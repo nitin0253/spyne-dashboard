@@ -387,13 +387,6 @@ select.sel:focus{border-color:var(--blue)}
       <div class="page-title">Segment Summary</div>
       <div class="page-sub">Enterprise mapped to Customer Segment · VIN = Image SKU · Video uses Image SKU → video_id, no new SKU</div>
     </div>
-    <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">
-      <span style="font-size:10px;color:var(--muted);margin-right:2px">Product:</span>
-      <button class="ftab active" data-prod="all">All</button>
-      <button class="ftab" data-prod="image">Images</button>
-      <button class="ftab" data-prod="360">360</button>
-      <button class="ftab" data-prod="video">Video</button>
-    </div>
   </div>
   <div class="kpi-grid" id="sg-kpis"></div>
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;margin-bottom:14px">
@@ -511,7 +504,6 @@ window.addEventListener('unhandledrejection',function(e){
 
 const API_URL='/api/data';
 let DATA=null,CHARTS={};
-let SG_PROD_FILTER='all';
 
 // ═══════════════════════════════════════════════════════════════════
 // GLOBAL FILTERS STATE
@@ -966,38 +958,15 @@ function renderProduct(){
 // ═══════════════════════════════════════════════════════════════════
 // SEGMENT  — product sub-filter + global segment filter
 // ═══════════════════════════════════════════════════════════════════
-document.querySelectorAll('.ftab[data-prod]').forEach(btn=>{
-  btn.addEventListener('click',()=>{
-    SG_PROD_FILTER=btn.dataset.prod;
-    document.querySelectorAll('.ftab[data-prod]').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    renderSegment();
-  });
-});
 
-function getSegFilteredData(segs){
-  const segFiltered=filterBreakdown(segs,'segment');
-  if(SG_PROD_FILTER==='all')return segFiltered;
-  const prodKey=SG_PROD_FILTER;
-  return segFiltered.map(seg=>{
-    const matchEntry=Object.entries(seg.byProduct||{}).find(([pName])=>{
-      if(prodKey==='image')return /image/i.test(pName);
-      if(prodKey==='360')return /360|spin/i.test(pName);
-      if(prodKey==='video')return /video/i.test(pName);
-      return false;
-    });
-    if(!matchEntry)return{...seg,units:0,vins:0,images:0,skus:0,actualMins:0,efficiency:0,costPerUnit:0,costPerVin:0};
-    const[,pd]=matchEntry;
-    return{...seg,units:pd.units,vins:pd.vins,images:pd.images,skus:pd.skus,actualMins:pd.actualMins,efficiency:pd.efficiency,costPerUnit:pd.costPerUnit,costPerVin:pd.costPerUnit};
-  }).filter(s=>s.units>0);
-}
+function getSegFilteredData(segs){ return filterBreakdown(segs,"segment"); }
 
 function renderSegment(){
   const months=filteredMonths();if(!months.length)return;
   const m=months[months.length-1];
   const rawSegs=m.segmentBreakdown;
   const segs=getSegFilteredData(rawSegs);
-  document.getElementById('sg-vol-sub').textContent=m.month+(SG_PROD_FILTER!=='all'?' · '+SG_PROD_FILTER+' filter':'');
+  document.getElementById('sg-vol-sub').textContent=m.month;
   document.getElementById('sg-kpis').innerHTML=segs.map(s=>kpi(s.name,f.num(s.vins?s.vins:s.units),f.num(s.uniqueEnterprises)+' enterprises · '+f.pct(s.efficiency)+' eff',null,sc(s.name))).join('');
   const labels=segs.map(s=>s.name),colors=segs.map(s=>sc(s.name));
   mk('ch-sg-vol',{type:'bar',_labelFmt:v=>v>0?f.short(v):'',data:{labels,datasets:[{label:'Units',data:segs.map(s=>s.units),backgroundColor:colors,borderRadius:5}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>f.short(v)}}}}});
@@ -1005,17 +974,17 @@ function renderSegment(){
   mk('ch-sg-vinc',{type:'bar',_labelFmt:v=>v?'₹'+Number(v).toFixed(2):'',data:{labels,datasets:[{label:'₹/VIN',data:segs.map(s=>s.costPerVin),backgroundColor:colors,borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'₹'+v}}}}});
   mk('ch-sg-eff',{type:'bar',_labelFmt:v=>v?v.toFixed(2)+'%':'',data:{labels,datasets:[{label:'Efficiency %',data:segs.map(s=>s.efficiency),backgroundColor:segs.map(s=>s.efficiency>=100?'#22d4a0':s.efficiency>=80?'#f5a42a':'#f0566a'),borderRadius:4}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.raw.toFixed(2)+'%'}}},scales:{y:{ticks:{callback:v=>v+'%'}}}}});
   const allSegs=[...new Set(DATA.months.flatMap(mo=>mo.segmentBreakdown.map(s=>s.name)))];
-  mk('ch-sg-trend',{type:'bar',data:{labels:filteredMonths().map(mo=>mo.month.replace('-26','')),datasets:allSegs.map((seg,i)=>({label:seg,data:filteredMonths().map(mo=>{const s=mo.segmentBreakdown.find(x=>x.name===seg);if(!s)return 0;if(SG_PROD_FILTER==='all')return s.units;const e=Object.entries(s.byProduct||{}).find(([k])=>SG_PROD_FILTER==='image'?/image/i.test(k):SG_PROD_FILTER==='360'?/360|spin/i.test(k):/video/i.test(k));return e?e[1].units:0;}),backgroundColor:sc(seg),stack:'a',borderRadius:i===allSegs.length-1?3:0}))},options:{scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:v=>f.short(v)}}}}});
+  mk('ch-sg-trend',{type:'bar',data:{labels:filteredMonths().map(mo=>mo.month.replace('-26','')),datasets:allSegs.map((seg,i)=>({label:seg,data:filteredMonths().map(mo=>{const s=mo.segmentBreakdown.find(x=>x.name===seg);if(!s)return 0;const prodAll=FILTERS.product.selected.size===0||FILTERS.product.selected.size===FILTERS.product.all.length;if(prodAll)return s.units;return Object.entries(s.byProduct||{}).filter(([k])=>passesFilter('product',k)).reduce((sum,[,pd])=>sum+pd.units,0);}),backgroundColor:sc(seg),stack:'a',borderRadius:i===allSegs.length-1?3:0}))},options:{scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:v=>f.short(v)}}}}});
   document.getElementById('sg-summary-tbl').innerHTML=rawSegs.map(s=>{
     const bar=Math.round((s.costShare||0)*1.4);
     return'<tr><td class="bright"><span class="seg" style="background:'+sc(s.name)+'22;color:'+sc(s.name)+'">'+s.name+'</span></td><td class="r">'+f.num(s.uniqueEnterprises)+'</td><td class="r" style="color:var(--purple);font-weight:600">'+f.num(s.vins)+'</td><td class="r" style="color:var(--text)">'+f.num(s.units)+'</td><td class="r">'+f.num(s.images)+'</td><td class="r">'+f.num(s.seg360Skus||0)+'</td><td class="r">'+f.num(s.segVideoIds||0)+'</td><td class="r">'+f.mins(s.actualMins)+'</td><td class="r"><span class="'+effCls(s.efficiency)+'">'+f.pct(s.efficiency)+'</span></td><td class="r" style="color:var(--amber);font-weight:600">'+f.inr(s.costPerVin)+'</td><td class="r">'+f.inr(s.costPerUnit)+'</td><td class="r">'+f.pct(s.costShare)+'<span class="mini-bar" style="width:'+bar+'px"></span></td></tr>';
   }).join('');
   if(false)document.getElementById('sg-deep').innerHTML=rawSegs.map(s=>{
     const prodEntries=Object.entries(s.byProduct||{});
-    const filteredProd=SG_PROD_FILTER==='all'?prodEntries:prodEntries.filter(([k])=>SG_PROD_FILTER==='image'?/image/i.test(k):SG_PROD_FILTER==='360'?/360|spin/i.test(k):/video/i.test(k));
+    const filteredProd=prodEntries.filter(([k])=>passesFilter('product',k));
     const prodRows=filteredProd.map(([pName,pd])=>'<tr><td class="bright">'+prodTag(pName)+'</td><td class="r">'+f.num(pd.vins)+'</td><td class="r">'+f.num(pd.units)+'</td><td class="r">'+f.mins(pd.actualMins)+'</td><td class="r"><span class="'+effCls(pd.efficiency)+'">'+f.pct(pd.efficiency)+'</span></td><td class="r">'+f.inr(pd.costPerUnit)+'</td></tr>').join('');
     const entRows=(s.topEnterprises||[]).map((e,i)=>'<tr><td class="rank-num">'+(i+1)+'</td><td class="bright" style="max-width:190px;overflow:hidden;text-overflow:ellipsis">'+e.name+'</td><td class="r" style="color:var(--sub);font-size:10px">'+( e.inventoryVersion||'—')+'</td><td class="r" style="color:var(--purple)">'+f.num(e.vins)+'</td><td class="r">'+f.num(e.units)+'</td><td class="r">'+f.mins(e.actualMins)+'</td><td class="r"><span class="'+effCls(e.efficiency)+'">'+f.pct(e.efficiency)+'</span></td><td class="r">'+f.inr(e.costPerUnit)+'</td></tr>').join('');
-    return'<div class="section" style="border-left:3px solid '+sc(s.name)+'"><div class="sec-head"><div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="seg" style="background:'+sc(s.name)+'22;color:'+sc(s.name)+';font-size:12px;padding:3px 10px">'+s.name+'</span><span style="font-weight:700;font-size:14px">'+f.num(s.vins)+' VINs</span><span style="font-size:11px;color:var(--muted)">·</span><span style="font-size:11px;color:var(--sub)">'+f.num(s.units)+' units</span><span style="font-size:11px;color:var(--muted)">·</span><span style="font-size:11px;color:var(--sub)">'+f.num(s.uniqueEnterprises)+' enterprises</span><span style="font-size:11px;color:var(--muted)">·</span><span class="'+effCls(s.efficiency)+'" style="font-size:11px">'+f.pct(s.efficiency)+' efficiency</span></div><div style="margin-top:6px;display:flex;gap:16px;flex-wrap:wrap"><span style="font-size:11px;color:var(--sub)">Cost Share: <b style="color:var(--text)">'+f.pct(s.costShare)+'</b></span><span style="font-size:11px;color:var(--sub)">₹/VIN: <b style="color:var(--amber)">'+f.inr(s.costPerVin)+'</b></span><span style="font-size:11px;color:var(--sub)">₹/Unit: <b style="color:var(--text)">'+f.inr(s.costPerUnit)+'</b></span><span style="font-size:11px;color:var(--sub)">Images: <b style="color:var(--text)">'+f.num(s.images)+'</b></span><span style="font-size:11px;color:var(--sub)">360 SKUs: <b style="color:var(--text)">'+f.num(s.seg360Skus||0)+'</b></span><span style="font-size:11px;color:var(--sub)">Video IDs: <b style="color:var(--text)">'+f.num(s.segVideoIds||0)+'</b></span></div></div></div><div class="g2"><div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px">Product Mix'+(SG_PROD_FILTER!=='all'?' · '+SG_PROD_FILTER+' filter':'')+'</div><table><thead><tr><th>Product</th><th class="r">VINs</th><th class="r">Units</th><th class="r">Minutes</th><th class="r">Efficiency</th><th class="r">₹/Unit</th></tr></thead><tbody>'+(prodRows||'<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:10px">No data for filter</td></tr>')+'</tbody></table></div><div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px">Top 10 Enterprises</div><table><thead><tr><th>#</th><th>Enterprise</th><th class="r">Inv.</th><th class="r">VINs</th><th class="r">Units</th><th class="r">Mins</th><th class="r">Eff.</th><th class="r">₹/Unit</th></tr></thead><tbody>'+(entRows||'<tr><td colspan="8" style="color:var(--muted);text-align:center;padding:10px">No data</td></tr>')+'</tbody></table></div></div></div>';
+    return'<div class="section" style="border-left:3px solid '+sc(s.name)+'"><div class="sec-head"><div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="seg" style="background:'+sc(s.name)+'22;color:'+sc(s.name)+';font-size:12px;padding:3px 10px">'+s.name+'</span><span style="font-weight:700;font-size:14px">'+f.num(s.vins)+' VINs</span><span style="font-size:11px;color:var(--muted)">·</span><span style="font-size:11px;color:var(--sub)">'+f.num(s.units)+' units</span><span style="font-size:11px;color:var(--muted)">·</span><span style="font-size:11px;color:var(--sub)">'+f.num(s.uniqueEnterprises)+' enterprises</span><span style="font-size:11px;color:var(--muted)">·</span><span class="'+effCls(s.efficiency)+'" style="font-size:11px">'+f.pct(s.efficiency)+' efficiency</span></div><div style="margin-top:6px;display:flex;gap:16px;flex-wrap:wrap"><span style="font-size:11px;color:var(--sub)">Cost Share: <b style="color:var(--text)">'+f.pct(s.costShare)+'</b></span><span style="font-size:11px;color:var(--sub)">₹/VIN: <b style="color:var(--amber)">'+f.inr(s.costPerVin)+'</b></span><span style="font-size:11px;color:var(--sub)">₹/Unit: <b style="color:var(--text)">'+f.inr(s.costPerUnit)+'</b></span><span style="font-size:11px;color:var(--sub)">Images: <b style="color:var(--text)">'+f.num(s.images)+'</b></span><span style="font-size:11px;color:var(--sub)">360 SKUs: <b style="color:var(--text)">'+f.num(s.seg360Skus||0)+'</b></span><span style="font-size:11px;color:var(--sub)">Video IDs: <b style="color:var(--text)">'+f.num(s.segVideoIds||0)+'</b></span></div></div></div><div class="g2"><div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px">Product Mix'+'</div><table><thead><tr><th>Product</th><th class="r">VINs</th><th class="r">Units</th><th class="r">Minutes</th><th class="r">Efficiency</th><th class="r">₹/Unit</th></tr></thead><tbody>'+(prodRows||'<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:10px">No data for filter</td></tr>')+'</tbody></table></div><div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px">Top 10 Enterprises</div><table><thead><tr><th>#</th><th>Enterprise</th><th class="r">Inv.</th><th class="r">VINs</th><th class="r">Units</th><th class="r">Mins</th><th class="r">Eff.</th><th class="r">₹/Unit</th></tr></thead><tbody>'+(entRows||'<tr><td colspan="8" style="color:var(--muted);text-align:center;padding:10px">No data</td></tr>')+'</tbody></table></div></div></div>';
   }).join('');
 }
 
