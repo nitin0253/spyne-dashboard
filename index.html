@@ -288,23 +288,22 @@ select.sel:focus{border-color:var(--blue)}
       <div class="ch"><canvas id="ch-cpi" height="130"></canvas></div>
     </div>
   </div>
-  <div class="section">
-    <div class="sec-head"><div><div class="sec-title">Efficiency Trend — All Months</div><div class="sec-sub">Target Mins / Actual Mins × 100 · green ≥100% · amber ≥80% · red below</div></div></div>
-    <div class="ch"><canvas id="ch-eff-trend" height="80"></canvas></div>
-  </div>
-  <div class="section">
-    <div class="sec-head"><div class="sec-title">Month-by-Month Breakdown</div></div>
-    <div class="tbl-wrap"><table>
-      <thead><tr>
-        <th>Month</th><th class="r">Salary Cost</th>
-        <th class="r">Images</th><th class="r">360 SKUs</th><th class="r">Video SKUs</th>
-        <th class="r">VINs</th><th class="r">Total Units</th><th class="r">Actual Mins</th>
-        <th class="r">Efficiency</th>
-        <th class="r">₹/Image</th><th class="r">₹/360 SKU</th><th class="r">₹/Video SKU</th>
-        <th class="r">₹/VIN</th><th class="r">₹/Unit</th><th class="r">Employees</th>
-      </tr></thead>
-      <tbody id="ov-tbody"></tbody>
-    </table></div>
+  <div class="g2">
+    <div class="section">
+      <div class="sec-head"><div><div class="sec-title">Efficiency Trend</div><div class="sec-sub">Target Mins / Actual Mins × 100</div></div></div>
+      <div class="ch"><canvas id="ch-eff-trend" height="130"></canvas></div>
+    </div>
+    <div class="section">
+      <div class="sec-head"><div class="sec-title">Month Snapshot</div></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr>
+          <th>Month</th><th class="r">Cost</th><th class="r">Images</th>
+          <th class="r">360 SKUs</th><th class="r">Video SKUs</th><th class="r">VINs</th>
+          <th class="r">Efficiency</th><th class="r">₹/VIN</th><th class="r">₹/Unit</th>
+        </tr></thead>
+        <tbody id="ov-tbody"></tbody>
+      </table></div>
+    </div>
   </div>
 </div>
 
@@ -314,17 +313,6 @@ select.sel:focus{border-color:var(--blue)}
     <div><div class="page-title">Costing Report</div><div class="page-sub">Cost by product, segment, dealer type &amp; enterprise</div></div>
   </div>
   <div class="kpi-grid" id="co-kpis"></div>
-  <div class="section">
-    <div class="sec-head"><div><div class="sec-title">Cost by Product</div><div class="sec-sub" id="co-prod-sub"></div></div></div>
-    <div class="tbl-wrap"><table>
-      <thead><tr>
-        <th>Product</th><th>Basis</th><th class="r">Units</th><th class="r">SKUs</th>
-        <th class="r">Actual Mins</th><th class="r">Efficiency</th>
-        <th class="r">₹/Unit</th><th class="r">₹/SKU</th><th class="r">Cost Share</th>
-      </tr></thead>
-      <tbody id="co-prod-tbl"></tbody>
-    </table></div>
-  </div>
   <div class="g2">
     <div class="section">
       <div class="sec-head"><div><div class="sec-title">Cost Share by Segment</div><div class="sec-sub" id="co-seg-sub"></div></div></div>
@@ -376,16 +364,12 @@ select.sel:focus{border-color:var(--blue)}
     </div>
   </div>
   <div class="section">
-    <div class="sec-head"><div><div class="sec-title">Efficiency by Product</div><div class="sec-sub">Target Mins / Actual Mins × 100</div></div></div>
-    <div class="ch"><canvas id="ch-pr-eff" height="70"></canvas></div>
-  </div>
-  <div class="section">
-    <div class="sec-head"><div class="sec-title">Product Detail</div></div>
+    <div class="sec-head"><div class="sec-title">Product Breakdown</div></div>
     <div class="tbl-wrap"><table>
       <thead><tr>
-        <th>Product</th><th>Unit</th><th class="r">Units</th><th class="r">SKUs</th>
-        <th class="r">Actual Mins</th><th class="r">Target Mins</th>
-        <th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r">₹/SKU</th><th class="r">Cost Share</th>
+        <th>Product</th><th>Basis</th><th class="r">Units</th><th class="r">SKUs</th>
+        <th class="r">Actual Mins</th><th class="r">Efficiency</th>
+        <th class="r">₹/Unit</th><th class="r">₹/SKU</th><th class="r">Cost Share</th>
       </tr></thead>
       <tbody id="pr-tbl"></tbody>
     </table></div>
@@ -412,29 +396,27 @@ select.sel:focus{border-color:var(--blue)}
     </div>
   </div>
   <div class="kpi-grid" id="sg-kpis"></div>
-  <div class="g2">
-    <div class="section">
-      <div class="sec-head"><div><div class="sec-title">Units by Segment</div><div class="sec-sub" id="sg-vol-sub"></div></div></div>
-      <div class="ch"><canvas id="ch-sg-vol" height="190"></canvas></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;margin-bottom:14px">
+    <div class="section" style="margin-bottom:0">
+      <div class="sec-head"><div><div class="sec-title">Units</div><div class="sec-sub" id="sg-vol-sub"></div></div></div>
+      <div class="ch"><canvas id="ch-sg-vol" height="170"></canvas></div>
     </div>
-    <div class="section">
+    <div class="section" style="margin-bottom:0">
       <div class="sec-head"><div><div class="sec-title">Cost Share</div></div></div>
-      <div class="ch"><canvas id="ch-sg-pie" height="190"></canvas></div>
+      <div class="ch"><canvas id="ch-sg-pie" height="170"></canvas></div>
     </div>
-  </div>
-  <div class="g2">
-    <div class="section">
-      <div class="sec-head"><div><div class="sec-title">₹/VIN by Segment</div><div class="sec-sub">Cost per unique vehicle</div></div></div>
-      <div class="ch"><canvas id="ch-sg-vinc" height="150"></canvas></div>
+    <div class="section" style="margin-bottom:0">
+      <div class="sec-head"><div><div class="sec-title">₹/VIN</div><div class="sec-sub">Cost per vehicle</div></div></div>
+      <div class="ch"><canvas id="ch-sg-vinc" height="170"></canvas></div>
     </div>
-    <div class="section">
-      <div class="sec-head"><div><div class="sec-title">Efficiency by Segment</div></div></div>
-      <div class="ch"><canvas id="ch-sg-eff" height="150"></canvas></div>
+    <div class="section" style="margin-bottom:0">
+      <div class="sec-head"><div><div class="sec-title">Efficiency</div></div></div>
+      <div class="ch"><canvas id="ch-sg-eff" height="170"></canvas></div>
     </div>
   </div>
   <div class="section">
-    <div class="sec-head"><div><div class="sec-title">Segment Volume Trend — All Months</div><div class="sec-sub">Units per segment</div></div></div>
-    <div class="ch"><canvas id="ch-sg-trend" height="80"></canvas></div>
+    <div class="sec-head"><div><div class="sec-title">Segment Trend — All Months</div><div class="sec-sub">Units per segment stacked</div></div></div>
+    <div class="ch"><canvas id="ch-sg-trend" height="70"></canvas></div>
   </div>
   <div class="section">
     <div class="sec-head"><div class="sec-title">Segment Summary Table</div></div>
@@ -448,7 +430,6 @@ select.sel:focus{border-color:var(--blue)}
       <tbody id="sg-summary-tbl"></tbody>
     </table></div>
   </div>
-  <div id="sg-deep"></div>
 </div>
 
 <!-- ══ QC EDITOR ══════════════════════════════════════════════════════════════ -->
@@ -934,7 +915,7 @@ function renderOverview(){
     const img=prods.find(p=>/image/i.test(p.name));
     const s360=prods.find(p=>/360|spin/i.test(p.name));
     const vid=prods.find(p=>/video/i.test(p.name));
-    return'<tr><td class="bright">'+m.month+'</td><td class="r">'+f.inr0(s.totalCost)+'</td><td class="r">'+f.num(s.totalImages)+'</td><td class="r">'+f.num(s.total360Skus)+'</td><td class="r">'+f.num(s.totalVideoSkus)+'</td><td class="r" style="color:var(--purple)">'+f.num(s.totalVins)+'</td><td class="r">'+f.num(s.totalUnits)+'</td><td class="r">'+f.mins(s.totalActMins)+'</td><td class="r"><span class="'+effCls(s.efficiency)+'">'+f.pct(s.efficiency)+'</span></td><td class="r">'+f.inr(img?.costPerUnit||0)+'</td><td class="r">'+f.inr(s360?.costPerUnit||0)+'</td><td class="r">'+f.inr(vid?.costPerUnit||0)+'</td><td class="r" style="color:var(--amber);font-weight:600">'+f.inr(s.costPerVin)+'</td><td class="r">'+f.inr(s.costPerUnit)+'</td><td class="r">'+s.employees+'</td></tr>';
+    return'<tr><td class="bright">'+m.month+'</td><td class="r">'+f.inr0(s.totalCost)+'</td><td class="r">'+f.num(s.totalImages)+'</td><td class="r">'+f.num(s.total360Skus)+'</td><td class="r">'+f.num(s.totalVideoSkus)+'</td><td class="r" style="color:var(--purple)">'+f.num(s.totalVins)+'</td><td class="r"><span class="'+effCls(s.efficiency)+'">'+f.pct(s.efficiency)+'</span></td><td class="r" style="color:var(--amber)">'+f.inr(s.costPerVin)+'</td><td class="r">'+f.inr(s.costPerUnit)+'</td></tr>';
   }).join('');
 }
 
@@ -953,12 +934,6 @@ function renderCosting(){
     kpi('₹/Unit',f.inr(s.costPerUnit),'Blended',null,'#38c4f0'),
     kpi('Efficiency',f.pct(s.efficiency),'Target/Actual',null,'#22d4a0'),
   ].join('');
-  document.getElementById('co-prod-sub').textContent=m.month;
-  const prods=filterBreakdown(m.productBreakdown,'product');
-  document.getElementById('co-prod-tbl').innerHTML=prods.map(p=>{
-    const bar=Math.round(p.costSharePct*1.4);
-    return'<tr><td class="bright">'+prodTag(p.name)+'</td><td style="color:var(--sub);font-size:10px">'+p.unitLabel+'</td><td class="r">'+f.num(p.units)+'</td><td class="r">'+f.num(p.skus)+'</td><td class="r">'+f.mins(p.actualMins)+'</td><td class="r"><span class="'+effCls(p.efficiency)+'">'+f.pct(p.efficiency)+'</span></td><td class="r" style="color:var(--text);font-weight:600">'+f.inr(p.costPerUnit)+'</td><td class="r">'+f.inr(p.costPerSku)+'</td><td class="r">'+f.pct(p.costSharePct)+'<span class="mini-bar" style="width:'+bar+'px"></span></td></tr>';
-  }).join('');
   const segs=filterBreakdown(m.segmentBreakdown,'segment');
   document.getElementById('co-seg-sub').textContent=m.month;
   mk('ch-seg-pie',{type:'doughnut',data:{labels:segs.map(s=>s.name),datasets:[{data:segs.map(s=>s.costShare),backgroundColor:segs.map(s=>sc(s.name)),borderWidth:0,hoverOffset:5,datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>4,color:'#fff',font:{size:10,weight:'600'},formatter:(v)=>v.toFixed(0)+'%',anchor:'center',align:'center'}}]},options:{cutout:'62%',scales:{x:{display:false},y:{display:false}},plugins:{legend:{position:'right',labels:{color:'#6a82a8',font:{size:10},boxWidth:9}},tooltip:{callbacks:{label:ctx=>ctx.label+': '+ctx.parsed.toFixed(2)+'%'}}}}});
@@ -980,8 +955,10 @@ function renderProduct(){
   document.getElementById('pr-kpis').innerHTML=prods.map(p=>kpi(p.name,f.short(p.units),p.unitLabel+' · '+f.inr(p.costPerUnit)+'/unit',null,pc(p.name,0))).join('');
   mk('ch-pr-vol',{type:'bar',_labelFmt:v=>v>0?f.short(v):'',data:{labels:prods.map(p=>p.name),datasets:[{label:'Units',data:prods.map(p=>p.units),backgroundColor:colors,borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>f.short(v)}}}}});
   mk('ch-pr-cpu',{type:'bar',_labelFmt:v=>v?f.inr(v):'',data:{labels:prods.map(p=>p.name),datasets:[{label:'₹/Unit',data:prods.map(p=>p.costPerUnit),backgroundColor:colors,borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'₹'+v}}}}});
-  mk('ch-pr-eff',{type:'bar',_labelFmt:v=>v?v.toFixed(2)+'%':'',data:{labels:prods.map(p=>p.name),datasets:[{label:'Efficiency %',data:prods.map(p=>p.efficiency),backgroundColor:prods.map(p=>p.efficiency>=100?'#22d4a0':p.efficiency>=80?'#f5a42a':'#f0566a'),borderRadius:4}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.raw.toFixed(2)+'%'}}},scales:{y:{ticks:{callback:v=>v+'%'}}}}});
-  document.getElementById('pr-tbl').innerHTML=prods.map(p=>'<tr><td class="bright">'+prodTag(p.name)+'</td><td style="color:var(--sub);font-size:10px">'+p.unitLabel+'</td><td class="r">'+f.num(p.units)+'</td><td class="r">'+f.num(p.skus)+'</td><td class="r">'+f.mins(p.actualMins)+'</td><td class="r">'+f.mins(p.sumTarget)+'</td><td class="r"><span class="'+effCls(p.efficiency)+'">'+f.pct(p.efficiency)+'</span></td><td class="r" style="color:var(--text);font-weight:600">'+f.inr(p.costPerUnit)+'</td><td class="r">'+f.inr(p.costPerSku)+'</td><td class="r">'+f.pct(p.costSharePct)+'</td></tr>').join('');
+  document.getElementById('pr-tbl').innerHTML=prods.map(p=>{
+    const bar=Math.round(p.costSharePct*1.4);
+    return'<tr><td class="bright">'+prodTag(p.name)+'</td><td style="color:var(--sub);font-size:10px">'+p.unitLabel+'</td><td class="r">'+f.num(p.units)+'</td><td class="r">'+f.num(p.skus)+'</td><td class="r">'+f.mins(p.actualMins)+'</td><td class="r"><span class="'+effCls(p.efficiency)+'">'+f.pct(p.efficiency)+'</span></td><td class="r" style="color:var(--text);font-weight:600">'+f.inr(p.costPerUnit)+'</td><td class="r">'+f.inr(p.costPerSku)+'</td><td class="r">'+f.pct(p.costSharePct)+'<span class="mini-bar" style="width:'+bar+'px"></span></td></tr>';
+  }).join('');
   const allProds=[...new Set(DATA.months.flatMap(m=>m.productBreakdown.map(p=>p.name)))];
   mk('ch-pr-trend',{type:'line',data:{labels:filteredMonths().map(m=>m.month.replace('-26','')),datasets:allProds.map((prod,i)=>({label:prod,data:filteredMonths().map(m=>(m.productBreakdown.find(p=>p.name===prod)?.costPerUnit||0)),borderColor:pc(prod,i),backgroundColor:pc(prod,i)+'22',borderWidth:2,tension:.3,pointBackgroundColor:pc(prod,i),pointRadius:4,fill:false}))},options:{scales:{y:{ticks:{callback:v=>'₹'+v}}},plugins:{tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': ₹'+Number(ctx.raw).toFixed(2)}}}}});
 }
@@ -1033,7 +1010,7 @@ function renderSegment(){
     const bar=Math.round((s.costShare||0)*1.4);
     return'<tr><td class="bright"><span class="seg" style="background:'+sc(s.name)+'22;color:'+sc(s.name)+'">'+s.name+'</span></td><td class="r">'+f.num(s.uniqueEnterprises)+'</td><td class="r" style="color:var(--purple);font-weight:600">'+f.num(s.vins)+'</td><td class="r" style="color:var(--text)">'+f.num(s.units)+'</td><td class="r">'+f.num(s.images)+'</td><td class="r">'+f.num(s.seg360Skus||0)+'</td><td class="r">'+f.num(s.segVideoIds||0)+'</td><td class="r">'+f.mins(s.actualMins)+'</td><td class="r"><span class="'+effCls(s.efficiency)+'">'+f.pct(s.efficiency)+'</span></td><td class="r" style="color:var(--amber);font-weight:600">'+f.inr(s.costPerVin)+'</td><td class="r">'+f.inr(s.costPerUnit)+'</td><td class="r">'+f.pct(s.costShare)+'<span class="mini-bar" style="width:'+bar+'px"></span></td></tr>';
   }).join('');
-  document.getElementById('sg-deep').innerHTML=rawSegs.map(s=>{
+  if(false)document.getElementById('sg-deep').innerHTML=rawSegs.map(s=>{
     const prodEntries=Object.entries(s.byProduct||{});
     const filteredProd=SG_PROD_FILTER==='all'?prodEntries:prodEntries.filter(([k])=>SG_PROD_FILTER==='image'?/image/i.test(k):SG_PROD_FILTER==='360'?/360|spin/i.test(k):/video/i.test(k));
     const prodRows=filteredProd.map(([pName,pd])=>'<tr><td class="bright">'+prodTag(pName)+'</td><td class="r">'+f.num(pd.vins)+'</td><td class="r">'+f.num(pd.units)+'</td><td class="r">'+f.mins(pd.actualMins)+'</td><td class="r"><span class="'+effCls(pd.efficiency)+'">'+f.pct(pd.efficiency)+'</span></td><td class="r">'+f.inr(pd.costPerUnit)+'</td></tr>').join('');
