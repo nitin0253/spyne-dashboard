@@ -40,33 +40,72 @@ nav{flex:1;padding:8px;overflow-y:auto}
 
 /* MAIN */
 #main{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden;min-width:0}
+
+/* TOPBAR */
 #topbar{height:48px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0}
 .tb-title{font-weight:600;font-size:14px}.tb-crumb{color:var(--muted);font-size:12px}
 .tb-right{margin-left:auto;display:flex;align-items:center;gap:8px}
 .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600}
 .pill-green{background:#0a2419;border:1px solid #143a25;color:var(--green)}
-.pill-amber{background:#1f160a;border:1px solid #3a2510;color:var(--amber)}
 .pill-dot{width:5px;height:5px;border-radius:50%;background:currentColor;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 .tb-time{font-size:10px;color:var(--muted);font-family:var(--mono)}
+
+/* ══ FILTER BAR ══════════════════════════════════════════════════════════ */
+#filterbar{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:8px 20px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0;
+}
+.fb-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);white-space:nowrap}
+.fb-sep{width:1px;height:20px;background:var(--border);margin:0 4px}
+.fb-clear{margin-left:auto;font-size:10px;font-weight:600;color:var(--sub);cursor:pointer;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:none;font-family:var(--font);transition:all .12s;white-space:nowrap}
+.fb-clear:hover{color:var(--red);border-color:var(--red)}
+.fb-active-count{display:none;font-size:9px;font-weight:700;background:var(--blue);color:#fff;border-radius:10px;padding:1px 5px;margin-left:3px}
+
+/* Multi-select dropdown */
+.ms-wrap{position:relative;flex-shrink:0}
+.ms-btn{display:flex;align-items:center;gap:6px;padding:5px 10px;background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;font-size:11px;font-weight:500;color:var(--sub);font-family:var(--font);white-space:nowrap;transition:all .12s;user-select:none;min-width:110px}
+.ms-btn:hover,.ms-btn.open{border-color:var(--blue);color:var(--text)}
+.ms-btn.has-filter{border-color:var(--blue);background:rgba(79,120,255,.08);color:var(--blue)}
+.ms-btn-label{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis}
+.ms-btn-count{background:var(--blue);color:#fff;font-size:9px;font-weight:700;border-radius:10px;padding:1px 5px;flex-shrink:0}
+.ms-caret{flex-shrink:0;transition:transform .15s}
+.ms-btn.open .ms-caret{transform:rotate(180deg)}
+
+.ms-dropdown{
+  position:absolute;top:calc(100% + 4px);left:0;min-width:200px;max-width:280px;
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+  box-shadow:0 8px 32px rgba(0,0,0,.5);z-index:200;overflow:hidden;
+}
+.ms-search{padding:8px;border-bottom:1px solid var(--border)}
+.ms-search input{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);padding:5px 8px;color:var(--text);font-size:11px;font-family:var(--font);outline:none}
+.ms-search input:focus{border-color:var(--blue)}
+.ms-actions{display:flex;gap:6px;padding:6px 8px;border-bottom:1px solid var(--border)}
+.ms-act{flex:1;padding:4px 0;text-align:center;font-size:10px;font-weight:600;cursor:pointer;border-radius:4px;transition:all .12s;border:1px solid var(--border);background:none;font-family:var(--font);color:var(--sub)}
+.ms-act:hover{background:var(--hover);color:var(--text)}
+.ms-act.sel-all{color:var(--green);border-color:rgba(34,212,160,.3)}
+.ms-act.sel-all:hover{background:rgba(34,212,160,.08)}
+.ms-act.desel-all{color:var(--red);border-color:rgba(240,86,106,.3)}
+.ms-act.desel-all:hover{background:rgba(240,86,106,.08)}
+.ms-list{max-height:220px;overflow-y:auto;padding:4px}
+.ms-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:var(--r-sm);cursor:pointer;transition:background .1s;user-select:none}
+.ms-item:hover{background:var(--hover)}
+.ms-item input[type=checkbox]{width:13px;height:13px;accent-color:var(--blue);cursor:pointer;flex-shrink:0}
+.ms-item-label{font-size:11px;color:var(--sub);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ms-item:hover .ms-item-label,.ms-item input:checked~.ms-item-label{color:var(--text)}
+.ms-empty{padding:12px;text-align:center;font-size:11px;color:var(--muted)}
 
 /* CONTENT */
 #content{flex:1;overflow-y:auto;padding:20px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 .page{display:none}.page.active{display:block}
 
-/* MONTH TABS */
-.tab-row{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
-.mtab{padding:4px 12px;border-radius:5px;border:none;cursor:pointer;font-size:11px;font-weight:600;font-family:var(--font);transition:all .12s;background:var(--dim);color:var(--sub)}
-.mtab:hover{color:var(--text)}.mtab.active{background:var(--blue);color:#fff}
-
-/* FILTER TABS (product filter) */
-.ftab{padding:3px 10px;border-radius:5px;border:1px solid var(--border);cursor:pointer;font-size:10px;font-weight:600;font-family:var(--font);transition:all .12s;background:transparent;color:var(--sub)}
-.ftab:hover{color:var(--text);border-color:var(--sub)}.ftab.active{border-color:var(--blue);color:var(--blue);background:rgba(79,120,255,.1)}
-
 /* PAGE HEADER */
 .page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;gap:12px;flex-wrap:wrap}
 .page-title{font-weight:700;font-size:16px;letter-spacing:-.3px}.page-sub{font-size:11px;color:var(--sub);margin-top:3px}
+.tab-row{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.ftab{padding:3px 10px;border-radius:5px;border:1px solid var(--border);cursor:pointer;font-size:10px;font-weight:600;font-family:var(--font);transition:all .12s;background:transparent;color:var(--sub)}
+.ftab:hover{color:var(--text);border-color:var(--sub)}.ftab.active{border-color:var(--blue);color:var(--blue);background:rgba(79,120,255,.1)}
 
 /* KPI GRID */
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;margin-bottom:16px}
@@ -103,18 +142,12 @@ tbody td.bright{color:var(--text);font-weight:500}
 .eff-hi{color:var(--green);font-weight:600}.eff-md{color:var(--amber);font-weight:600}.eff-lo{color:var(--red);font-weight:600}
 .rank-num{color:var(--muted);font-size:10px;font-family:var(--mono)}
 .mini-bar{display:inline-block;height:3px;border-radius:2px;background:var(--blue);vertical-align:middle;margin-left:6px;opacity:.6}
-
-/* TAGS */
 .seg{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600}
 .prod-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600}
-
-/* INPUTS */
 .search{background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);padding:5px 10px;color:var(--text);font-size:11px;font-family:var(--font);outline:none;width:180px;transition:border-color .15s}
 .search:focus{border-color:var(--blue)}.search::placeholder{color:var(--muted)}
 select.sel{background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);padding:5px 8px;color:var(--sub);font-size:11px;font-family:var(--font);outline:none;cursor:pointer}
 select.sel:focus{border-color:var(--blue)}
-
-/* CHART */
 .ch{position:relative}
 
 /* OVERLAY */
@@ -124,8 +157,6 @@ select.sel:focus{border-color:var(--blue)}
 .err-box{background:#120810;border:1px solid #4a1525;border-radius:var(--r);padding:20px 24px;max-width:480px;text-align:center}
 .err-box h3{color:var(--red);margin-bottom:8px}.err-box p{color:var(--sub);font-size:11px;line-height:1.7}
 .err-box button{margin-top:14px;background:var(--red);border:none;color:#fff;padding:6px 16px;border-radius:var(--r-sm);cursor:pointer;font-size:12px;font-family:var(--font)}
-
-/* EXCLUDED USERS PAGE */
 .excl-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;background:rgba(240,86,106,.12);border:1px solid rgba(240,86,106,.3);color:var(--red)}
 </style>
 </head>
@@ -167,6 +198,77 @@ select.sel:focus{border-color:var(--blue)}
     </div>
   </div>
 
+  <!-- ══ GLOBAL FILTER BAR ══════════════════════════════════════════════ -->
+  <div id="filterbar">
+    <span class="fb-label">Filters</span>
+    <div class="fb-sep"></div>
+    <!-- Month filter -->
+    <div class="ms-wrap" id="fw-month">
+      <div class="ms-btn" onclick="toggleDropdown('month')">
+        <span class="ms-btn-label" id="flbl-month">All Months</span>
+        <span class="ms-btn-count" id="fcnt-month" style="display:none"></span>
+        <svg class="ms-caret" width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="ms-dropdown" id="fdd-month" style="display:none">
+        <div class="ms-search"><input type="text" placeholder="Search months…" oninput="filterItems('month',this.value)"></div>
+        <div class="ms-actions">
+          <button class="ms-act sel-all" onclick="selectAll('month')">Select All</button>
+          <button class="ms-act desel-all" onclick="deselectAll('month')">Deselect All</button>
+        </div>
+        <div class="ms-list" id="flist-month"></div>
+      </div>
+    </div>
+    <!-- Segment filter -->
+    <div class="ms-wrap" id="fw-segment">
+      <div class="ms-btn" onclick="toggleDropdown('segment')">
+        <span class="ms-btn-label" id="flbl-segment">All Segments</span>
+        <span class="ms-btn-count" id="fcnt-segment" style="display:none"></span>
+        <svg class="ms-caret" width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="ms-dropdown" id="fdd-segment" style="display:none">
+        <div class="ms-search"><input type="text" placeholder="Search segments…" oninput="filterItems('segment',this.value)"></div>
+        <div class="ms-actions">
+          <button class="ms-act sel-all" onclick="selectAll('segment')">Select All</button>
+          <button class="ms-act desel-all" onclick="deselectAll('segment')">Deselect All</button>
+        </div>
+        <div class="ms-list" id="flist-segment"></div>
+      </div>
+    </div>
+    <!-- Product filter -->
+    <div class="ms-wrap" id="fw-product">
+      <div class="ms-btn" onclick="toggleDropdown('product')">
+        <span class="ms-btn-label" id="flbl-product">All Products</span>
+        <span class="ms-btn-count" id="fcnt-product" style="display:none"></span>
+        <svg class="ms-caret" width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="ms-dropdown" id="fdd-product" style="display:none">
+        <div class="ms-search"><input type="text" placeholder="Search products…" oninput="filterItems('product',this.value)"></div>
+        <div class="ms-actions">
+          <button class="ms-act sel-all" onclick="selectAll('product')">Select All</button>
+          <button class="ms-act desel-all" onclick="deselectAll('product')">Deselect All</button>
+        </div>
+        <div class="ms-list" id="flist-product"></div>
+      </div>
+    </div>
+    <!-- User / Editor filter -->
+    <div class="ms-wrap" id="fw-user">
+      <div class="ms-btn" onclick="toggleDropdown('user')">
+        <span class="ms-btn-label" id="flbl-user">All Users</span>
+        <span class="ms-btn-count" id="fcnt-user" style="display:none"></span>
+        <svg class="ms-caret" width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="ms-dropdown" id="fdd-user" style="display:none">
+        <div class="ms-search"><input type="text" placeholder="Search users…" oninput="filterItems('user',this.value)"></div>
+        <div class="ms-actions">
+          <button class="ms-act sel-all" onclick="selectAll('user')">Select All</button>
+          <button class="ms-act desel-all" onclick="deselectAll('user')">Deselect All</button>
+        </div>
+        <div class="ms-list" id="flist-user"></div>
+      </div>
+    </div>
+    <button class="fb-clear" id="fb-clear-btn" onclick="clearAllFilters()" style="display:none">✕ Clear Filters</button>
+  </div>
+
   <div id="content">
 
 <!-- ══ OVERVIEW ══════════════════════════════════════════════════════════════ -->
@@ -187,7 +289,7 @@ select.sel:focus{border-color:var(--blue)}
     </div>
   </div>
   <div class="section">
-    <div class="sec-head"><div><div class="sec-title">Efficiency Trend — All Months</div><div class="sec-sub">Target Mins / Actual Mins × 100 · coloured green ≥100% · amber ≥80% · red below</div></div></div>
+    <div class="sec-head"><div><div class="sec-title">Efficiency Trend — All Months</div><div class="sec-sub">Target Mins / Actual Mins × 100 · green ≥100% · amber ≥80% · red below</div></div></div>
     <div class="ch"><canvas id="ch-eff-trend" height="80"></canvas></div>
   </div>
   <div class="section">
@@ -209,8 +311,7 @@ select.sel:focus{border-color:var(--blue)}
 <!-- ══ COSTING ════════════════════════════════════════════════════════════════ -->
 <div class="page" id="page-costing">
   <div class="page-header">
-    <div><div class="page-title">Costing Report</div><div class="page-sub">Cost by product, segment, dealer type & enterprise</div></div>
-    <div class="tab-row" id="co-tabs"></div>
+    <div><div class="page-title">Costing Report</div><div class="page-sub">Cost by product, segment, dealer type &amp; enterprise</div></div>
   </div>
   <div class="kpi-grid" id="co-kpis"></div>
   <div class="section">
@@ -261,8 +362,7 @@ select.sel:focus{border-color:var(--blue)}
 <!-- ══ PRODUCT ════════════════════════════════════════════════════════════════ -->
 <div class="page" id="page-product">
   <div class="page-header">
-    <div><div class="page-title">Product Report</div><div class="page-sub">Per-product cost, volume & efficiency</div></div>
-    <div class="tab-row" id="pr-tabs"></div>
+    <div><div class="page-title">Product Report</div><div class="page-sub">Per-product cost, volume &amp; efficiency</div></div>
   </div>
   <div class="kpi-grid" id="pr-kpis"></div>
   <div class="g2">
@@ -291,7 +391,7 @@ select.sel:focus{border-color:var(--blue)}
     </table></div>
   </div>
   <div class="section">
-    <div class="sec-head"><div><div class="sec-title">₹/Unit Trend — All Months</div><div class="sec-sub">Cost per billing unit per product across all months</div></div></div>
+    <div class="sec-head"><div><div class="sec-title">₹/Unit Trend — All Months</div><div class="sec-sub">Cost per billing unit per product</div></div></div>
     <div class="ch"><canvas id="ch-pr-trend" height="80"></canvas></div>
   </div>
 </div>
@@ -301,17 +401,14 @@ select.sel:focus{border-color:var(--blue)}
   <div class="page-header">
     <div>
       <div class="page-title">Segment Summary</div>
-      <div class="page-sub">Enterprise mapped to Customer Segment · VIN = Image SKU (360 reuses VIN; Video uses Image SKU → video_id, no new SKU)</div>
+      <div class="page-sub">Enterprise mapped to Customer Segment · VIN = Image SKU · Video uses Image SKU → video_id, no new SKU</div>
     </div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
-      <div class="tab-row" id="sg-tabs"></div>
-      <div style="display:flex;gap:4px;align-items:center">
-        <span style="font-size:10px;color:var(--muted);margin-right:4px">Filter:</span>
-        <button class="ftab active" data-prod="all">All</button>
-        <button class="ftab" data-prod="image">Images</button>
-        <button class="ftab" data-prod="360">360</button>
-        <button class="ftab" data-prod="video">Video</button>
-      </div>
+    <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">
+      <span style="font-size:10px;color:var(--muted);margin-right:2px">Product:</span>
+      <button class="ftab active" data-prod="all">All</button>
+      <button class="ftab" data-prod="image">Images</button>
+      <button class="ftab" data-prod="360">360</button>
+      <button class="ftab" data-prod="video">Video</button>
     </div>
   </div>
   <div class="kpi-grid" id="sg-kpis"></div>
@@ -358,7 +455,6 @@ select.sel:focus{border-color:var(--blue)}
 <div class="page" id="page-editor">
   <div class="page-header">
     <div><div class="page-title">QC Editor Report</div><div class="page-sub">Per-editor production · Video: reqc rows only · Excluded users removed</div></div>
-    <div class="tab-row" id="ed-tabs"></div>
   </div>
   <div class="kpi-grid" id="ed-kpis"></div>
   <div class="g2">
@@ -398,19 +494,14 @@ select.sel:focus{border-color:var(--blue)}
 <!-- ══ EXCLUDED USERS ════════════════════════════════════════════════════════ -->
 <div class="page" id="page-excluded">
   <div class="page-header">
-    <div>
-      <div class="page-title">Excluded Users</div>
-      <div class="page-sub">Users in the remove_users sheet — excluded from all calculations, cost allocations, and editor reports</div>
-    </div>
+    <div><div class="page-title">Excluded Users</div><div class="page-sub">Users in remove_users sheet — excluded from all calculations</div></div>
   </div>
   <div class="section">
-    <div class="sec-head">
-      <div><div class="sec-title">Exclusion Impact Summary</div><div class="sec-sub">Salary cost removed from calculations per month</div></div>
-    </div>
+    <div class="sec-head"><div><div class="sec-title">Exclusion Impact Summary</div></div></div>
     <div class="tbl-wrap"><table>
       <thead><tr>
-        <th>Month</th><th class="r">Excluded Count</th><th class="r">Active Employees</th>
-        <th class="r">Excl. Salary Cost</th><th class="r">Incl. Salary Cost</th><th class="r">% Excluded</th>
+        <th>Month</th><th class="r">Excluded</th><th class="r">Active Employees</th>
+        <th class="r">Excl. Salary</th><th class="r">Incl. Salary</th><th class="r">% Excl.</th>
       </tr></thead>
       <tbody id="excl-summary-tbl"></tbody>
     </table></div>
@@ -422,61 +513,236 @@ select.sel:focus{border-color:var(--blue)}
 </div><!-- /main -->
 
 <script>
-// Global error handler — catches any uncaught JS errors and shows them on screen
-window.onerror = function(msg, src, line, col, err) {
-  console.error('[GLOBAL ERROR]', msg, 'at', src, line+':'+col, err);
-  const el = document.getElementById('overlay-msg');
-  if(el) el.textContent = 'JS Error: '+msg+' (line '+line+')';
+// ═══════════════════════════════════════════════════════════════════
+// GLOBAL ERROR HANDLERS
+// ═══════════════════════════════════════════════════════════════════
+window.onerror = function(msg,src,line,col,err){
+  console.error('[GLOBAL ERROR]',msg,'at',src,line+':'+col,err);
+  const el=document.getElementById('overlay-msg');
+  if(el)el.textContent='JS Error: '+msg+' (line '+line+')';
   return false;
 };
-window.addEventListener('unhandledrejection', function(e){
-  console.error('[UNHANDLED PROMISE]', e.reason);
-  const el = document.getElementById('overlay-msg');
-  if(el) el.textContent = 'Promise error: '+(e.reason?.message||e.reason);
+window.addEventListener('unhandledrejection',function(e){
+  console.error('[UNHANDLED PROMISE]',e.reason);
+  const el=document.getElementById('overlay-msg');
+  if(el)el.textContent='Promise error: '+(e.reason?.message||e.reason);
 });
 
-const API_URL = '/api/data';
-let DATA = null, CHARTS = {};
-let SEL = { costing:null, product:null, editor:null, segment:null };
-let SG_PROD_FILTER = 'all'; // 'all' | 'image' | '360' | 'video'
+const API_URL='/api/data';
+let DATA=null,CHARTS={};
+let SG_PROD_FILTER='all';
 
-// ── FORMAT ────────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+// GLOBAL FILTERS STATE
+// ═══════════════════════════════════════════════════════════════════
+// Each filter: { all: [...], selected: Set([...]) }
+const FILTERS = {
+  month:   { all:[], selected: new Set() },
+  segment: { all:[], selected: new Set() },
+  product: { all:[], selected: new Set() },
+  user:    { all:[], selected: new Set() },
+};
+
+// Returns true if a value passes all active filters
+function passesFilter(key, value) {
+  const f = FILTERS[key];
+  if (f.selected.size === 0 || f.selected.size === f.all.length) return true;
+  return f.selected.has(value);
+}
+
+// Apply all 4 filters to the full enriched output rows of a month
+// Returns filtered rows (or null if month is filtered out)
+function applyFilters(monthData) {
+  if (!passesFilter('month', monthData.key)) return null;
+  return {
+    ...monthData,
+    // Re-filter output rows via editorBreakdown/segmentBreakdown proxies
+    // We store filtered views, not raw rows — so filter at aggregation level
+  };
+}
+
+// Get months passing the month filter
+function filteredMonths() {
+  if (!DATA) return [];
+  return DATA.months.filter(m => passesFilter('month', m.key));
+}
+
+// Filter breakdown arrays by segment/product/user
+function filterBreakdown(arr, type) {
+  if (!arr) return [];
+  if (type === 'product') {
+    return arr.filter(r => passesFilter('product', r.name));
+  }
+  if (type === 'segment') {
+    return arr.filter(r => passesFilter('segment', r.name));
+  }
+  if (type === 'editor') {
+    return arr.filter(r => passesFilter('user', r.email));
+  }
+  return arr;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// FILTER DROPDOWN ENGINE
+// ═══════════════════════════════════════════════════════════════════
+let openDropdown = null;
+
+function toggleDropdown(key) {
+  const dd = document.getElementById('fdd-'+key);
+  const btn = document.querySelector('#fw-'+key+' .ms-btn');
+  if (openDropdown && openDropdown !== key) {
+    document.getElementById('fdd-'+openDropdown).style.display='none';
+    document.querySelector('#fw-'+openDropdown+' .ms-btn').classList.remove('open');
+  }
+  const isOpen = dd.style.display !== 'none';
+  dd.style.display = isOpen ? 'none' : 'block';
+  btn.classList.toggle('open', !isOpen);
+  openDropdown = isOpen ? null : key;
+  if (!isOpen) {
+    const inp = dd.querySelector('input');
+    if (inp) { inp.value=''; filterItems(key,''); inp.focus(); }
+  }
+}
+
+// Close dropdowns when clicking outside
+document.addEventListener('click', function(e) {
+  if (openDropdown && !e.target.closest('.ms-wrap')) {
+    document.getElementById('fdd-'+openDropdown).style.display='none';
+    document.querySelector('#fw-'+openDropdown+' .ms-btn').classList.remove('open');
+    openDropdown = null;
+  }
+});
+
+function buildDropdown(key, items, labelFn) {
+  const f = FILTERS[key];
+  f.all = items.slice();
+  f.selected = new Set(items); // all selected by default
+  renderList(key, items, labelFn || (v=>v));
+  updateFilterBtn(key);
+}
+
+function renderList(key, items, labelFn) {
+  const list = document.getElementById('flist-'+key);
+  if (!items.length) { list.innerHTML='<div class="ms-empty">No items</div>'; return; }
+  list.innerHTML = items.map(v => {
+    const checked = FILTERS[key].selected.has(v) ? 'checked' : '';
+    const lbl = (labelFn||((x)=>x))(v);
+    return `<label class="ms-item"><input type="checkbox" ${checked} onchange="toggleItem('${key}','${v.replace(/'/g,"\\'")}',this.checked)"><span class="ms-item-label" title="${lbl}">${lbl}</span></label>`;
+  }).join('');
+}
+
+function filterItems(key, query) {
+  const f = FILTERS[key];
+  const q = query.toLowerCase();
+  const filtered = q ? f.all.filter(v=>v.toLowerCase().includes(q)) : f.all;
+  renderList(key, filtered);
+}
+
+function toggleItem(key, value, checked) {
+  if (checked) FILTERS[key].selected.add(value);
+  else FILTERS[key].selected.delete(value);
+  updateFilterBtn(key);
+  rerenderAll();
+}
+
+function selectAll(key) {
+  FILTERS[key].all.forEach(v => FILTERS[key].selected.add(v));
+  renderList(key, FILTERS[key].all);
+  updateFilterBtn(key);
+  rerenderAll();
+}
+
+function deselectAll(key) {
+  FILTERS[key].selected.clear();
+  renderList(key, FILTERS[key].all);
+  updateFilterBtn(key);
+  rerenderAll();
+}
+
+function clearAllFilters() {
+  ['month','segment','product','user'].forEach(k => selectAll(k));
+  document.getElementById('fb-clear-btn').style.display='none';
+}
+
+function updateFilterBtn(key) {
+  const f = FILTERS[key];
+  const btn = document.querySelector('#fw-'+key+' .ms-btn');
+  const lbl = document.getElementById('flbl-'+key);
+  const cnt = document.getElementById('fcnt-'+key);
+  const isAll = f.selected.size === 0 || f.selected.size === f.all.length;
+  const names = { month:'All Months', segment:'All Segments', product:'All Products', user:'All Users' };
+  if (isAll) {
+    lbl.textContent = names[key];
+    cnt.style.display = 'none';
+    btn.classList.remove('has-filter');
+  } else {
+    const sel = f.selected.size;
+    lbl.textContent = sel===1 ? [...f.selected][0] : sel+' selected';
+    cnt.textContent = sel;
+    cnt.style.display = 'inline';
+    btn.classList.add('has-filter');
+  }
+  // Show/hide global clear button
+  const anyActive = ['month','segment','product','user'].some(k => {
+    const ff=FILTERS[k]; return ff.selected.size>0 && ff.selected.size<ff.all.length;
+  });
+  document.getElementById('fb-clear-btn').style.display = anyActive ? '' : 'none';
+}
+
+function initFilters() {
+  if (!DATA) return;
+  const months = DATA.months;
+
+  // Month filter
+  buildDropdown('month', months.map(m=>m.key), v => months.find(m=>m.key===v)?.month || v);
+
+  // Segment filter — union across all months
+  const segs = [...new Set(months.flatMap(m=>m.segmentBreakdown.map(s=>s.name)))].sort();
+  buildDropdown('segment', segs);
+
+  // Product filter — union across all months
+  const prods = [...new Set(months.flatMap(m=>m.productBreakdown.map(p=>p.name)))];
+  buildDropdown('product', prods);
+
+  // User/editor filter — union across all months
+  const users = [...new Set(months.flatMap(m=>m.editorBreakdown.map(e=>e.email)))].sort();
+  buildDropdown('user', users, v=>v.split('@')[0]+' ('+v+')');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// FORMAT
+// ═══════════════════════════════════════════════════════════════════
 const f = {
   num:   v => v==null?'—':Number(v).toLocaleString('en-IN'),
-  // inr: always 2 decimal places for all values
-  inr:   v => {
-    if(v==null)return'—';
-    const n=Number(v);
-    if(n===0)return'₹0.00';
-    return'₹'+n.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
-  },
+  inr:   v => { if(v==null)return'—'; const n=Number(v); if(n===0)return'₹0.00'; return'₹'+n.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}); },
   inr0:  v => v==null?'—':'₹'+Math.round(v).toLocaleString('en-IN'),
   pct:   v => v==null?'—':Number(v).toFixed(2)+'%',
-  mins:  v => {if(!v)return'—';const h=Math.floor(v/60),m=Math.round(v%60);return h?`${f.num(h)}h ${m}m`:`${m}m`;},
-  short: v => {if(!v&&v!==0)return'—';if(v>=1e7)return(v/1e7).toFixed(2)+'Cr';if(v>=1e5)return(v/1e5).toFixed(2)+'L';if(v>=1e3)return(v/1e3).toFixed(2)+'K';return Number(v).toLocaleString('en-IN');},
+  mins:  v => { if(!v)return'—'; const h=Math.floor(v/60),m=Math.round(v%60); return h?`${f.num(h)}h ${m}m`:`${m}m`; },
+  short: v => { if(!v&&v!==0)return'—'; if(v>=1e7)return(v/1e7).toFixed(2)+'Cr'; if(v>=1e5)return(v/1e5).toFixed(2)+'L'; if(v>=1e3)return(v/1e3).toFixed(2)+'K'; return Number(v).toLocaleString('en-IN'); },
   email: e => e?e.split('@')[0]:'—',
 };
 
-// ── COLOURS ───────────────────────────────────────────────────────────────────
-const SEG_C = {Ent:'#4f78ff',Enterprise:'#4f78ff',Mid:'#a07cff',SMB:'#22d4a0',Resellers:'#f5a42a',Unknown:'#3a4e70'};
-const PROD_C = {Images:'#4f78ff','360':'#22d4a0',Video:'#f5a42a',Spin:'#22d4a0'};
-const PAL = ['#4f78ff','#22d4a0','#f5a42a','#a07cff','#f0566a','#38c4f0','#f07832'];
+// ═══════════════════════════════════════════════════════════════════
+// COLOURS
+// ═══════════════════════════════════════════════════════════════════
+const SEG_C={Ent:'#4f78ff',Enterprise:'#4f78ff',Mid:'#a07cff',SMB:'#22d4a0',Resellers:'#f5a42a',Unknown:'#3a4e70'};
+const PROD_C={Images:'#4f78ff','360':'#22d4a0',Video:'#f5a42a',Spin:'#22d4a0'};
+const PAL=['#4f78ff','#22d4a0','#f5a42a','#a07cff','#f0566a','#38c4f0','#f07832'];
 function pc(name,i=0){for(const k of Object.keys(PROD_C))if(name?.toLowerCase().includes(k.toLowerCase()))return PROD_C[k];return PAL[i%PAL.length];}
 function sc(name){return SEG_C[name]||PAL[4];}
 function effCls(v){return v>=100?'eff-hi':v>=80?'eff-md':'eff-lo';}
 
-// ── CHART ─────────────────────────────────────────────────────────────────────
-// Register datalabels plugin (only if loaded — CDN failure won't crash the app)
-if(typeof ChartDataLabels !== 'undefined') Chart.register(ChartDataLabels);
+// ═══════════════════════════════════════════════════════════════════
+// CHART ENGINE
+// ═══════════════════════════════════════════════════════════════════
+if(typeof ChartDataLabels!=='undefined') Chart.register(ChartDataLabels);
 
 const BASE={
   responsive:true,maintainAspectRatio:true,animation:{duration:320},
   plugins:{
     legend:{labels:{color:'#6a82a8',font:{size:10},boxWidth:9,padding:12}},
-    tooltip:{backgroundColor:'#111926',borderColor:'#1a2540',borderWidth:1,
-      titleColor:'#6a82a8',bodyColor:'#dce8f8',titleFont:{size:10},
-      bodyFont:{size:11,family:"'JetBrains Mono',monospace"},padding:10},
-    datalabels:{display:false}, // off by default; enabled per-chart
+    tooltip:{backgroundColor:'#111926',borderColor:'#1a2540',borderWidth:1,titleColor:'#6a82a8',bodyColor:'#dce8f8',titleFont:{size:10},bodyFont:{size:11},padding:10},
+    datalabels:{display:false},
   },
   scales:{
     x:{ticks:{color:'#3a4e70',font:{size:10}},grid:{color:'rgba(26,37,64,.5)'}},
@@ -484,20 +750,15 @@ const BASE={
   },
 };
 
-// Helper: build datalabels config for a chart type
-function dlLabels(type, fmtFn, opts={}) {
-  if(typeof ChartDataLabels === 'undefined') return {display:false};
-  const isBar = type==='bar';
-  const isHBar = opts.horizontal;
-  return {
-    display: ctx => { const v = ctx.dataset.data[ctx.dataIndex]; return v != null && v !== 0; },
-    color: '#dce8f8',
-    font: { size: 10, family: "'JetBrains Mono',monospace", weight:'500' },
-    formatter: fmtFn || (v => v==null||v===0?'':f.short(v)),
-    anchor: isBar ? 'end' : 'center',
-    align:  isBar ? (isHBar ? 'right' : 'top') : 'top',
-    offset: isBar ? (isHBar ? 4 : 3) : 0,
-    clamp:  true,
+function dlLabels(type,fmtFn,opts={}){
+  if(typeof ChartDataLabels==='undefined')return{display:false};
+  const isBar=type==='bar';const isH=opts.horizontal;
+  return{
+    display:ctx=>{const v=ctx.dataset.data[ctx.dataIndex];return v!=null&&v!==0;},
+    color:'#dce8f8',font:{size:10,weight:'500'},
+    formatter:fmtFn||(v=>v==null||v===0?'':f.short(v)),
+    anchor:isBar?'end':'center',align:isBar?(isH?'right':'top'):'top',
+    offset:isBar?(isH?4:3):0,clamp:true,
   };
 }
 
@@ -505,42 +766,31 @@ function mk(id,cfg){
   if(CHARTS[id]){CHARTS[id].destroy();delete CHARTS[id];}
   const el=document.getElementById(id);if(!el)return;
   const opts=deepMerge(JSON.parse(JSON.stringify(BASE)),cfg.options||{});
-  // Auto-wire datalabels onto datasets that don't already have them
-  const chartType = cfg.type;
-  const isHorizontal = opts.indexAxis==='y';
-  const fmtFn = cfg._labelFmt || null;
-  if(cfg.data?.datasets){
-    cfg.data.datasets.forEach(ds => {
-      if(!ds.datalabels) {
-        ds.datalabels = dlLabels(chartType, fmtFn, {horizontal: isHorizontal});
-      }
+  if(['bar','line'].includes(cfg.type)&&!opts.layout?.padding?.top){
+    if(!opts.layout)opts.layout={};if(!opts.layout.padding)opts.layout.padding={};
+    opts.layout.padding.top=opts.layout.padding.top||22;
+  }
+  if(cfg._stackTotal&&cfg.data?.datasets){
+    const lastIdx=cfg.data.datasets.length-1;
+    cfg.data.datasets.forEach((ds,i)=>{
+      ds.datalabels=i===lastIdx?{
+        display:ctx=>{const total=ctx.chart.data.datasets.reduce((s,d)=>s+(+d.data[ctx.dataIndex]||0),0);return total>0;},
+        color:'#dce8f8',font:{size:9},anchor:'end',align:'top',
+        formatter:(v,ctx)=>{const total=ctx.chart.data.datasets.reduce((s,d)=>s+(+d.data[ctx.dataIndex]||0),0);return total>0?f.short(total):'';}
+      }:{display:false};
     });
   }
-  // Give bar/line charts extra top padding so datalabels don't clip
-  if(['bar','line'].includes(cfg.type) && !opts.layout?.padding?.top){
-    if(!opts.layout)opts.layout={};
-    if(!opts.layout.padding)opts.layout.padding={};
-    opts.layout.padding.top = opts.layout.padding.top || 22;
-  }
-  // For stacked charts with _stackTotal, add a datalabels config that shows the stack total on the last dataset
-  if(cfg._stackTotal && cfg.data?.datasets){
-    const lastIdx = cfg.data.datasets.length - 1;
-    cfg.data.datasets.forEach((ds, i) => {
-      ds.datalabels = i === lastIdx ? {
-        display: ctx => { const total = ctx.chart.data.datasets.reduce((s,d)=>s+(+d.data[ctx.dataIndex]||0),0); return total>0; },
-        color: '#dce8f8',
-        font: { size: 9 },
-        anchor: 'end',
-        align: 'top',
-        formatter: (v, ctx) => { const total = ctx.chart.data.datasets.reduce((s,d)=>s+(+d.data[ctx.dataIndex]||0),0); return total>0?f.short(total):''; }
-      } : { display: false };
-    });
+  if(cfg.data?.datasets&&cfg._labelFmt){
+    cfg.data.datasets.forEach(ds=>{if(!ds.datalabels)ds.datalabels=dlLabels(cfg.type,cfg._labelFmt,{horizontal:opts.indexAxis==='y'});});
   }
   CHARTS[id]=new Chart(el,{...cfg,options:opts});
 }
+
 function deepMerge(b,o){for(const k in o){if(o[k]&&typeof o[k]==='object'&&!Array.isArray(o[k]))b[k]=deepMerge(b[k]||{},o[k]);else b[k]=o[k];}return b;}
 
-// ── NAV ───────────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════════════════════════════════
 const PAGE_TITLES={overview:'Monthly Overview',costing:'Costing Report',product:'Product Report',segment:'Segment Summary',editor:'QC Editor Report',excluded:'Excluded Users'};
 document.querySelectorAll('.nav-item').forEach(el=>{
   el.addEventListener('click',()=>{
@@ -553,152 +803,103 @@ document.querySelectorAll('.nav-item').forEach(el=>{
   });
 });
 
-// ── FETCH ─────────────────────────────────────────────────────────────────────
-function setMsg(msg){ const el=document.getElementById('overlay-msg'); if(el) el.textContent=msg; console.log('[dash]',msg); }
+// ═══════════════════════════════════════════════════════════════════
+// FETCH
+// ═══════════════════════════════════════════════════════════════════
+function setMsg(msg){const el=document.getElementById('overlay-msg');if(el)el.textContent=msg;console.log('[dash]',msg);}
 
 async function fetchData(){
-  overlayShow('Step 1/4: Starting up…');
-  setMsg('Step 1/4: Page loaded, starting fetch…');
-  await new Promise(r=>setTimeout(r,100)); // let overlay render
-
+  overlayShow('Step 1/4: Starting up…');setMsg('Step 1/4: Page loaded, starting fetch…');
+  await new Promise(r=>setTimeout(r,100));
   try{
     setMsg('Step 2/4: Calling '+API_URL+'…');
-    console.log('[dash] fetching', API_URL);
-    const res = await fetch(API_URL);
+    const res=await fetch(API_URL);
     setMsg('Step 3/4: Got HTTP '+res.status+' response, parsing JSON…');
-    console.log('[dash] response status', res.status, res.ok);
-
-    if(!res.ok){
-      const txt = await res.text();
-      console.error('[dash] non-OK response:', txt);
-      throw new Error('HTTP '+res.status+' — '+txt.slice(0,300));
-    }
-
-    const json = await res.json();
-    console.log('[dash] parsed JSON, keys:', Object.keys(json));
-
-    if(json.error) throw new Error(json.error + (json.hint?' | '+json.hint:'') + (json.details?' | '+JSON.stringify(json.details):''));
-
+    if(!res.ok){const txt=await res.text();throw new Error('HTTP '+res.status+' — '+txt.slice(0,300));}
+    const json=await res.json();
+    if(json.error)throw new Error(json.error+(json.hint?' | '+json.hint:'')+(json.details?' | '+JSON.stringify(json.details):''));
     setMsg('Step 4/4: Rendering '+json.months?.length+' months…');
     DATA=json;
-    const last=DATA.months[DATA.months.length-1]?.key;
-    SEL.costing=last;SEL.product=last;SEL.editor=last;SEL.segment=last;
     overlayHide();
     document.getElementById('status-text').textContent=DATA.months.length+' months';
-    // Update date range in topbar dynamically from loaded data
+    if(DATA.fetchedAt)document.getElementById('fetched-at').textContent='as of '+new Date(DATA.fetchedAt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
     if(DATA.months.length>0){
       const first=DATA.months[0].month.replace('-26','');
       const last2=DATA.months[DATA.months.length-1].month.replace('-26','');
       const yr='20'+DATA.months[0].month.split('-')[1];
       document.getElementById('tb-range').textContent=first+' – '+last2+' '+yr;
     }
-    if(DATA.fetchedAt) document.getElementById('fetched-at').textContent='as of '+new Date(DATA.fetchedAt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    initFilters();
     renderAll();
-
   }catch(err){
-    console.error('[dash] fetchData error:', err);
-    const detail = 'URL tried: '+API_URL+'\n\nError: '+err.message+'\n\nOpen DevTools → Console for more.';
-    overlayError(err.message, detail);
+    console.error('[dash] fetchData error:',err);
+    overlayError(err.message,'URL tried: '+API_URL+'\n\nError: '+err.message+'\n\nOpen DevTools → Console for more.');
   }
 }
+
 async function refreshData(){const btn=document.getElementById('refresh-btn');btn.classList.add('spinning');await fetchData();btn.classList.remove('spinning');}
-function overlayShow(msg){const el=document.getElementById('overlay');el.style.display='flex';el.innerHTML=`<div class="spinner"></div><div class="overlay-msg">${msg}</div>`;}
+function overlayShow(msg){const el=document.getElementById('overlay');el.style.display='flex';el.innerHTML='<div class="spinner"></div><div class="overlay-msg">'+msg+'</div>';}
 function overlayHide(){document.getElementById('overlay').style.display='none';}
-function overlayError(msg, detail){
-  const d = detail ? `<pre style="margin-top:8px;font-size:9px;color:#6a82a8;text-align:left;white-space:pre-wrap;word-break:break-all;background:#0a0f1a;padding:8px;border-radius:4px;max-height:120px;overflow-y:auto">${detail}</pre>` : '';
-  document.getElementById('overlay').innerHTML=`<div class="err-box">
-    <h3>Failed to load data</h3>
-    <p>${msg}</p>
-    ${d}
-    <p style="margin-top:10px;font-size:10px;line-height:1.6">
-      Common fixes:<br>
-      1. Check <b>GOOGLE_SERVICE_ACCOUNT_EMAIL</b> and <b>GOOGLE_PRIVATE_KEY</b> in Vercel env vars<br>
-      2. Make sure all 6 sheets are shared with the service account email (Viewer)<br>
-      3. Redeploy after adding env vars
-    </p>
-    <button onclick="location.reload()">Retry</button>
-  </div>`;
+function overlayError(msg,detail){
+  const d=detail?'<pre style="margin-top:8px;font-size:9px;color:#6a82a8;text-align:left;white-space:pre-wrap;word-break:break-all;background:#0a0f1a;padding:8px;border-radius:4px;max-height:120px;overflow-y:auto">'+detail+'</pre>':'';
+  document.getElementById('overlay').innerHTML='<div class="err-box"><h3>Failed to load data</h3><p>'+msg+'</p>'+d+'<p style="margin-top:10px;font-size:10px;line-height:1.6">1. Check GOOGLE_SERVICE_ACCOUNT_EMAIL and GOOGLE_PRIVATE_KEY in Vercel env vars<br>2. Make sure all sheets are shared with the service account (Viewer)<br>3. Redeploy after adding env vars</p><button onclick="location.reload()">Retry</button></div>';
 }
 
-// ── TABS ──────────────────────────────────────────────────────────────────────
-function buildTabs(cid,key,fn){
-  const c=document.getElementById(cid);c.innerHTML='';
-  DATA.months.forEach(m=>{
-    const b=document.createElement('button');b.className='mtab'+(m.key===SEL[key]?' active':'');
-    b.textContent=m.month.replace('-26','');
-    b.onclick=()=>{SEL[key]=m.key;c.querySelectorAll('.mtab').forEach(x=>x.classList.remove('active'));b.classList.add('active');fn();};
-    c.appendChild(b);
-  });
-}
-
-// ── RENDER ALL ────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+// RENDER ALL — respects FILTERS
+// ═══════════════════════════════════════════════════════════════════
+function rerenderAll(){renderAll();}
 function renderAll(){
-  buildTabs('co-tabs','costing',renderCosting);
-  buildTabs('pr-tabs','product',renderProduct);
-  buildTabs('ed-tabs','editor',renderEditor);
-  buildTabs('sg-tabs','segment',renderSegment);
+  if(!DATA)return;
   renderOverview();renderCosting();renderProduct();renderSegment();renderEditor();renderExcluded();
 }
 
-// ── KPI CARD ──────────────────────────────────────────────────────────────────
+// KPI helper
 function kpi(label,value,sub,delta,color){
-  const dHtml=delta!=null?`<div class="kpi-delta ${delta>=0?'up':'down'}">${delta>=0?'▲':'▼'} ${Math.abs(delta).toFixed(1)}%</div>`:'';
-  return`<div class="kpi"><div class="kpi-accent" style="background:${color||'var(--blue)'}"></div><div class="kpi-label">${label}</div><div class="kpi-value">${value}</div>${sub?`<div class="kpi-sub">${sub}</div>`:''}${dHtml}</div>`;
+  const dHtml=delta!=null?'<div class="kpi-delta '+(delta>=0?'up':'down')+'">'+(delta>=0?'▲':'▼')+' '+Math.abs(delta).toFixed(2)+'%</div>':'';
+  return'<div class="kpi"><div class="kpi-accent" style="background:'+(color||'var(--blue)')+'"></div><div class="kpi-label">'+label+'</div><div class="kpi-value">'+value+'</div>'+(sub?'<div class="kpi-sub">'+sub+'</div>':'')+dHtml+'</div>';
 }
-function prodTag(name){const c=pc(name,0);return`<span class="prod-tag" style="background:${c}22;color:${c}">${name}</span>`;}
+function prodTag(name){const c=pc(name,0);return'<span class="prod-tag" style="background:'+c+'22;color:'+c+'">'+name+'</span>';}
 
-// ══ OVERVIEW ══════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════
+// OVERVIEW
+// ═══════════════════════════════════════════════════════════════════
 function renderOverview(){
-  const months=DATA.months,last=months[months.length-1],prev=months[months.length-2];
+  const months=filteredMonths();
+  if(!months.length){document.getElementById('ov-kpis').innerHTML='<div style="color:var(--muted);padding:20px">No months match the current filter.</div>';return;}
+  const last=months[months.length-1],prev=months[months.length-2];
   const s=last.summary;
   function d(k){if(!prev?.summary[k])return null;return((s[k]-prev.summary[k])/prev.summary[k])*100;}
   document.getElementById('ov-kpis').innerHTML=[
     kpi('Salary Cost',f.inr0(s.totalCost),last.month,d('totalCost'),'#4f78ff'),
     kpi('Images',f.num(s.totalImages),'Images product',d('totalImages'),'#4f78ff'),
-    kpi('360 SKUs',f.num(s.total360Skus),'360 / Spin SKUs',null,'#22d4a0'),
+    kpi('360 SKUs',f.num(s.total360Skus),'360/Spin SKUs',null,'#22d4a0'),
     kpi('Video SKUs',f.num(s.totalVideoSkus),'reqc only',null,'#f5a42a'),
     kpi('VINs',f.num(s.totalVins),'Image SKUs = VINs',d('totalVins'),'#a07cff'),
     kpi('Total Units',f.num(s.totalUnits),'Billing units',d('totalUnits'),'#38c4f0'),
     kpi('Efficiency',f.pct(s.efficiency),'Target / Actual',d('efficiency'),'#22d4a0'),
     kpi('₹ / VIN',f.inr(s.costPerVin),'Per unique vehicle',d('costPerVin'),'#f5a42a'),
   ].join('');
-
   const labels=months.map(m=>m.month.replace('-26',''));
-  mk('ch-cost',{type:'line',_labelFmt:v=>v?'₹'+f.short(v):'',data:{labels,datasets:[{label:'Salary Cost',data:months.map(m=>m.summary.totalCost),borderColor:'#4f78ff',borderWidth:2,backgroundColor:'rgba(79,120,255,.1)',fill:true,tension:.35,pointBackgroundColor:'#4f78ff',pointRadius:5,pointHoverRadius:7}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' ₹'+f.num(ctx.raw)}}},scales:{y:{ticks:{callback:v=>'₹'+f.short(v)}}}},_labelFmt:v=>v?'₹'+f.short(v):''});
+  mk('ch-cost',{type:'line',_labelFmt:v=>v?'₹'+f.short(v):'',data:{labels,datasets:[{label:'Salary Cost',data:months.map(m=>m.summary.totalCost),borderColor:'#4f78ff',borderWidth:2,backgroundColor:'rgba(79,120,255,.1)',fill:true,tension:.35,pointBackgroundColor:'#4f78ff',pointRadius:5,pointHoverRadius:7}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' ₹'+f.num(ctx.raw)}}},scales:{y:{ticks:{callback:v=>'₹'+f.short(v)}}}}});
   mk('ch-vol',{type:'bar',_labelFmt:v=>v>0?f.short(v):'',data:{labels,datasets:[{label:'Images',data:months.map(m=>m.summary.totalImages),backgroundColor:'#4f78ff',borderRadius:3},{label:'360 SKUs',data:months.map(m=>m.summary.total360Skus||0),backgroundColor:'#22d4a0',borderRadius:3},{label:'Video SKUs',data:months.map(m=>m.summary.totalVideoSkus||0),backgroundColor:'#f5a42a',borderRadius:3}]},options:{scales:{y:{ticks:{callback:v=>f.short(v)}}}}});
   mk('ch-cpi',{type:'line',_labelFmt:v=>v?'₹'+Number(v).toFixed(2):'',data:{labels,datasets:[{label:'₹/Unit',data:months.map(m=>m.summary.costPerUnit),borderColor:'#22d4a0',borderWidth:2,tension:.3,pointBackgroundColor:'#22d4a0',pointRadius:5},{label:'₹/VIN',data:months.map(m=>m.summary.costPerVin||0),borderColor:'#f5a42a',borderWidth:2,tension:.3,pointBackgroundColor:'#f5a42a',pointRadius:5}]},options:{scales:{y:{ticks:{callback:v=>'₹'+v}}}}});
-
-  // Efficiency trend — coloured bars per month
-  mk('ch-eff-trend',{type:'bar',_labelFmt:v=>v?v.toFixed(1)+'%':'',data:{labels,datasets:[{label:'Efficiency %',data:months.map(m=>m.summary.efficiency),backgroundColor:months.map(m=>m.summary.efficiency>=100?'#22d4a0':m.summary.efficiency>=80?'#f5a42a':'#f0566a'),borderRadius:4}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.raw.toFixed(1)+'%'}}},scales:{y:{ticks:{callback:v=>v+'%'}}}}});
-
+  mk('ch-eff-trend',{type:'bar',_labelFmt:v=>v?v.toFixed(2)+'%':'',data:{labels,datasets:[{label:'Efficiency %',data:months.map(m=>m.summary.efficiency),backgroundColor:months.map(m=>m.summary.efficiency>=100?'#22d4a0':m.summary.efficiency>=80?'#f5a42a':'#f0566a'),borderRadius:4}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.raw.toFixed(2)+'%'}}},scales:{y:{ticks:{callback:v=>v+'%'}}}}});
   document.getElementById('ov-tbody').innerHTML=months.map(m=>{
     const s=m.summary;
     const img=m.productBreakdown.find(p=>/image/i.test(p.name));
     const s360=m.productBreakdown.find(p=>/360|spin/i.test(p.name));
     const vid=m.productBreakdown.find(p=>/video/i.test(p.name));
-    return`<tr>
-      <td class="bright">${m.month}</td>
-      <td class="r">${f.inr0(s.totalCost)}</td>
-      <td class="r">${f.num(s.totalImages)}</td>
-      <td class="r">${f.num(s.total360Skus)}</td>
-      <td class="r">${f.num(s.totalVideoSkus)}</td>
-      <td class="r" style="color:var(--purple)">${f.num(s.totalVins)}</td>
-      <td class="r">${f.num(s.totalUnits)}</td>
-      <td class="r">${f.mins(s.totalActMins)}</td>
-      <td class="r"><span class="${effCls(s.efficiency)}">${f.pct(s.efficiency)}</span></td>
-      <td class="r">${f.inr(img?.costPerUnit||0)}</td>
-      <td class="r">${f.inr(s360?.costPerUnit||0)}</td>
-      <td class="r">${f.inr(vid?.costPerUnit||0)}</td>
-      <td class="r" style="color:var(--amber);font-weight:600">${f.inr(s.costPerVin)}</td>
-      <td class="r">${f.inr(s.costPerUnit)}</td>
-      <td class="r">${s.employees}</td>
-    </tr>`;
+    return'<tr><td class="bright">'+m.month+'</td><td class="r">'+f.inr0(s.totalCost)+'</td><td class="r">'+f.num(s.totalImages)+'</td><td class="r">'+f.num(s.total360Skus)+'</td><td class="r">'+f.num(s.totalVideoSkus)+'</td><td class="r" style="color:var(--purple)">'+f.num(s.totalVins)+'</td><td class="r">'+f.num(s.totalUnits)+'</td><td class="r">'+f.mins(s.totalActMins)+'</td><td class="r"><span class="'+effCls(s.efficiency)+'">'+f.pct(s.efficiency)+'</span></td><td class="r">'+f.inr(img?.costPerUnit||0)+'</td><td class="r">'+f.inr(s360?.costPerUnit||0)+'</td><td class="r">'+f.inr(vid?.costPerUnit||0)+'</td><td class="r" style="color:var(--amber);font-weight:600">'+f.inr(s.costPerVin)+'</td><td class="r">'+f.inr(s.costPerUnit)+'</td><td class="r">'+s.employees+'</td></tr>';
   }).join('');
 }
 
-// ══ COSTING ═══════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════
+// COSTING — uses last filtered month + segment/product filters
+// ═══════════════════════════════════════════════════════════════════
 function renderCosting(){
-  const m=DATA.months.find(x=>x.key===SEL.costing);if(!m)return;
+  const months=filteredMonths();if(!months.length)return;
+  const m=months[months.length-1];
   const s=m.summary;
   document.getElementById('co-kpis').innerHTML=[
     kpi('Salary Cost',f.inr0(s.totalCost),m.month,null,'#4f78ff'),
@@ -709,57 +910,40 @@ function renderCosting(){
     kpi('Efficiency',f.pct(s.efficiency),'Target/Actual',null,'#22d4a0'),
   ].join('');
   document.getElementById('co-prod-sub').textContent=m.month;
-  document.getElementById('co-prod-tbl').innerHTML=m.productBreakdown.map(p=>{
+  const prods=filterBreakdown(m.productBreakdown,'product');
+  document.getElementById('co-prod-tbl').innerHTML=prods.map(p=>{
     const bar=Math.round(p.costSharePct*1.4);
-    return`<tr><td class="bright">${prodTag(p.name)}</td><td style="color:var(--sub);font-size:10px">${p.unitLabel}</td>
-      <td class="r">${f.num(p.units)}</td><td class="r">${f.num(p.skus)}</td>
-      <td class="r">${f.mins(p.actualMins)}</td>
-      <td class="r"><span class="${effCls(p.efficiency)}">${f.pct(p.efficiency)}</span></td>
-      <td class="r" style="color:var(--text);font-weight:600">${f.inr(p.costPerUnit)}</td>
-      <td class="r">${f.inr(p.costPerSku)}</td>
-      <td class="r">${f.pct(p.costSharePct)}<span class="mini-bar" style="width:${bar}px"></span></td></tr>`;
+    return'<tr><td class="bright">'+prodTag(p.name)+'</td><td style="color:var(--sub);font-size:10px">'+p.unitLabel+'</td><td class="r">'+f.num(p.units)+'</td><td class="r">'+f.num(p.skus)+'</td><td class="r">'+f.mins(p.actualMins)+'</td><td class="r"><span class="'+effCls(p.efficiency)+'">'+f.pct(p.efficiency)+'</span></td><td class="r" style="color:var(--text);font-weight:600">'+f.inr(p.costPerUnit)+'</td><td class="r">'+f.inr(p.costPerSku)+'</td><td class="r">'+f.pct(p.costSharePct)+'<span class="mini-bar" style="width:'+bar+'px"></span></td></tr>';
   }).join('');
-  const segs=m.segmentBreakdown;
+  const segs=filterBreakdown(m.segmentBreakdown,'segment');
   document.getElementById('co-seg-sub').textContent=m.month;
-  mk('ch-seg-pie',{type:'doughnut',data:{labels:segs.map(s=>s.name),datasets:[{data:segs.map(s=>s.costShare),backgroundColor:segs.map(s=>sc(s.name)),borderWidth:0,hoverOffset:5,datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>4,color:'#fff',font:{size:10,weight:'600'},formatter:(v,ctx)=>v.toFixed(0)+'%',anchor:'center',align:'center'}}]},options:{cutout:'62%',scales:{x:{display:false},y:{display:false}},plugins:{legend:{position:'right',labels:{color:'#6a82a8',font:{size:10},boxWidth:9}},tooltip:{callbacks:{label:ctx=>ctx.label+': '+ctx.parsed.toFixed(1)+'%'}}}}});
+  mk('ch-seg-pie',{type:'doughnut',data:{labels:segs.map(s=>s.name),datasets:[{data:segs.map(s=>s.costShare),backgroundColor:segs.map(s=>sc(s.name)),borderWidth:0,hoverOffset:5,datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>4,color:'#fff',font:{size:10,weight:'600'},formatter:(v)=>v.toFixed(0)+'%',anchor:'center',align:'center'}}]},options:{cutout:'62%',scales:{x:{display:false},y:{display:false}},plugins:{legend:{position:'right',labels:{color:'#6a82a8',font:{size:10},boxWidth:9}},tooltip:{callbacks:{label:ctx=>ctx.label+': '+ctx.parsed.toFixed(2)+'%'}}}}});
   mk('ch-seg-bar',{type:'bar',_labelFmt:v=>v?'₹'+Number(v).toFixed(2):'',data:{labels:segs.map(s=>s.name),datasets:[{label:'₹/VIN',data:segs.map(s=>s.costPerVin),backgroundColor:segs.map(s=>sc(s.name)),borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'₹'+v}}}}});
-  document.getElementById('co-dealer-tbl').innerHTML=m.dealerBreakdown.map(d=>`<tr>
-    <td class="bright">${d.name}</td><td class="r">${f.num(d.units)}</td><td class="r">${f.num(d.vins)}</td>
-    <td class="r">${f.mins(d.actualMins)}</td>
-    <td class="r"><span class="${effCls(d.efficiency)}">${f.pct(d.efficiency)}</span></td>
-    <td class="r">${f.inr(d.costPerUnit)}</td><td class="r">${f.inr(d.costPerVin)}</td></tr>`).join('');
-  document.getElementById('co-ent-tbl').innerHTML=m.enterpriseBreakdown.map((e,i)=>`<tr>
-    <td class="rank-num">${i+1}</td>
-    <td class="bright" style="max-width:200px;overflow:hidden;text-overflow:ellipsis">${e.name}</td>
-    <td><span class="seg" style="background:${sc(e.segment)}22;color:${sc(e.segment)}">${e.segment}</span></td>
-    <td class="r">${f.num(e.units)}</td><td class="r">${f.num(e.vins)}</td>
-    <td class="r">${f.mins(e.actualMins)}</td>
-    <td class="r"><span class="${effCls(e.efficiency)}">${f.pct(e.efficiency)}</span></td>
-    <td class="r">${f.inr(e.costPerUnit)}</td><td class="r">${f.inr(e.costPerVin)}</td></tr>`).join('');
+  document.getElementById('co-dealer-tbl').innerHTML=m.dealerBreakdown.map(d=>'<tr><td class="bright">'+d.name+'</td><td class="r">'+f.num(d.units)+'</td><td class="r">'+f.num(d.vins)+'</td><td class="r">'+f.mins(d.actualMins)+'</td><td class="r"><span class="'+effCls(d.efficiency)+'">'+f.pct(d.efficiency)+'</span></td><td class="r">'+f.inr(d.costPerUnit)+'</td><td class="r">'+f.inr(d.costPerVin)+'</td></tr>').join('');
+  document.getElementById('co-ent-tbl').innerHTML=m.enterpriseBreakdown.map((e,i)=>'<tr><td class="rank-num">'+(i+1)+'</td><td class="bright" style="max-width:200px;overflow:hidden;text-overflow:ellipsis">'+e.name+'</td><td><span class="seg" style="background:'+sc(e.segment)+'22;color:'+sc(e.segment)+'">'+e.segment+'</span></td><td class="r">'+f.num(e.units)+'</td><td class="r">'+f.num(e.vins)+'</td><td class="r">'+f.mins(e.actualMins)+'</td><td class="r"><span class="'+effCls(e.efficiency)+'">'+f.pct(e.efficiency)+'</span></td><td class="r">'+f.inr(e.costPerUnit)+'</td><td class="r">'+f.inr(e.costPerVin)+'</td></tr>').join('');
 }
 
-// ══ PRODUCT ═══════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════
+// PRODUCT
+// ═══════════════════════════════════════════════════════════════════
 function renderProduct(){
-  const m=DATA.months.find(x=>x.key===SEL.product);if(!m)return;
-  const prods=m.productBreakdown;const colors=prods.map((p,i)=>pc(p.name,i));
+  const months=filteredMonths();if(!months.length)return;
+  const m=months[months.length-1];
+  const prods=filterBreakdown(m.productBreakdown,'product');
+  const colors=prods.map((p,i)=>pc(p.name,i));
   document.getElementById('pr-vol-sub').textContent=m.month;
   document.getElementById('pr-kpis').innerHTML=prods.map(p=>kpi(p.name,f.short(p.units),p.unitLabel,null,pc(p.name,0))).join('');
   mk('ch-pr-vol',{type:'bar',_labelFmt:v=>v>0?f.short(v):'',data:{labels:prods.map(p=>p.name),datasets:[{label:'Units',data:prods.map(p=>p.units),backgroundColor:colors,borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>f.short(v)}}}}});
   mk('ch-pr-cpu',{type:'bar',_labelFmt:v=>v?f.inr(v):'',data:{labels:prods.map(p=>p.name),datasets:[{label:'₹/Unit',data:prods.map(p=>p.costPerUnit),backgroundColor:colors,borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'₹'+v}}}}});
-  mk('ch-pr-eff',{type:'bar',_labelFmt:v=>v?v.toFixed(1)+'%':'',data:{labels:prods.map(p=>p.name),datasets:[{label:'Efficiency %',data:prods.map(p=>p.efficiency),backgroundColor:prods.map(p=>p.efficiency>=100?'#22d4a0':p.efficiency>=80?'#f5a42a':'#f0566a'),borderRadius:4}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.raw.toFixed(1)}%`}}},scales:{y:{ticks:{callback:v=>v+'%'}}}}});
-  document.getElementById('pr-tbl').innerHTML=prods.map(p=>`<tr>
-    <td class="bright">${prodTag(p.name)}</td><td style="color:var(--sub);font-size:10px">${p.unitLabel}</td>
-    <td class="r">${f.num(p.units)}</td><td class="r">${f.num(p.skus)}</td>
-    <td class="r">${f.mins(p.actualMins)}</td><td class="r">${f.mins(p.sumTarget)}</td>
-    <td class="r"><span class="${effCls(p.efficiency)}">${f.pct(p.efficiency)}</span></td>
-    <td class="r" style="color:var(--text);font-weight:600">${f.inr(p.costPerUnit)}</td>
-    <td class="r">${f.inr(p.costPerSku)}</td><td class="r">${f.pct(p.costSharePct)}</td></tr>`).join('');
+  mk('ch-pr-eff',{type:'bar',_labelFmt:v=>v?v.toFixed(2)+'%':'',data:{labels:prods.map(p=>p.name),datasets:[{label:'Efficiency %',data:prods.map(p=>p.efficiency),backgroundColor:prods.map(p=>p.efficiency>=100?'#22d4a0':p.efficiency>=80?'#f5a42a':'#f0566a'),borderRadius:4}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.raw.toFixed(2)+'%'}}},scales:{y:{ticks:{callback:v=>v+'%'}}}}});
+  document.getElementById('pr-tbl').innerHTML=prods.map(p=>'<tr><td class="bright">'+prodTag(p.name)+'</td><td style="color:var(--sub);font-size:10px">'+p.unitLabel+'</td><td class="r">'+f.num(p.units)+'</td><td class="r">'+f.num(p.skus)+'</td><td class="r">'+f.mins(p.actualMins)+'</td><td class="r">'+f.mins(p.sumTarget)+'</td><td class="r"><span class="'+effCls(p.efficiency)+'">'+f.pct(p.efficiency)+'</span></td><td class="r" style="color:var(--text);font-weight:600">'+f.inr(p.costPerUnit)+'</td><td class="r">'+f.inr(p.costPerSku)+'</td><td class="r">'+f.pct(p.costSharePct)+'</td></tr>').join('');
   const allProds=[...new Set(DATA.months.flatMap(m=>m.productBreakdown.map(p=>p.name)))];
-  mk('ch-pr-trend',{type:'line',data:{labels:DATA.months.map(m=>m.month.replace('-26','')),datasets:allProds.map((prod,i)=>({label:prod,data:DATA.months.map(m=>(m.productBreakdown.find(p=>p.name===prod)?.costPerUnit||0)),borderColor:pc(prod,i),backgroundColor:pc(prod,i)+'22',borderWidth:2,tension:.3,pointBackgroundColor:pc(prod,i),pointRadius:4,fill:false}))},options:{scales:{y:{ticks:{callback:v=>'₹'+v}}},plugins:{tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': ₹'+Number(ctx.raw).toFixed(2)}}}}});
+  mk('ch-pr-trend',{type:'line',data:{labels:filteredMonths().map(m=>m.month.replace('-26','')),datasets:allProds.map((prod,i)=>({label:prod,data:filteredMonths().map(m=>(m.productBreakdown.find(p=>p.name===prod)?.costPerUnit||0)),borderColor:pc(prod,i),backgroundColor:pc(prod,i)+'22',borderWidth:2,tension:.3,pointBackgroundColor:pc(prod,i),pointRadius:4,fill:false}))},options:{scales:{y:{ticks:{callback:v=>'₹'+v}}},plugins:{tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': ₹'+Number(ctx.raw).toFixed(2)}}}}});
 }
 
-// ══ SEGMENT ═══════════════════════════════════════════════════════════════════
-// Product filter buttons
+// ═══════════════════════════════════════════════════════════════════
+// SEGMENT  — product sub-filter + global segment filter
+// ═══════════════════════════════════════════════════════════════════
 document.querySelectorAll('.ftab[data-prod]').forEach(btn=>{
   btn.addEventListener('click',()=>{
     SG_PROD_FILTER=btn.dataset.prod;
@@ -769,143 +953,62 @@ document.querySelectorAll('.ftab[data-prod]').forEach(btn=>{
   });
 });
 
-function getSegmentFilteredData(segs){
-  if(SG_PROD_FILTER==='all')return segs;
-  const prodKey=SG_PROD_FILTER; // 'image','360','video'
-  return segs.map(seg=>{
-    // Find matching product entries
+function getSegFilteredData(segs){
+  const segFiltered=filterBreakdown(segs,'segment');
+  if(SG_PROD_FILTER==='all')return segFiltered;
+  const prodKey=SG_PROD_FILTER;
+  return segFiltered.map(seg=>{
     const matchEntry=Object.entries(seg.byProduct||{}).find(([pName])=>{
       if(prodKey==='image')return /image/i.test(pName);
       if(prodKey==='360')return /360|spin/i.test(pName);
       if(prodKey==='video')return /video/i.test(pName);
       return false;
     });
-    if(!matchEntry)return {...seg,units:0,vins:0,images:0,skus:0,actualMins:0,efficiency:0,costPerUnit:0,costPerVin:0};
-    const[pName,pd]=matchEntry;
-    return{
-      ...seg,
-      units:pd.units,
-      vins:pd.vins,
-      images:pd.images,
-      skus:pd.skus,
-      actualMins:pd.actualMins,
-      efficiency:pd.efficiency,
-      costPerUnit:pd.costPerUnit,
-      // costPerVin for image filter = image cost / image vins; for others use unit cost
-      costPerVin:/image/i.test(pName)?pd.costPerUnit:pd.costPerUnit,
-    };
+    if(!matchEntry)return{...seg,units:0,vins:0,images:0,skus:0,actualMins:0,efficiency:0,costPerUnit:0,costPerVin:0};
+    const[,pd]=matchEntry;
+    return{...seg,units:pd.units,vins:pd.vins,images:pd.images,skus:pd.skus,actualMins:pd.actualMins,efficiency:pd.efficiency,costPerUnit:pd.costPerUnit,costPerVin:pd.costPerUnit};
   }).filter(s=>s.units>0);
 }
 
 function renderSegment(){
-  const m=DATA.months.find(x=>x.key===SEL.segment);if(!m)return;
+  const months=filteredMonths();if(!months.length)return;
+  const m=months[months.length-1];
   const rawSegs=m.segmentBreakdown;
-  const segs=getSegmentFilteredData(rawSegs);
-  document.getElementById('sg-vol-sub').textContent=m.month+(SG_PROD_FILTER!=='all'?` · ${SG_PROD_FILTER} filter`:'');
-
-  // KPI cards per segment (always show all segments, but with filtered numbers)
-  document.getElementById('sg-kpis').innerHTML=segs.map(s=>
-    kpi(s.name,f.num(s.vins?s.vins:s.units),
-      `${f.num(s.uniqueEnterprises)} enterprises · ${f.pct(s.efficiency)} eff`,
-      null,sc(s.name))
-  ).join('');
-
+  const segs=getSegFilteredData(rawSegs);
+  document.getElementById('sg-vol-sub').textContent=m.month+(SG_PROD_FILTER!=='all'?' · '+SG_PROD_FILTER+' filter':'');
+  document.getElementById('sg-kpis').innerHTML=segs.map(s=>kpi(s.name,f.num(s.vins?s.vins:s.units),f.num(s.uniqueEnterprises)+' enterprises · '+f.pct(s.efficiency)+' eff',null,sc(s.name))).join('');
   const labels=segs.map(s=>s.name),colors=segs.map(s=>sc(s.name));
   mk('ch-sg-vol',{type:'bar',_labelFmt:v=>v>0?f.short(v):'',data:{labels,datasets:[{label:'Units',data:segs.map(s=>s.units),backgroundColor:colors,borderRadius:5}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>f.short(v)}}}}});
   mk('ch-sg-pie',{type:'doughnut',data:{labels,datasets:[{data:segs.map(s=>s.units),backgroundColor:colors,borderWidth:0,hoverOffset:5,datalabels:{display:ctx=>{const total=ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);return total>0&&(ctx.dataset.data[ctx.dataIndex]/total*100)>4;},color:'#fff',font:{size:10,weight:'600'},formatter:(v,ctx)=>{const total=ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);return total>0?(v/total*100).toFixed(0)+'%':'';},anchor:'center',align:'center'}}]},options:{cutout:'62%',scales:{x:{display:false},y:{display:false}},plugins:{legend:{position:'right',labels:{color:'#6a82a8',font:{size:10},boxWidth:9}},tooltip:{callbacks:{label:ctx=>ctx.label+': '+f.num(ctx.raw)}}}}});
   mk('ch-sg-vinc',{type:'bar',_labelFmt:v=>v?'₹'+Number(v).toFixed(2):'',data:{labels,datasets:[{label:'₹/VIN',data:segs.map(s=>s.costPerVin),backgroundColor:colors,borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'₹'+v}}}}});
-  mk('ch-sg-eff',{type:'bar',_labelFmt:v=>v?v.toFixed(1)+'%':'',data:{labels,datasets:[{label:'Efficiency %',data:segs.map(s=>s.efficiency),backgroundColor:segs.map(s=>s.efficiency>=100?'#22d4a0':s.efficiency>=80?'#f5a42a':'#f0566a'),borderRadius:4}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.raw.toFixed(1)}%`}}},scales:{y:{ticks:{callback:v=>v+'%'}}}}});
-
-  // MoM trend (unfiltered for trend, or filtered per product)
+  mk('ch-sg-eff',{type:'bar',_labelFmt:v=>v?v.toFixed(2)+'%':'',data:{labels,datasets:[{label:'Efficiency %',data:segs.map(s=>s.efficiency),backgroundColor:segs.map(s=>s.efficiency>=100?'#22d4a0':s.efficiency>=80?'#f5a42a':'#f0566a'),borderRadius:4}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.raw.toFixed(2)+'%'}}},scales:{y:{ticks:{callback:v=>v+'%'}}}}});
   const allSegs=[...new Set(DATA.months.flatMap(mo=>mo.segmentBreakdown.map(s=>s.name)))];
-  mk('ch-sg-trend',{type:'bar',data:{labels:DATA.months.map(mo=>mo.month.replace('-26','')),datasets:allSegs.map((seg,i)=>({label:seg,data:DATA.months.map(mo=>{const s=mo.segmentBreakdown.find(x=>x.name===seg);if(!s)return 0;if(SG_PROD_FILTER==='all')return s.units;const e=Object.entries(s.byProduct||{}).find(([k])=>SG_PROD_FILTER==='image'?/image/i.test(k):SG_PROD_FILTER==='360'?/360|spin/i.test(k):/video/i.test(k));return e?e[1].units:0;}),backgroundColor:sc(seg),stack:'a',borderRadius:i===allSegs.length-1?3:0}))},options:{scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:v=>f.short(v)}}}}});
-
-  // Summary table
+  mk('ch-sg-trend',{type:'bar',data:{labels:filteredMonths().map(mo=>mo.month.replace('-26','')),datasets:allSegs.map((seg,i)=>({label:seg,data:filteredMonths().map(mo=>{const s=mo.segmentBreakdown.find(x=>x.name===seg);if(!s)return 0;if(SG_PROD_FILTER==='all')return s.units;const e=Object.entries(s.byProduct||{}).find(([k])=>SG_PROD_FILTER==='image'?/image/i.test(k):SG_PROD_FILTER==='360'?/360|spin/i.test(k):/video/i.test(k));return e?e[1].units:0;}),backgroundColor:sc(seg),stack:'a',borderRadius:i===allSegs.length-1?3:0}))},options:{scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:v=>f.short(v)}}}}});
   document.getElementById('sg-summary-tbl').innerHTML=rawSegs.map(s=>{
     const bar=Math.round((s.costShare||0)*1.4);
-    return`<tr>
-      <td class="bright"><span class="seg" style="background:${sc(s.name)}22;color:${sc(s.name)}">${s.name}</span></td>
-      <td class="r">${f.num(s.uniqueEnterprises)}</td>
-      <td class="r" style="color:var(--purple);font-weight:600">${f.num(s.vins)}</td>
-      <td class="r" style="color:var(--text)">${f.num(s.units)}</td>
-      <td class="r">${f.num(s.images)}</td>
-      <td class="r">${f.num(s.seg360Skus||0)}</td>
-      <td class="r">${f.num(s.segVideoIds||0)}</td>
-      <td class="r">${f.mins(s.actualMins)}</td>
-      <td class="r"><span class="${effCls(s.efficiency)}">${f.pct(s.efficiency)}</span></td>
-      <td class="r" style="color:var(--amber);font-weight:600">${f.inr(s.costPerVin)}</td>
-      <td class="r">${f.inr(s.costPerUnit)}</td>
-      <td class="r">${f.pct(s.costShare)}<span class="mini-bar" style="width:${bar}px"></span></td>
-    </tr>`;
+    return'<tr><td class="bright"><span class="seg" style="background:'+sc(s.name)+'22;color:'+sc(s.name)+'">'+s.name+'</span></td><td class="r">'+f.num(s.uniqueEnterprises)+'</td><td class="r" style="color:var(--purple);font-weight:600">'+f.num(s.vins)+'</td><td class="r" style="color:var(--text)">'+f.num(s.units)+'</td><td class="r">'+f.num(s.images)+'</td><td class="r">'+f.num(s.seg360Skus||0)+'</td><td class="r">'+f.num(s.segVideoIds||0)+'</td><td class="r">'+f.mins(s.actualMins)+'</td><td class="r"><span class="'+effCls(s.efficiency)+'">'+f.pct(s.efficiency)+'</span></td><td class="r" style="color:var(--amber);font-weight:600">'+f.inr(s.costPerVin)+'</td><td class="r">'+f.inr(s.costPerUnit)+'</td><td class="r">'+f.pct(s.costShare)+'<span class="mini-bar" style="width:'+bar+'px"></span></td></tr>';
   }).join('');
-
-  // Deep-dive per segment
   document.getElementById('sg-deep').innerHTML=rawSegs.map(s=>{
-    // product mix rows (respect filter)
     const prodEntries=Object.entries(s.byProduct||{});
     const filteredProd=SG_PROD_FILTER==='all'?prodEntries:prodEntries.filter(([k])=>SG_PROD_FILTER==='image'?/image/i.test(k):SG_PROD_FILTER==='360'?/360|spin/i.test(k):/video/i.test(k));
-    const prodRows=filteredProd.map(([pName,pd])=>`<tr>
-      <td class="bright">${prodTag(pName)}</td>
-      <td class="r">${f.num(pd.vins)}</td><td class="r">${f.num(pd.units)}</td>
-      <td class="r">${f.mins(pd.actualMins)}</td>
-      <td class="r"><span class="${effCls(pd.efficiency)}">${f.pct(pd.efficiency)}</span></td>
-      <td class="r">${f.inr(pd.costPerUnit)}</td></tr>`).join('');
-    const entRows=(s.topEnterprises||[]).map((e,i)=>`<tr>
-      <td class="rank-num">${i+1}</td>
-      <td class="bright" style="max-width:190px;overflow:hidden;text-overflow:ellipsis">${e.name}</td>
-      <td class="r" style="color:var(--sub);font-size:10px">${e.inventoryVersion||'—'}</td>
-      <td class="r" style="color:var(--purple)">${f.num(e.vins)}</td>
-      <td class="r">${f.num(e.units)}</td>
-      <td class="r">${f.mins(e.actualMins)}</td>
-      <td class="r"><span class="${effCls(e.efficiency)}">${f.pct(e.efficiency)}</span></td>
-      <td class="r">${f.inr(e.costPerUnit)}</td></tr>`).join('');
-    return`<div class="section" style="border-left:3px solid ${sc(s.name)}">
-      <div class="sec-head">
-        <div>
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            <span class="seg" style="background:${sc(s.name)}22;color:${sc(s.name)};font-size:12px;padding:3px 10px">${s.name}</span>
-            <span style="font-weight:700;font-size:14px">${f.num(s.vins)} VINs</span>
-            <span style="font-size:11px;color:var(--muted)">·</span>
-            <span style="font-size:11px;color:var(--sub)">${f.num(s.units)} units</span>
-            <span style="font-size:11px;color:var(--muted)">·</span>
-            <span style="font-size:11px;color:var(--sub)">${f.num(s.uniqueEnterprises)} enterprises</span>
-            <span style="font-size:11px;color:var(--muted)">·</span>
-            <span class="${effCls(s.efficiency)}" style="font-size:11px">${f.pct(s.efficiency)} efficiency</span>
-          </div>
-          <div style="margin-top:6px;display:flex;gap:16px;flex-wrap:wrap">
-            <span style="font-size:11px;color:var(--sub)">Cost Share: <b style="color:var(--text)">${f.pct(s.costShare)}</b></span>
-            <span style="font-size:11px;color:var(--sub)">₹/VIN: <b style="color:var(--amber)">${f.inr(s.costPerVin)}</b></span>
-            <span style="font-size:11px;color:var(--sub)">₹/Unit: <b style="color:var(--text)">${f.inr(s.costPerUnit)}</b></span>
-            <span style="font-size:11px;color:var(--sub)">Images: <b style="color:var(--text)">${f.num(s.images)}</b></span>
-            <span style="font-size:11px;color:var(--sub)">360 SKUs: <b style="color:var(--text)">${f.num(s.seg360Skus||0)}</b></span>
-            <span style="font-size:11px;color:var(--sub)">Video IDs: <b style="color:var(--text)">${f.num(s.segVideoIds||0)}</b></span>
-          </div>
-        </div>
-      </div>
-      <div class="g2">
-        <div>
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px">Product Mix${SG_PROD_FILTER!=='all'?` · ${SG_PROD_FILTER} filter`:''}</div>
-          <table><thead><tr><th>Product</th><th class="r">VINs</th><th class="r">Units</th><th class="r">Minutes</th><th class="r">Efficiency</th><th class="r">₹/Unit</th></tr></thead>
-          <tbody>${prodRows||'<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:10px">No data for filter</td></tr>'}</tbody></table>
-        </div>
-        <div>
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px">Top 10 Enterprises</div>
-          <table><thead><tr><th>#</th><th>Enterprise</th><th class="r">Inv.</th><th class="r">VINs</th><th class="r">Units</th><th class="r">Mins</th><th class="r">Eff.</th><th class="r">₹/Unit</th></tr></thead>
-          <tbody>${entRows||'<tr><td colspan="8" style="color:var(--muted);text-align:center;padding:10px">No data</td></tr>'}</tbody></table>
-        </div>
-      </div>
-    </div>`;
+    const prodRows=filteredProd.map(([pName,pd])=>'<tr><td class="bright">'+prodTag(pName)+'</td><td class="r">'+f.num(pd.vins)+'</td><td class="r">'+f.num(pd.units)+'</td><td class="r">'+f.mins(pd.actualMins)+'</td><td class="r"><span class="'+effCls(pd.efficiency)+'">'+f.pct(pd.efficiency)+'</span></td><td class="r">'+f.inr(pd.costPerUnit)+'</td></tr>').join('');
+    const entRows=(s.topEnterprises||[]).map((e,i)=>'<tr><td class="rank-num">'+(i+1)+'</td><td class="bright" style="max-width:190px;overflow:hidden;text-overflow:ellipsis">'+e.name+'</td><td class="r" style="color:var(--sub);font-size:10px">'+( e.inventoryVersion||'—')+'</td><td class="r" style="color:var(--purple)">'+f.num(e.vins)+'</td><td class="r">'+f.num(e.units)+'</td><td class="r">'+f.mins(e.actualMins)+'</td><td class="r"><span class="'+effCls(e.efficiency)+'">'+f.pct(e.efficiency)+'</span></td><td class="r">'+f.inr(e.costPerUnit)+'</td></tr>').join('');
+    return'<div class="section" style="border-left:3px solid '+sc(s.name)+'"><div class="sec-head"><div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="seg" style="background:'+sc(s.name)+'22;color:'+sc(s.name)+';font-size:12px;padding:3px 10px">'+s.name+'</span><span style="font-weight:700;font-size:14px">'+f.num(s.vins)+' VINs</span><span style="font-size:11px;color:var(--muted)">·</span><span style="font-size:11px;color:var(--sub)">'+f.num(s.units)+' units</span><span style="font-size:11px;color:var(--muted)">·</span><span style="font-size:11px;color:var(--sub)">'+f.num(s.uniqueEnterprises)+' enterprises</span><span style="font-size:11px;color:var(--muted)">·</span><span class="'+effCls(s.efficiency)+'" style="font-size:11px">'+f.pct(s.efficiency)+' efficiency</span></div><div style="margin-top:6px;display:flex;gap:16px;flex-wrap:wrap"><span style="font-size:11px;color:var(--sub)">Cost Share: <b style="color:var(--text)">'+f.pct(s.costShare)+'</b></span><span style="font-size:11px;color:var(--sub)">₹/VIN: <b style="color:var(--amber)">'+f.inr(s.costPerVin)+'</b></span><span style="font-size:11px;color:var(--sub)">₹/Unit: <b style="color:var(--text)">'+f.inr(s.costPerUnit)+'</b></span><span style="font-size:11px;color:var(--sub)">Images: <b style="color:var(--text)">'+f.num(s.images)+'</b></span><span style="font-size:11px;color:var(--sub)">360 SKUs: <b style="color:var(--text)">'+f.num(s.seg360Skus||0)+'</b></span><span style="font-size:11px;color:var(--sub)">Video IDs: <b style="color:var(--text)">'+f.num(s.segVideoIds||0)+'</b></span></div></div></div><div class="g2"><div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px">Product Mix'+(SG_PROD_FILTER!=='all'?' · '+SG_PROD_FILTER+' filter':'')+'</div><table><thead><tr><th>Product</th><th class="r">VINs</th><th class="r">Units</th><th class="r">Minutes</th><th class="r">Efficiency</th><th class="r">₹/Unit</th></tr></thead><tbody>'+(prodRows||'<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:10px">No data for filter</td></tr>')+'</tbody></table></div><div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px">Top 10 Enterprises</div><table><thead><tr><th>#</th><th>Enterprise</th><th class="r">Inv.</th><th class="r">VINs</th><th class="r">Units</th><th class="r">Mins</th><th class="r">Eff.</th><th class="r">₹/Unit</th></tr></thead><tbody>'+(entRows||'<tr><td colspan="8" style="color:var(--muted);text-align:center;padding:10px">No data</td></tr>')+'</tbody></table></div></div></div>';
   }).join('');
 }
 
-// ══ QC EDITOR ═════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════
+// QC EDITOR — filtered by user filter
+// ═══════════════════════════════════════════════════════════════════
 let edData=[];
 function renderEditor(){
-  const m=DATA.months.find(x=>x.key===SEL.editor);if(!m)return;
-  edData=m.editorBreakdown;
+  const months=filteredMonths();if(!months.length)return;
+  const m=months[months.length-1];
+  edData=filterBreakdown(m.editorBreakdown,'editor');
   document.getElementById('ed-sub1').textContent=m.month;
   document.getElementById('ed-sub2').textContent=m.month;
-  const top=edData[0]||{},avgEff=edData.length?(edData.reduce((s,e)=>s+e.efficiency,0)/edData.length).toFixed(1):0;
+  const top=edData[0]||{};
+  const avgEff=edData.length?(edData.reduce((s,e)=>s+e.efficiency,0)/edData.length).toFixed(2):0;
   document.getElementById('ed-kpis').innerHTML=[
     kpi('Active Editors',f.num(edData.length),m.month,null,'#4f78ff'),
     kpi('Top Editor',f.email(top.email)||'—',top.email||'',null,'#22d4a0'),
@@ -917,7 +1020,7 @@ function renderEditor(){
   const t10=[...edData].slice(0,10);
   mk('ch-ed-vol',{type:'bar',_labelFmt:v=>v>0?f.short(v):'',data:{labels:t10.map(e=>f.email(e.email)),datasets:[{label:'Units',data:t10.map(e=>e.units),backgroundColor:'#4f78ff',borderRadius:[0,3,3,0]}]},options:{indexAxis:'y',layout:{padding:{right:50}},plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>f.short(v)}},y:{ticks:{font:{size:10}}}}}});
   const tEff=[...edData].sort((a,b)=>b.efficiency-a.efficiency).slice(0,10);
-  mk('ch-ed-eff',{type:'bar',_labelFmt:v=>v?v.toFixed(1)+'%':'',data:{labels:tEff.map(e=>f.email(e.email)),datasets:[{label:'Efficiency %',data:tEff.map(e=>e.efficiency),backgroundColor:tEff.map(e=>e.efficiency>=100?'#22d4a0':e.efficiency>=80?'#f5a42a':'#f0566a'),borderRadius:[0,3,3,0]}]},options:{indexAxis:'y',layout:{padding:{right:60}},plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>v+'%'}},y:{ticks:{font:{size:10}}}}}});
+  mk('ch-ed-eff',{type:'bar',_labelFmt:v=>v?v.toFixed(2)+'%':'',data:{labels:tEff.map(e=>f.email(e.email)),datasets:[{label:'Efficiency %',data:tEff.map(e=>e.efficiency),backgroundColor:tEff.map(e=>e.efficiency>=100?'#22d4a0':e.efficiency>=80?'#f5a42a':'#f0566a'),borderRadius:[0,3,3,0]}]},options:{indexAxis:'y',layout:{padding:{right:60}},plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>v+'%'}},y:{ticks:{font:{size:10}}}}}});
   renderEditorTable();
 }
 function renderEditorTable(){
@@ -928,64 +1031,30 @@ function renderEditorTable(){
     const imgU=e.byProduct?Object.entries(e.byProduct).find(([k])=>/image/i.test(k))?.[1]||0:e.images;
     const s360=e.byProduct?Object.entries(e.byProduct).find(([k])=>/360|spin/i.test(k))?.[1]||0:0;
     const vid=e.byProduct?Object.entries(e.byProduct).find(([k])=>/video/i.test(k))?.[1]||0:0;
-    return`<tr><td class="rank-num">${i+1}</td>
-      <td><div style="color:var(--text);font-weight:500">${f.email(e.email)}</div><div style="font-size:10px;color:var(--muted)">${e.email}</div></td>
-      <td class="r">${f.num(imgU)}</td><td class="r">${f.num(s360)}</td><td class="r">${f.num(vid)}</td>
-      <td class="r" style="color:var(--text);font-weight:600">${f.num(e.units)}</td>
-      <td class="r">${f.mins(e.actualMins)}</td>
-      <td class="r"><span class="${effCls(e.efficiency)}">${f.pct(e.efficiency)}</span></td>
-      <td class="r">${f.inr(e.costPerUnit)}</td>
-      <td class="r">${e.salary?f.inr0(e.salary):'<span style="color:var(--muted);font-size:10px">—</span>'}</td></tr>`;
+    return'<tr><td class="rank-num">'+(i+1)+'</td><td><div style="color:var(--text);font-weight:500">'+f.email(e.email)+'</div><div style="font-size:10px;color:var(--muted)">'+e.email+'</div></td><td class="r">'+f.num(imgU)+'</td><td class="r">'+f.num(s360)+'</td><td class="r">'+f.num(vid)+'</td><td class="r" style="color:var(--text);font-weight:600">'+f.num(e.units)+'</td><td class="r">'+f.mins(e.actualMins)+'</td><td class="r"><span class="'+effCls(e.efficiency)+'">'+f.pct(e.efficiency)+'</span></td><td class="r">'+f.inr(e.costPerUnit)+'</td><td class="r">'+(e.salary?f.inr0(e.salary):'<span style="color:var(--muted);font-size:10px">—</span>')+'</td></tr>';
   }).join('');
 }
 document.getElementById('ed-search').addEventListener('input',renderEditorTable);
 document.getElementById('ed-sort').addEventListener('change',renderEditorTable);
 
-// ══ EXCLUDED USERS ════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════
+// EXCLUDED USERS
+// ═══════════════════════════════════════════════════════════════════
 function renderExcluded(){
-  // Impact summary table
+  if(!DATA)return;
   document.getElementById('excl-summary-tbl').innerHTML=DATA.months.map(m=>{
-    const s=m.summary;
-    const exclCount=m.excludedUsers?.length||0;
+    const s=m.summary;const exclCount=m.excludedUsers?.length||0;
     const exclSalary=m.excludedUsers?.reduce((sum,u)=>sum+(u.factorSalary||0),0)||0;
     const totalWithExcl=s.totalCost+exclSalary;
-    const exclPct=totalWithExcl>0?(exclSalary/totalWithExcl*100).toFixed(1):0;
-    return`<tr>
-      <td class="bright">${m.month}</td>
-      <td class="r">${exclCount?`<span class="excl-badge">${exclCount} excluded</span>`:'<span style="color:var(--muted)">0</span>'}</td>
-      <td class="r">${s.employees}</td>
-      <td class="r">${exclSalary>0?`<span style="color:var(--red)">${f.inr0(exclSalary)}</span>`:'<span style="color:var(--muted)">—</span>'}</td>
-      <td class="r">${f.inr0(s.totalCost)}</td>
-      <td class="r">${exclPct>0?`<span style="color:var(--red)">${exclPct}%</span>`:'<span style="color:var(--muted)">0%</span>'}</td>
-    </tr>`;
+    const exclPct=totalWithExcl>0?(exclSalary/totalWithExcl*100).toFixed(2):0;
+    return'<tr><td class="bright">'+m.month+'</td><td class="r">'+(exclCount?'<span class="excl-badge">'+exclCount+' excluded</span>':'<span style="color:var(--muted)">0</span>')+'</td><td class="r">'+s.employees+'</td><td class="r">'+(exclSalary>0?'<span style="color:var(--red)">'+f.inr0(exclSalary)+'</span>':'<span style="color:var(--muted)">—</span>')+'</td><td class="r">'+f.inr0(s.totalCost)+'</td><td class="r">'+(exclPct>0?'<span style="color:var(--red)">'+exclPct+'%</span>':'<span style="color:var(--muted)">0%</span>')+'</td></tr>';
   }).join('');
-
-  // Per-month expanded lists
   const container=document.getElementById('excl-months');
   container.innerHTML=DATA.months.map(m=>{
     const users=m.excludedUsers||[];
-    if(!users.length)return`<div class="section" style="opacity:.5"><div class="sec-head"><div class="sec-title">${m.month}</div><div class="sec-sub" style="margin-top:0;margin-left:8px">No excluded users</div></div></div>`;
-    const rows=users.map((u,i)=>`<tr>
-      <td class="rank-num">${i+1}</td>
-      <td class="bright">${u.name||'—'}</td>
-      <td><span style="color:var(--sub);font-size:11px">${u.email}</span></td>
-      <td style="color:var(--muted);font-size:10px;font-family:var(--mono)">${u.empNo||'—'}</td>
-      <td class="r">${f.inr0(u.salary)}</td>
-      <td class="r"><span style="color:var(--red)">${f.inr0(u.factorSalary)}</span></td>
-    </tr>`).join('');
-    return`<div class="section" style="border-left:3px solid var(--red)">
-      <div class="sec-head">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div class="sec-title">${m.month}</div>
-          <span class="excl-badge">${users.length} excluded</span>
-          <span style="font-size:11px;color:var(--sub)">Excl. cost: <b style="color:var(--red)">${f.inr0(users.reduce((s,u)=>s+(u.factorSalary||0),0))}</b></span>
-        </div>
-      </div>
-      <div class="tbl-wrap"><table>
-        <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Emp No</th><th class="r">Base Salary</th><th class="r">Factor Salary</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table></div>
-    </div>`;
+    if(!users.length)return'<div class="section" style="opacity:.5"><div class="sec-head"><div class="sec-title">'+m.month+'</div><div class="sec-sub" style="margin-top:0;margin-left:8px">No excluded users</div></div></div>';
+    const rows=users.map((u,i)=>'<tr><td class="rank-num">'+(i+1)+'</td><td class="bright">'+(u.name||'—')+'</td><td><span style="color:var(--sub);font-size:11px">'+u.email+'</span></td><td style="color:var(--muted);font-size:10px;font-family:var(--mono)">'+(u.empNo||'—')+'</td><td class="r">'+f.inr0(u.salary)+'</td><td class="r"><span style="color:var(--red)">'+f.inr0(u.factorSalary)+'</span></td></tr>').join('');
+    return'<div class="section" style="border-left:3px solid var(--red)"><div class="sec-head"><div style="display:flex;align-items:center;gap:10px"><div class="sec-title">'+m.month+'</div><span class="excl-badge">'+users.length+' excluded</span><span style="font-size:11px;color:var(--sub)">Excl. cost: <b style="color:var(--red)">'+f.inr0(users.reduce((s,u)=>s+(u.factorSalary||0),0))+'</b></span></div></div><div class="tbl-wrap"><table><thead><tr><th>#</th><th>Name</th><th>Email</th><th>Emp No</th><th class="r">Base Salary</th><th class="r">Factor Salary</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
   }).join('');
 }
 
