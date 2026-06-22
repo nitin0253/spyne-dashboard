@@ -2,51 +2,45 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Spyne · Production Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-:root {
-  --bg:#080c14; --surface:#0e1420; --card:#121a2a; --card2:#141e30;
-  --border:#1a2540; --hover:#192236; --active:#1a2d52;
-  --blue:#4f78ff; --blue2:#3d62e8; --blue-glow:rgba(79,120,255,.15);
-  --green:#22d4a0; --amber:#f5a42a; --red:#f0566a; --purple:#a07cff;
-  --cyan:#38c4f0; --orange:#f07832;
-  --text:#dce8f8; --sub:#6a82a8; --muted:#3a4e70; --dim:#253352;
-  --font:'Inter',system-ui,sans-serif; --mono:'JetBrains Mono',monospace;
-  --r:10px; --r-sm:6px;
+:root{
+  --bg:#080c14;--surface:#0d1422;--card:#111926;--card2:#131f2e;
+  --border:#1a2540;--hover:#17213a;--active:#1a2d52;
+  --blue:#4f78ff;--green:#22d4a0;--amber:#f5a42a;--red:#f0566a;--purple:#a07cff;--cyan:#38c4f0;--orange:#f07832;
+  --text:#dce8f8;--sub:#6a82a8;--muted:#3a4e70;--dim:#1e2d4a;
+  --font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
+  --r:10px;--r-sm:6px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden}
 body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13px;display:flex}
 
-/* ── SIDEBAR ── */
-#sidebar{width:210px;height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden}
+/* SIDEBAR */
+#sidebar{width:214px;height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
 .logo{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
-.logo-mark{width:30px;height:30px;background:var(--blue);border-radius:7px;display:grid;place-items:center;font-weight:800;font-size:13px;color:#fff;flex-shrink:0;letter-spacing:-.5px}
-.logo-name{font-weight:700;font-size:13px;letter-spacing:-.2px}
-.logo-tagline{font-size:10px;color:var(--sub);margin-top:1px}
+.logo-mark{width:30px;height:30px;background:var(--blue);border-radius:7px;display:grid;place-items:center;font-weight:800;font-size:13px;color:#fff;flex-shrink:0}
+.logo-name{font-weight:700;font-size:13px}.logo-tag{font-size:10px;color:var(--sub);margin-top:1px}
 nav{flex:1;padding:8px;overflow-y:auto}
-.nav-section{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);padding:12px 10px 6px}
+.nav-sec{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);padding:12px 10px 6px}
 .nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--r-sm);cursor:pointer;color:var(--sub);font-size:12px;font-weight:500;margin-bottom:1px;transition:all .12s;user-select:none}
 .nav-item:hover{background:var(--hover);color:var(--text)}
 .nav-item.active{background:var(--active);color:var(--blue)}
 .nav-icon{font-size:14px;width:18px;text-align:center;flex-shrink:0}
-.nav-badge{margin-left:auto;background:var(--dim);color:var(--sub);font-size:9px;font-weight:600;padding:1px 5px;border-radius:10px}
-.sidebar-foot{padding:8px;border-top:1px solid var(--border)}
+.sb-foot{padding:8px;border-top:1px solid var(--border)}
 .sb-btn{display:flex;align-items:center;gap:8px;width:100%;padding:7px 10px;border-radius:var(--r-sm);background:none;border:none;color:var(--sub);cursor:pointer;font-size:11px;font-family:var(--font);transition:all .12s}
 .sb-btn:hover{background:var(--hover);color:var(--text)}
-.sb-btn svg{flex-shrink:0}
 .spinning svg{animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ── MAIN ── */
+/* MAIN */
 #main{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden;min-width:0}
 #topbar{height:48px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0}
-.tb-title{font-weight:600;font-size:14px}
-.tb-crumb{color:var(--muted);font-size:12px}
+.tb-title{font-weight:600;font-size:14px}.tb-crumb{color:var(--muted);font-size:12px}
 .tb-right{margin-left:auto;display:flex;align-items:center;gap:8px}
 .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600}
 .pill-green{background:#0a2419;border:1px solid #143a25;color:var(--green)}
@@ -55,139 +49,113 @@ nav{flex:1;padding:8px;overflow-y:auto}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 .tb-time{font-size:10px;color:var(--muted);font-family:var(--mono)}
 
-/* ── CONTENT ── */
+/* CONTENT */
 #content{flex:1;overflow-y:auto;padding:20px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
-.page{display:none}
-.page.active{display:block}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.page{display:none}.page.active{display:block}
 
-/* ── MONTH TABS ── */
+/* MONTH TABS */
 .tab-row{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
-.mtab{padding:4px 12px;border-radius:5px;border:none;cursor:pointer;font-size:11px;font-weight:600;font-family:var(--font);transition:all .12s;background:var(--dim);color:var(--sub);letter-spacing:.01em}
-.mtab:hover{color:var(--text)}
-.mtab.active{background:var(--blue);color:#fff}
+.mtab{padding:4px 12px;border-radius:5px;border:none;cursor:pointer;font-size:11px;font-weight:600;font-family:var(--font);transition:all .12s;background:var(--dim);color:var(--sub)}
+.mtab:hover{color:var(--text)}.mtab.active{background:var(--blue);color:#fff}
 
-/* ── PAGE HEADER ── */
+/* FILTER TABS (product filter) */
+.ftab{padding:3px 10px;border-radius:5px;border:1px solid var(--border);cursor:pointer;font-size:10px;font-weight:600;font-family:var(--font);transition:all .12s;background:transparent;color:var(--sub)}
+.ftab:hover{color:var(--text);border-color:var(--sub)}.ftab.active{border-color:var(--blue);color:var(--blue);background:rgba(79,120,255,.1)}
+
+/* PAGE HEADER */
 .page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;gap:12px;flex-wrap:wrap}
-.page-title{font-weight:700;font-size:16px;letter-spacing:-.3px}
-.page-sub{font-size:11px;color:var(--sub);margin-top:3px}
+.page-title{font-weight:700;font-size:16px;letter-spacing:-.3px}.page-sub{font-size:11px;color:var(--sub);margin-top:3px}
 
-/* ── KPI GRID ── */
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;margin-bottom:16px}
 .kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;position:relative;overflow:hidden;transition:border-color .15s}
-.kpi::before{content:'';position:absolute;inset:0;background:var(--accent-glow,transparent);pointer-events:none}
-.kpi:hover{border-color:var(--blue);border-color:rgba(79,120,255,.4)}
-.kpi-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--sub);margin-bottom:8px}
-.kpi-value{font-size:20px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-.5px}
-.kpi-sub{font-size:10px;color:var(--muted);margin-top:6px}
-.kpi-delta{font-size:10px;font-weight:600;margin-top:4px;display:flex;align-items:center;gap:3px}
-.kpi-delta.up{color:var(--green)}
-.kpi-delta.down{color:var(--red)}
-.kpi-delta.neu{color:var(--muted)}
+.kpi:hover{border-color:rgba(79,120,255,.4)}
 .kpi-accent{width:3px;position:absolute;left:0;top:0;bottom:0;border-radius:10px 0 0 10px}
+.kpi-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--sub);margin-bottom:6px}
+.kpi-value{font-size:21px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-.5px}
+.kpi-sub{font-size:10px;color:var(--muted);margin-top:5px}
+.kpi-delta{font-size:10px;font-weight:600;margin-top:4px}
+.kpi-delta.up{color:var(--green)}.kpi-delta.down{color:var(--red)}
 
-/* ── SECTION ── */
+/* SECTION */
 .section{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:14px}
 .sec-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:8px}
-.sec-title{font-weight:600;font-size:13px}
-.sec-sub{font-size:10px;color:var(--sub);margin-top:2px}
+.sec-title{font-weight:600;font-size:13px}.sec-sub{font-size:10px;color:var(--sub);margin-top:2px}
 .sec-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;flex-shrink:0}
 
-/* ── GRIDS ── */
+/* GRIDS */
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
-.g13{display:grid;grid-template-columns:1fr 2fr;gap:14px}
-@media(max-width:960px){.g2,.g3,.g13{grid-template-columns:1fr}}
+@media(max-width:960px){.g2,.g3{grid-template-columns:1fr}}
 
-/* ── TABLE ── */
-.tbl-wrap{overflow-x:auto;margin:0 -4px;padding:0 4px}
+/* TABLE */
+.tbl-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:12px}
 thead th{padding:0 10px 9px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);white-space:nowrap;border-bottom:1px solid var(--border)}
-thead th.r,thead th.rc{text-align:right}
-tbody tr{border-bottom:1px solid rgba(26,37,64,.6);transition:background .1s}
+thead th.r{text-align:right}
+tbody tr{border-bottom:1px solid rgba(26,37,64,.5);transition:background .1s}
 tbody tr:hover{background:var(--hover)}
 tbody td{padding:9px 10px;color:var(--sub);white-space:nowrap}
 tbody td.r{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:11px}
 tbody td.bright{color:var(--text);font-weight:500}
-tbody td.center{text-align:center}
-.eff-hi{color:var(--green);font-weight:600}
-.eff-md{color:var(--amber);font-weight:600}
-.eff-lo{color:var(--red);font-weight:600}
+.eff-hi{color:var(--green);font-weight:600}.eff-md{color:var(--amber);font-weight:600}.eff-lo{color:var(--red);font-weight:600}
 .rank-num{color:var(--muted);font-size:10px;font-family:var(--mono)}
 .mini-bar{display:inline-block;height:3px;border-radius:2px;background:var(--blue);vertical-align:middle;margin-left:6px;opacity:.6}
 
-/* ── SEGMENT PILL ── */
+/* TAGS */
 .seg{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600}
-
-/* ── PRODUCT TAG ── */
 .prod-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600}
 
-/* ── INPUTS ── */
+/* INPUTS */
 .search{background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);padding:5px 10px;color:var(--text);font-size:11px;font-family:var(--font);outline:none;width:180px;transition:border-color .15s}
-.search:focus{border-color:var(--blue)}
-.search::placeholder{color:var(--muted)}
-select.sel{background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);padding:5px 8px;color:var(--sub);font-size:11px;font-family:var(--font);outline:none;cursor:pointer;transition:border-color .15s}
+.search:focus{border-color:var(--blue)}.search::placeholder{color:var(--muted)}
+select.sel{background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);padding:5px 8px;color:var(--sub);font-size:11px;font-family:var(--font);outline:none;cursor:pointer}
 select.sel:focus{border-color:var(--blue)}
 
-/* ── DIVIDER ── */
-.divider{height:1px;background:var(--border);margin:14px 0}
+/* CHART */
+.ch{position:relative}
 
-/* ── NOTICE ── */
-.notice{display:inline-flex;align-items:center;gap:5px;font-size:10px;color:var(--sub);background:var(--card2);border:1px solid var(--border);border-radius:4px;padding:3px 8px}
-
-/* ── LOADING ── */
+/* OVERLAY */
 #overlay{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:999}
 .spinner{width:32px;height:32px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
 .overlay-msg{font-size:12px;color:var(--sub)}
-.err-box{background:#120810;border:1px solid #4a1525;border-radius:var(--r);padding:20px 24px;max-width:460px;text-align:center}
-.err-box h3{color:var(--red);margin-bottom:8px}
-.err-box p{color:var(--sub);font-size:11px;line-height:1.7}
+.err-box{background:#120810;border:1px solid #4a1525;border-radius:var(--r);padding:20px 24px;max-width:480px;text-align:center}
+.err-box h3{color:var(--red);margin-bottom:8px}.err-box p{color:var(--sub);font-size:11px;line-height:1.7}
 .err-box button{margin-top:14px;background:var(--red);border:none;color:#fff;padding:6px 16px;border-radius:var(--r-sm);cursor:pointer;font-size:12px;font-family:var(--font)}
 
-/* ── SCROLLBAR ── */
-::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
-
-/* ── CHART WRAP ── */
-.ch{position:relative}
+/* EXCLUDED USERS PAGE */
+.excl-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;background:rgba(240,86,106,.12);border:1px solid rgba(240,86,106,.3);color:var(--red)}
 </style>
 </head>
 <body>
 
-<div id="overlay">
-  <div class="spinner"></div>
-  <div class="overlay-msg" id="overlay-msg">Connecting to Google Sheets…</div>
-</div>
+<div id="overlay"><div class="spinner"></div><div class="overlay-msg" id="overlay-msg">Connecting to Google Sheets…</div></div>
 
-<!-- SIDEBAR -->
 <div id="sidebar">
   <div class="logo">
     <div class="logo-mark">Sp</div>
-    <div>
-      <div class="logo-name">Spyne</div>
-      <div class="logo-tagline">Production Dashboard</div>
-    </div>
+    <div><div class="logo-name">Spyne</div><div class="logo-tag">Production Dashboard</div></div>
   </div>
   <nav>
-    <div class="nav-section">Reports</div>
+    <div class="nav-sec">Reports</div>
     <div class="nav-item active" data-page="overview"><span class="nav-icon">📈</span>Monthly Overview</div>
     <div class="nav-item" data-page="costing"><span class="nav-icon">💰</span>Costing Report</div>
     <div class="nav-item" data-page="product"><span class="nav-icon">📦</span>Product Report</div>
-    <div class="nav-item" data-page="editor"><span class="nav-icon">👤</span>QC Editor Report</div>
     <div class="nav-item" data-page="segment"><span class="nav-icon">🏷️</span>Segment Summary</div>
+    <div class="nav-item" data-page="editor"><span class="nav-icon">👤</span>QC Editor Report</div>
+    <div class="nav-item" data-page="excluded"><span class="nav-icon">🚫</span>Excluded Users</div>
   </nav>
-  <div class="sidebar-foot">
+  <div class="sb-foot">
     <button class="sb-btn" id="refresh-btn" onclick="refreshData()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
         <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>
         <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>
-      </svg>
-      Refresh Data
+      </svg>Refresh Data
     </button>
   </div>
 </div>
 
-<!-- MAIN -->
 <div id="main">
   <div id="topbar">
     <span class="tb-title" id="tb-title">Monthly Overview</span>
@@ -200,982 +168,709 @@ select.sel:focus{border-color:var(--blue)}
 
   <div id="content">
 
-    <!-- ════════════════════════════════════════════
-         PAGE: OVERVIEW
-    ═════════════════════════════════════════════ -->
-    <div class="page active" id="page-overview">
+<!-- ══ OVERVIEW ══════════════════════════════════════════════════════════════ -->
+<div class="page active" id="page-overview">
+  <div class="kpi-grid" id="ov-kpis"></div>
+  <div class="section">
+    <div class="sec-head"><div><div class="sec-title">Salary Cost — Month on Month</div><div class="sec-sub">Total factored salary cost of active employees</div></div></div>
+    <div class="ch"><canvas id="ch-cost" height="75"></canvas></div>
+  </div>
+  <div class="g2">
+    <div class="section">
+      <div class="sec-head"><div><div class="sec-title">Volume Trend</div><div class="sec-sub">Images · 360 SKUs · Video SKUs</div></div></div>
+      <div class="ch"><canvas id="ch-vol" height="130"></canvas></div>
+    </div>
+    <div class="section">
+      <div class="sec-head"><div><div class="sec-title">Cost Efficiency</div><div class="sec-sub">₹ per billing unit · ₹ per VIN</div></div></div>
+      <div class="ch"><canvas id="ch-cpi" height="130"></canvas></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="sec-head"><div><div class="sec-title">Volume by Product — All Months</div><div class="sec-sub">Images = image count · 360 & Video = SKU count · Video: reqc only</div></div></div>
+    <div class="ch"><canvas id="ch-prod-stack" height="80"></canvas></div>
+  </div>
+  <div class="section">
+    <div class="sec-head"><div class="sec-title">Month-by-Month Breakdown</div></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr>
+        <th>Month</th><th class="r">Salary Cost</th>
+        <th class="r">Images</th><th class="r">360 SKUs</th><th class="r">Video SKUs</th>
+        <th class="r">VINs</th><th class="r">Total Units</th><th class="r">Actual Mins</th>
+        <th class="r">Efficiency</th>
+        <th class="r">₹/Image</th><th class="r">₹/360 SKU</th><th class="r">₹/Video SKU</th>
+        <th class="r">₹/VIN</th><th class="r">₹/Unit</th><th class="r">Employees</th>
+      </tr></thead>
+      <tbody id="ov-tbody"></tbody>
+    </table></div>
+  </div>
+</div>
 
-      <!-- top KPIs (latest month) -->
-      <div class="kpi-grid" id="ov-kpis"></div>
+<!-- ══ COSTING ════════════════════════════════════════════════════════════════ -->
+<div class="page" id="page-costing">
+  <div class="page-header">
+    <div><div class="page-title">Costing Report</div><div class="page-sub">Cost by product, segment, dealer type & enterprise</div></div>
+    <div class="tab-row" id="co-tabs"></div>
+  </div>
+  <div class="kpi-grid" id="co-kpis"></div>
+  <div class="section">
+    <div class="sec-head"><div><div class="sec-title">Cost by Product</div><div class="sec-sub" id="co-prod-sub"></div></div></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr>
+        <th>Product</th><th>Basis</th><th class="r">Units</th><th class="r">SKUs</th>
+        <th class="r">Actual Mins</th><th class="r">Efficiency</th>
+        <th class="r">₹/Unit</th><th class="r">₹/SKU</th><th class="r">Cost Share</th>
+      </tr></thead>
+      <tbody id="co-prod-tbl"></tbody>
+    </table></div>
+  </div>
+  <div class="g2">
+    <div class="section">
+      <div class="sec-head"><div><div class="sec-title">Cost Share by Segment</div><div class="sec-sub" id="co-seg-sub"></div></div></div>
+      <div class="ch"><canvas id="ch-seg-pie" height="190"></canvas></div>
+    </div>
+    <div class="section">
+      <div class="sec-head"><div><div class="sec-title">₹/VIN by Segment</div></div></div>
+      <div class="ch"><canvas id="ch-seg-bar" height="190"></canvas></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="sec-head"><div class="sec-title">Dealer Type Breakdown</div></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr>
+        <th>Dealer Type</th><th class="r">Units</th><th class="r">VINs</th>
+        <th class="r">Actual Mins</th><th class="r">Efficiency</th>
+        <th class="r">₹/Unit</th><th class="r">₹/VIN</th>
+      </tr></thead>
+      <tbody id="co-dealer-tbl"></tbody>
+    </table></div>
+  </div>
+  <div class="section">
+    <div class="sec-head"><div class="sec-title">Top 25 Enterprises</div></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr>
+        <th>#</th><th>Enterprise</th><th>Segment</th>
+        <th class="r">Units</th><th class="r">VINs</th><th class="r">Actual Mins</th>
+        <th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r">₹/VIN</th>
+      </tr></thead>
+      <tbody id="co-ent-tbl"></tbody>
+    </table></div>
+  </div>
+</div>
 
-      <!-- MoM trend: salary cost -->
-      <div class="section">
-        <div class="sec-head">
-          <div><div class="sec-title">Salary Cost — Month on Month</div><div class="sec-sub">Total factored salary cost per month</div></div>
-        </div>
-        <div class="ch"><canvas id="ch-cost" height="75"></canvas></div>
-      </div>
+<!-- ══ PRODUCT ════════════════════════════════════════════════════════════════ -->
+<div class="page" id="page-product">
+  <div class="page-header">
+    <div><div class="page-title">Product Report</div><div class="page-sub">Per-product cost, volume & efficiency</div></div>
+    <div class="tab-row" id="pr-tabs"></div>
+  </div>
+  <div class="kpi-grid" id="pr-kpis"></div>
+  <div class="g2">
+    <div class="section">
+      <div class="sec-head"><div><div class="sec-title">Units by Product</div><div class="sec-sub" id="pr-vol-sub"></div></div></div>
+      <div class="ch"><canvas id="ch-pr-vol" height="190"></canvas></div>
+    </div>
+    <div class="section">
+      <div class="sec-head"><div><div class="sec-title">₹/Unit by Product</div></div></div>
+      <div class="ch"><canvas id="ch-pr-cpu" height="190"></canvas></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="sec-head"><div><div class="sec-title">Efficiency by Product</div><div class="sec-sub">Target Mins / Actual Mins × 100</div></div></div>
+    <div class="ch"><canvas id="ch-pr-eff" height="70"></canvas></div>
+  </div>
+  <div class="section">
+    <div class="sec-head"><div class="sec-title">Product Detail</div></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr>
+        <th>Product</th><th>Unit</th><th class="r">Units</th><th class="r">SKUs</th>
+        <th class="r">Actual Mins</th><th class="r">Target Mins</th>
+        <th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r">₹/SKU</th><th class="r">Cost Share</th>
+      </tr></thead>
+      <tbody id="pr-tbl"></tbody>
+    </table></div>
+  </div>
+  <div class="section">
+    <div class="sec-head"><div><div class="sec-title">Volume Trend — All Months</div><div class="sec-sub">Stacked by product</div></div></div>
+    <div class="ch"><canvas id="ch-pr-trend" height="80"></canvas></div>
+  </div>
+</div>
 
-      <!-- Volume + Efficiency row -->
-      <div class="g2">
-        <div class="section">
-          <div class="sec-head"><div><div class="sec-title">Volume Trend</div><div class="sec-sub">Billing units processed (Images / SKUs)</div></div></div>
-          <div class="ch"><canvas id="ch-vol" height="130"></canvas></div>
-        </div>
-        <div class="section">
-          <div class="sec-head"><div><div class="sec-title">Cost Efficiency</div><div class="sec-sub">₹ per billing unit and ₹ per SKU</div></div></div>
-          <div class="ch"><canvas id="ch-cpi" height="130"></canvas></div>
-        </div>
-      </div>
-
-      <!-- Product stacked MoM -->
-      <div class="section">
-        <div class="sec-head"><div><div class="sec-title">Volume by Product — All Months</div><div class="sec-sub">Images product = image count · 360 & Video = SKU count · Video: reqc rows only</div></div></div>
-        <div class="ch"><canvas id="ch-prod-stack" height="80"></canvas></div>
-      </div>
-
-      <!-- Detailed MoM breakdown table with product columns -->
-      <div class="section">
-        <div class="sec-head"><div class="sec-title">Month-by-Month Breakdown</div></div>
-        <div class="tbl-wrap">
-          <table id="ov-table">
-            <thead>
-              <tr>
-                <th>Month</th>
-                <th class="r">Salary Cost</th>
-                <th class="r">Images</th>
-                <th class="r">360 SKUs</th>
-                <th class="r">Video SKUs</th>
-                <th class="r">Total Units</th>
-                <th class="r">Actual Mins</th>
-                <th class="r">Efficiency</th>
-                <th class="r">₹/Image</th>
-                <th class="r">₹/360 SKU</th>
-                <th class="r">₹/Video SKU</th>
-                <th class="r">₹/Unit (blended)</th>
-                <th class="r">Employees</th>
-              </tr>
-            </thead>
-            <tbody id="ov-tbody"></tbody>
-          </table>
-        </div>
+<!-- ══ SEGMENT ════════════════════════════════════════════════════════════════ -->
+<div class="page" id="page-segment">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Segment Summary</div>
+      <div class="page-sub">Enterprise mapped to Customer Segment · VIN = Image SKU (360 reuses VIN; Video uses Image SKU → video_id, no new SKU)</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+      <div class="tab-row" id="sg-tabs"></div>
+      <div style="display:flex;gap:4px;align-items:center">
+        <span style="font-size:10px;color:var(--muted);margin-right:4px">Filter:</span>
+        <button class="ftab active" data-prod="all">All</button>
+        <button class="ftab" data-prod="image">Images</button>
+        <button class="ftab" data-prod="360">360</button>
+        <button class="ftab" data-prod="video">Video</button>
       </div>
     </div>
+  </div>
+  <div class="kpi-grid" id="sg-kpis"></div>
+  <div class="g2">
+    <div class="section">
+      <div class="sec-head"><div><div class="sec-title">Units by Segment</div><div class="sec-sub" id="sg-vol-sub"></div></div></div>
+      <div class="ch"><canvas id="ch-sg-vol" height="190"></canvas></div>
+    </div>
+    <div class="section">
+      <div class="sec-head"><div><div class="sec-title">Cost Share</div></div></div>
+      <div class="ch"><canvas id="ch-sg-pie" height="190"></canvas></div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="section">
+      <div class="sec-head"><div><div class="sec-title">₹/VIN by Segment</div><div class="sec-sub">Cost per unique vehicle</div></div></div>
+      <div class="ch"><canvas id="ch-sg-vinc" height="150"></canvas></div>
+    </div>
+    <div class="section">
+      <div class="sec-head"><div><div class="sec-title">Efficiency by Segment</div></div></div>
+      <div class="ch"><canvas id="ch-sg-eff" height="150"></canvas></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="sec-head"><div><div class="sec-title">Segment Volume Trend — All Months</div><div class="sec-sub">Units per segment</div></div></div>
+    <div class="ch"><canvas id="ch-sg-trend" height="80"></canvas></div>
+  </div>
+  <div class="section">
+    <div class="sec-head"><div class="sec-title">Segment Summary Table</div></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr>
+        <th>Segment</th><th class="r">Enterprises</th><th class="r">VINs</th>
+        <th class="r">Units</th><th class="r">Images</th><th class="r">360 SKUs</th><th class="r">Video IDs</th>
+        <th class="r">Actual Mins</th><th class="r">Efficiency</th>
+        <th class="r">₹/VIN</th><th class="r">₹/Unit</th><th class="r">Cost Share</th>
+      </tr></thead>
+      <tbody id="sg-summary-tbl"></tbody>
+    </table></div>
+  </div>
+  <div id="sg-deep"></div>
+</div>
 
-    <!-- ════════════════════════════════════════════
-         PAGE: COSTING
-    ═════════════════════════════════════════════ -->
-    <div class="page" id="page-costing">
-      <div class="page-header">
-        <div><div class="page-title">Costing Report</div><div class="page-sub">Cost breakdown by segment, dealer type & enterprise</div></div>
-        <div class="tab-row" id="co-tabs"></div>
-      </div>
-      <div class="kpi-grid" id="co-kpis"></div>
-
-      <!-- product cost breakdown -->
-      <div class="section">
-        <div class="sec-head"><div><div class="sec-title">Cost by Product</div><div class="sec-sub" id="co-prod-sub"></div></div></div>
-        <div class="tbl-wrap">
-          <table>
-            <thead><tr>
-              <th>Product</th><th>Unit Basis</th>
-              <th class="r">Units</th><th class="r">SKUs</th><th class="r">Actual Mins</th>
-              <th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r">₹/SKU</th><th class="r">Cost Share</th>
-            </tr></thead>
-            <tbody id="co-prod-tbl"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- segment charts -->
-      <div class="g2">
-        <div class="section">
-          <div class="sec-head"><div><div class="sec-title">Cost Share by Segment</div><div class="sec-sub" id="co-seg-sub"></div></div></div>
-          <div class="ch"><canvas id="ch-seg-pie" height="190"></canvas></div>
-        </div>
-        <div class="section">
-          <div class="sec-head"><div><div class="sec-title">₹/Unit by Segment</div></div></div>
-          <div class="ch"><canvas id="ch-seg-bar" height="190"></canvas></div>
-        </div>
-      </div>
-
-      <!-- dealer -->
-      <div class="section">
-        <div class="sec-head"><div class="sec-title">Dealer Type Breakdown</div></div>
-        <div class="tbl-wrap"><table>
-          <thead><tr>
-            <th>Dealer Type</th><th class="r">Units</th><th class="r">SKUs</th>
-            <th class="r">Actual Mins</th><th class="r">Efficiency</th>
-            <th class="r">₹/Unit</th><th class="r">₹/SKU</th>
-          </tr></thead>
-          <tbody id="co-dealer-tbl"></tbody>
-        </table></div>
-      </div>
-
-      <!-- enterprise -->
-      <div class="section">
-        <div class="sec-head"><div class="sec-title">Top 25 Enterprises by Volume</div></div>
-        <div class="tbl-wrap"><table>
-          <thead><tr>
-            <th>#</th><th>Enterprise</th><th>Segment</th>
-            <th class="r">Units</th><th class="r">SKUs</th>
-            <th class="r">Actual Mins</th><th class="r">Efficiency</th><th class="r">₹/Unit</th>
-          </tr></thead>
-          <tbody id="co-ent-tbl"></tbody>
-        </table></div>
+<!-- ══ QC EDITOR ══════════════════════════════════════════════════════════════ -->
+<div class="page" id="page-editor">
+  <div class="page-header">
+    <div><div class="page-title">QC Editor Report</div><div class="page-sub">Per-editor production · Video: reqc rows only · Excluded users removed</div></div>
+    <div class="tab-row" id="ed-tabs"></div>
+  </div>
+  <div class="kpi-grid" id="ed-kpis"></div>
+  <div class="g2">
+    <div class="section">
+      <div class="sec-head"><div><div class="sec-title">Top 10 — Units</div><div class="sec-sub" id="ed-sub1"></div></div></div>
+      <div class="ch"><canvas id="ch-ed-vol" height="220"></canvas></div>
+    </div>
+    <div class="section">
+      <div class="sec-head"><div><div class="sec-title">Top 10 — Efficiency</div><div class="sec-sub" id="ed-sub2"></div></div></div>
+      <div class="ch"><canvas id="ch-ed-eff" height="220"></canvas></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="sec-head">
+      <div class="sec-title">All Editors</div>
+      <div class="sec-actions">
+        <input type="text" class="search" id="ed-search" placeholder="Search editor…">
+        <select class="sel" id="ed-sort">
+          <option value="units">Sort: Units</option><option value="images">Sort: Images</option>
+          <option value="skus">Sort: SKUs</option><option value="efficiency">Sort: Efficiency</option>
+          <option value="actualMins">Sort: Minutes</option><option value="costPerUnit">Sort: ₹/Unit</option>
+        </select>
       </div>
     </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr>
+        <th>#</th><th>Editor</th>
+        <th class="r">Images</th><th class="r">360 SKUs</th><th class="r">Video SKUs</th>
+        <th class="r">Total Units</th><th class="r">Actual Mins</th>
+        <th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r">Salary</th>
+      </tr></thead>
+      <tbody id="ed-tbl"></tbody>
+    </table></div>
+  </div>
+</div>
 
-    <!-- ════════════════════════════════════════════
-         PAGE: PRODUCT
-    ═════════════════════════════════════════════ -->
-    <div class="page" id="page-product">
-      <div class="page-header">
-        <div><div class="page-title">Product Report</div><div class="page-sub">Per-product cost, volume & efficiency — Images use image count, 360 & Video use SKU count</div></div>
-        <div class="tab-row" id="pr-tabs"></div>
-      </div>
-
-      <div class="kpi-grid" id="pr-kpis"></div>
-
-      <div class="g2">
-        <div class="section">
-          <div class="sec-head"><div><div class="sec-title">Units by Product</div><div class="sec-sub" id="pr-vol-sub"></div></div></div>
-          <div class="ch"><canvas id="ch-pr-vol" height="190"></canvas></div>
-        </div>
-        <div class="section">
-          <div class="sec-head"><div><div class="sec-title">₹/Unit by Product</div></div></div>
-          <div class="ch"><canvas id="ch-pr-cpu" height="190"></canvas></div>
-        </div>
-      </div>
-
-      <!-- Efficiency by product -->
-      <div class="section">
-        <div class="sec-head"><div><div class="sec-title">Efficiency by Product</div><div class="sec-sub">Target Mins / Actual Mins × 100</div></div></div>
-        <div class="ch"><canvas id="ch-pr-eff" height="70"></canvas></div>
-      </div>
-
-      <div class="section">
-        <div class="sec-head"><div class="sec-title">Product Detail</div></div>
-        <div class="tbl-wrap"><table>
-          <thead><tr>
-            <th>Product</th><th>Unit</th>
-            <th class="r">Units</th><th class="r">SKUs</th><th class="r">Actual Mins</th>
-            <th class="r">Target Mins</th><th class="r">Efficiency</th>
-            <th class="r">₹/Unit</th><th class="r">₹/SKU</th><th class="r">Cost Share</th>
-          </tr></thead>
-          <tbody id="pr-tbl"></tbody>
-        </table></div>
-      </div>
-
-      <!-- Cross-month trend -->
-      <div class="section">
-        <div class="sec-head"><div><div class="sec-title">Volume Trend — All Months</div><div class="sec-sub">Units per product (stacked)</div></div></div>
-        <div class="ch"><canvas id="ch-pr-trend" height="80"></canvas></div>
-      </div>
+<!-- ══ EXCLUDED USERS ════════════════════════════════════════════════════════ -->
+<div class="page" id="page-excluded">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Excluded Users</div>
+      <div class="page-sub">Users in the remove_users sheet — excluded from all calculations, cost allocations, and editor reports</div>
     </div>
-
-    <!-- ════════════════════════════════════════════
-         PAGE: QC EDITOR
-    ═════════════════════════════════════════════ -->
-    <div class="page" id="page-editor">
-      <div class="page-header">
-        <div><div class="page-title">QC Editor Report</div><div class="page-sub">Per-editor production, efficiency & cost · Video: reqc rows only</div></div>
-        <div class="tab-row" id="ed-tabs"></div>
-      </div>
-
-      <div class="kpi-grid" id="ed-kpis"></div>
-
-      <div class="g2">
-        <div class="section">
-          <div class="sec-head"><div><div class="sec-title">Top 10 — Units Processed</div><div class="sec-sub" id="ed-sub1"></div></div></div>
-          <div class="ch"><canvas id="ch-ed-vol" height="220"></canvas></div>
-        </div>
-        <div class="section">
-          <div class="sec-head"><div><div class="sec-title">Top 10 — Efficiency</div><div class="sec-sub" id="ed-sub2"></div></div></div>
-          <div class="ch"><canvas id="ch-ed-eff" height="220"></canvas></div>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="sec-head">
-          <div class="sec-title">All Editors</div>
-          <div class="sec-actions">
-            <input type="text" class="search" id="ed-search" placeholder="Search editor…">
-            <select class="sel" id="ed-sort">
-              <option value="units">Sort: Units</option>
-              <option value="images">Sort: Images</option>
-              <option value="skus">Sort: SKUs</option>
-              <option value="efficiency">Sort: Efficiency</option>
-              <option value="actualMins">Sort: Minutes</option>
-              <option value="costPerUnit">Sort: ₹/Unit</option>
-            </select>
-          </div>
-        </div>
-        <div class="tbl-wrap"><table>
-          <thead><tr>
-            <th>#</th><th>Editor</th>
-            <th class="r">Images</th><th class="r">360 SKUs</th><th class="r">Video SKUs</th>
-            <th class="r">Total Units</th><th class="r">Actual Mins</th>
-            <th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r">Salary</th>
-          </tr></thead>
-          <tbody id="ed-tbl"></tbody>
-        </table></div>
-      </div>
+  </div>
+  <div class="section">
+    <div class="sec-head">
+      <div><div class="sec-title">Exclusion Impact Summary</div><div class="sec-sub">Salary cost removed from calculations per month</div></div>
     </div>
-
-
-    <!-- ════════════════════════════════════════════
-         PAGE: SEGMENT SUMMARY
-    ═════════════════════════════════════════════ -->
-    <div class="page" id="page-segment">
-      <div class="page-header">
-        <div><div class="page-title">Segment Summary</div><div class="page-sub">Enterprise output mapped to Customer Segment via enterprise_details · per-segment cost, volume, product mix & top accounts</div></div>
-        <div class="tab-row" id="sg-tabs"></div>
-      </div>
-
-      <!-- segment KPI cards — one per segment -->
-      <div class="kpi-grid" id="sg-kpis"></div>
-
-      <!-- Overview charts row -->
-      <div class="g2">
-        <div class="section">
-          <div class="sec-head"><div><div class="sec-title">Units by Segment</div><div class="sec-sub" id="sg-vol-sub"></div></div></div>
-          <div class="ch"><canvas id="ch-sg-vol" height="190"></canvas></div>
-        </div>
-        <div class="section">
-          <div class="sec-head"><div><div class="sec-title">Cost Share by Segment</div></div></div>
-          <div class="ch"><canvas id="ch-sg-pie" height="190"></canvas></div>
-        </div>
-      </div>
-
-      <div class="g2">
-        <div class="section">
-          <div class="sec-head"><div><div class="sec-title">₹/Unit by Segment</div></div></div>
-          <div class="ch"><canvas id="ch-sg-cpu" height="150"></canvas></div>
-        </div>
-        <div class="section">
-          <div class="sec-head"><div><div class="sec-title">Efficiency by Segment</div><div class="sec-sub">Target Mins / Actual Mins × 100</div></div></div>
-          <div class="ch"><canvas id="ch-sg-eff" height="150"></canvas></div>
-        </div>
-      </div>
-
-      <!-- MoM segment trend -->
-      <div class="section">
-        <div class="sec-head"><div><div class="sec-title">Segment Volume Trend — All Months</div><div class="sec-sub">Units per segment (stacked)</div></div></div>
-        <div class="ch"><canvas id="ch-sg-trend" height="80"></canvas></div>
-      </div>
-
-      <!-- Segment summary table -->
-      <div class="section">
-        <div class="sec-head"><div class="sec-title">Segment Summary Table</div></div>
-        <div class="tbl-wrap"><table>
-          <thead><tr>
-            <th>Segment</th>
-            <th class="r">Enterprises</th>
-            <th class="r">Total Units</th><th class="r">Images</th><th class="r">SKUs</th>
-            <th class="r">Actual Mins</th><th class="r">Efficiency</th>
-            <th class="r">₹/Unit</th><th class="r">₹/SKU</th><th class="r">Cost Share</th>
-          </tr></thead>
-          <tbody id="sg-summary-tbl"></tbody>
-        </table></div>
-      </div>
-
-      <!-- Per-segment deep dive (accordion-style sections) -->
-      <div id="sg-deep"></div>
-    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr>
+        <th>Month</th><th class="r">Excluded Count</th><th class="r">Active Employees</th>
+        <th class="r">Excl. Salary Cost</th><th class="r">Incl. Salary Cost</th><th class="r">% Excluded</th>
+      </tr></thead>
+      <tbody id="excl-summary-tbl"></tbody>
+    </table></div>
+  </div>
+  <div id="excl-months"></div>
+</div>
 
   </div><!-- /content -->
 </div><!-- /main -->
 
 <script>
-// ─── CONFIG ───────────────────────────────────────────────────────────────────
 const API_URL = '/api/data';
+let DATA = null, CHARTS = {};
+let SEL = { costing:null, product:null, editor:null, segment:null };
+let SG_PROD_FILTER = 'all'; // 'all' | 'image' | '360' | 'video'
 
-// ─── STATE ────────────────────────────────────────────────────────────────────
-let DATA = null;
-let CHARTS = {};
-let SEL = { costing: null, product: null, editor: null, segment: null };
-
-// ─── FORMAT ───────────────────────────────────────────────────────────────────
+// ── FORMAT ────────────────────────────────────────────────────────────────────
 const f = {
-  num:   v => v == null ? '—' : Number(v).toLocaleString('en-IN'),
-  inr:   v => v == null ? '—' : '₹' + Number(v).toLocaleString('en-IN', { maximumFractionDigits: 2 }),
-  inr0:  v => v == null ? '—' : '₹' + Math.round(v).toLocaleString('en-IN'),
-  pct:   v => v == null ? '—' : Number(v).toFixed(1) + '%',
-  mins:  v => { if (!v) return '—'; const h = Math.floor(v/60), m = Math.round(v%60); return h ? `${f.num(h)}h ${m}m` : `${m}m`; },
-  short: v => { if (!v && v!==0) return '—'; if (v>=1e7) return (v/1e7).toFixed(1)+'Cr'; if (v>=1e5) return (v/1e5).toFixed(1)+'L'; if (v>=1e3) return (v/1e3).toFixed(1)+'K'; return String(Math.round(v)); },
-  email: e => e ? e.split('@')[0] : '—',
-  date:  d => new Date(d).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),
+  num:   v => v==null?'—':Number(v).toLocaleString('en-IN'),
+  inr:   v => v==null?'—':'₹'+Number(v).toLocaleString('en-IN',{maximumFractionDigits:2}),
+  inr0:  v => v==null?'—':'₹'+Math.round(v).toLocaleString('en-IN'),
+  pct:   v => v==null?'—':Number(v).toFixed(1)+'%',
+  mins:  v => {if(!v)return'—';const h=Math.floor(v/60),m=Math.round(v%60);return h?`${f.num(h)}h ${m}m`:`${m}m`;},
+  short: v => {if(!v&&v!==0)return'—';if(v>=1e7)return(v/1e7).toFixed(1)+'Cr';if(v>=1e5)return(v/1e5).toFixed(1)+'L';if(v>=1e3)return(v/1e3).toFixed(1)+'K';return String(Math.round(v));},
+  email: e => e?e.split('@')[0]:'—',
 };
 
-// ─── COLOURS ──────────────────────────────────────────────────────────────────
-const SEG_C = { Ent:'#4f78ff', Enterprise:'#4f78ff', Mid:'#a07cff', SMB:'#22d4a0', Resellers:'#f5a42a', Unknown:'#3a4e70' };
-const PROD_C = { Images:'#4f78ff', '360':'#22d4a0', Video:'#f5a42a', Spin:'#22d4a0' };
+// ── COLOURS ───────────────────────────────────────────────────────────────────
+const SEG_C = {Ent:'#4f78ff',Enterprise:'#4f78ff',Mid:'#a07cff',SMB:'#22d4a0',Resellers:'#f5a42a',Unknown:'#3a4e70'};
+const PROD_C = {Images:'#4f78ff','360':'#22d4a0',Video:'#f5a42a',Spin:'#22d4a0'};
 const PAL = ['#4f78ff','#22d4a0','#f5a42a','#a07cff','#f0566a','#38c4f0','#f07832'];
+function pc(name,i=0){for(const k of Object.keys(PROD_C))if(name?.toLowerCase().includes(k.toLowerCase()))return PROD_C[k];return PAL[i%PAL.length];}
+function sc(name){return SEG_C[name]||PAL[4];}
+function effCls(v){return v>=100?'eff-hi':v>=80?'eff-md':'eff-lo';}
 
-function pc(name, i=0) {
-  for (const k of Object.keys(PROD_C)) if (name?.toLowerCase().includes(k.toLowerCase())) return PROD_C[k];
-  return PAL[i % PAL.length];
-}
-function sc(name) { return SEG_C[name] || PAL[Object.keys(SEG_C).length % PAL.length]; }
-function effCls(v) { return v >= 100 ? 'eff-hi' : v >= 80 ? 'eff-md' : 'eff-lo'; }
-
-// ─── CHART BASE ───────────────────────────────────────────────────────────────
-const BASE = {
-  responsive: true, maintainAspectRatio: true, animation: { duration: 350 },
-  plugins: {
-    legend: { labels: { color: '#6a82a8', font: { size: 10 }, boxWidth: 9, padding: 12 } },
-    tooltip: {
-      backgroundColor: '#121a2a', borderColor: '#1a2540', borderWidth: 1,
-      titleColor: '#6a82a8', bodyColor: '#dce8f8',
-      titleFont: { size: 10 }, bodyFont: { size: 11, family: "'JetBrains Mono',monospace" },
-      padding: 10, callbacks: {}
-    },
+// ── CHART ─────────────────────────────────────────────────────────────────────
+const BASE={
+  responsive:true,maintainAspectRatio:true,animation:{duration:320},
+  plugins:{
+    legend:{labels:{color:'#6a82a8',font:{size:10},boxWidth:9,padding:12}},
+    tooltip:{backgroundColor:'#111926',borderColor:'#1a2540',borderWidth:1,
+      titleColor:'#6a82a8',bodyColor:'#dce8f8',titleFont:{size:10},
+      bodyFont:{size:11,family:"'JetBrains Mono',monospace"},padding:10},
   },
-  scales: {
-    x: { ticks: { color: '#3a4e70', font: { size: 10 } }, grid: { color: 'rgba(26,37,64,.5)' } },
-    y: { ticks: { color: '#3a4e70', font: { size: 10 } }, grid: { color: 'rgba(26,37,64,.5)' } },
+  scales:{
+    x:{ticks:{color:'#3a4e70',font:{size:10}},grid:{color:'rgba(26,37,64,.5)'}},
+    y:{ticks:{color:'#3a4e70',font:{size:10}},grid:{color:'rgba(26,37,64,.5)'}},
   },
 };
-
-function mk(id, cfg) {
-  if (CHARTS[id]) { CHARTS[id].destroy(); delete CHARTS[id]; }
-  const el = document.getElementById(id);
-  if (!el) return;
-  const opts = deepMerge(JSON.parse(JSON.stringify(BASE)), cfg.options || {});
-  CHARTS[id] = new Chart(el, { ...cfg, options: opts });
+function mk(id,cfg){
+  if(CHARTS[id]){CHARTS[id].destroy();delete CHARTS[id];}
+  const el=document.getElementById(id);if(!el)return;
+  const opts=deepMerge(JSON.parse(JSON.stringify(BASE)),cfg.options||{});
+  CHARTS[id]=new Chart(el,{...cfg,options:opts});
 }
+function deepMerge(b,o){for(const k in o){if(o[k]&&typeof o[k]==='object'&&!Array.isArray(o[k]))b[k]=deepMerge(b[k]||{},o[k]);else b[k]=o[k];}return b;}
 
-function deepMerge(b, o) {
-  for (const k in o) {
-    if (o[k] && typeof o[k] === 'object' && !Array.isArray(o[k])) b[k] = deepMerge(b[k]||{}, o[k]);
-    else b[k] = o[k];
-  }
-  return b;
-}
-
-// ─── NAVIGATION ───────────────────────────────────────────────────────────────
-const PAGE_TITLES = { overview:'Monthly Overview', costing:'Costing Report', product:'Product Report', editor:'QC Editor Report', segment:'Segment Summary' };
-document.querySelectorAll('.nav-item').forEach(el => {
-  el.addEventListener('click', () => {
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+// ── NAV ───────────────────────────────────────────────────────────────────────
+const PAGE_TITLES={overview:'Monthly Overview',costing:'Costing Report',product:'Product Report',segment:'Segment Summary',editor:'QC Editor Report',excluded:'Excluded Users'};
+document.querySelectorAll('.nav-item').forEach(el=>{
+  el.addEventListener('click',()=>{
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     el.classList.add('active');
-    const pg = el.dataset.page;
-    document.getElementById('page-' + pg).classList.add('active');
-    document.getElementById('tb-title').textContent = PAGE_TITLES[pg];
+    const pg=el.dataset.page;
+    document.getElementById('page-'+pg).classList.add('active');
+    document.getElementById('tb-title').textContent=PAGE_TITLES[pg];
   });
 });
 
-// ─── FETCH ────────────────────────────────────────────────────────────────────
-async function fetchData() {
+// ── FETCH ─────────────────────────────────────────────────────────────────────
+async function fetchData(){
   overlayShow('Fetching data from Google Sheets…');
-  try {
-    const res = await fetch(API_URL);
-    if (!res.ok) throw new Error(`HTTP ${res.status} — ${await res.text()}`);
-    const json = await res.json();
-    if (json.error) throw new Error(json.error);
-    DATA = json;
-    const last = DATA.months[DATA.months.length - 1]?.key;
-    SEL.costing = last; SEL.product = last; SEL.editor = last; SEL.segment = last;
+  try{
+    const res=await fetch(API_URL);
+    if(!res.ok)throw new Error(`HTTP ${res.status} — ${await res.text()}`);
+    const json=await res.json();
+    if(json.error)throw new Error(json.error);
+    DATA=json;
+    const last=DATA.months[DATA.months.length-1]?.key;
+    SEL.costing=last;SEL.product=last;SEL.editor=last;SEL.segment=last;
     overlayHide();
-    document.getElementById('status-text').textContent = `${DATA.months.length} months`;
-    if (DATA.fetchedAt) document.getElementById('fetched-at').textContent = 'as of ' + new Date(DATA.fetchedAt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('status-text').textContent=`${DATA.months.length} months`;
+    if(DATA.fetchedAt)document.getElementById('fetched-at').textContent='as of '+new Date(DATA.fetchedAt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
     renderAll();
-  } catch (err) {
-    overlayError(err.message);
-  }
+  }catch(err){overlayError(err.message);}
 }
-async function refreshData() {
-  const btn = document.getElementById('refresh-btn');
-  btn.classList.add('spinning');
-  await fetchData();
-  btn.classList.remove('spinning');
-}
-function overlayShow(msg) {
-  const el = document.getElementById('overlay');
-  el.style.display = 'flex';
-  el.innerHTML = `<div class="spinner"></div><div class="overlay-msg">${msg}</div>`;
-}
-function overlayHide() { document.getElementById('overlay').style.display = 'none'; }
-function overlayError(msg) {
-  document.getElementById('overlay').innerHTML = `<div class="err-box">
-    <h3>Failed to load data</h3>
-    <p>${msg}</p>
-    <p style="margin-top:8px;font-size:10px">Check: Google credentials in Vercel · Sheets shared with service account · API endpoint /api/data</p>
-    <button onclick="location.reload()">Retry</button>
-  </div>`;
-}
+async function refreshData(){const btn=document.getElementById('refresh-btn');btn.classList.add('spinning');await fetchData();btn.classList.remove('spinning');}
+function overlayShow(msg){const el=document.getElementById('overlay');el.style.display='flex';el.innerHTML=`<div class="spinner"></div><div class="overlay-msg">${msg}</div>`;}
+function overlayHide(){document.getElementById('overlay').style.display='none';}
+function overlayError(msg){document.getElementById('overlay').innerHTML=`<div class="err-box"><h3>Failed to load data</h3><p>${msg}</p><p style="margin-top:8px;font-size:10px">Check: Google credentials in Vercel · Sheets shared with service account</p><button onclick="location.reload()">Retry</button></div>`;}
 
-// ─── TABS ─────────────────────────────────────────────────────────────────────
-function buildTabs(containerId, pageKey, onSelect) {
-  const c = document.getElementById(containerId);
-  c.innerHTML = '';
-  DATA.months.forEach(m => {
-    const b = document.createElement('button');
-    b.className = 'mtab' + (m.key === SEL[pageKey] ? ' active' : '');
-    b.textContent = m.month.replace('-26','');
-    b.onclick = () => {
-      SEL[pageKey] = m.key;
-      c.querySelectorAll('.mtab').forEach(x => x.classList.remove('active'));
-      b.classList.add('active');
-      onSelect();
-    };
+// ── TABS ──────────────────────────────────────────────────────────────────────
+function buildTabs(cid,key,fn){
+  const c=document.getElementById(cid);c.innerHTML='';
+  DATA.months.forEach(m=>{
+    const b=document.createElement('button');b.className='mtab'+(m.key===SEL[key]?' active':'');
+    b.textContent=m.month.replace('-26','');
+    b.onclick=()=>{SEL[key]=m.key;c.querySelectorAll('.mtab').forEach(x=>x.classList.remove('active'));b.classList.add('active');fn();};
     c.appendChild(b);
   });
 }
 
-// ─── RENDER ALL ───────────────────────────────────────────────────────────────
-function renderAll() {
-  buildTabs('co-tabs','costing', renderCosting);
-  buildTabs('pr-tabs','product',  renderProduct);
-  buildTabs('ed-tabs','editor',   renderEditor);
-  buildTabs('sg-tabs','segment',  renderSegment);
-  renderOverview();
-  renderCosting();
-  renderProduct();
-  renderEditor();
-  renderSegment();
+// ── RENDER ALL ────────────────────────────────────────────────────────────────
+function renderAll(){
+  buildTabs('co-tabs','costing',renderCosting);
+  buildTabs('pr-tabs','product',renderProduct);
+  buildTabs('ed-tabs','editor',renderEditor);
+  buildTabs('sg-tabs','segment',renderSegment);
+  renderOverview();renderCosting();renderProduct();renderSegment();renderEditor();renderExcluded();
 }
 
-// ════════════════════════════════════════════════════════
-// OVERVIEW
-// ════════════════════════════════════════════════════════
-function renderOverview() {
-  const months = DATA.months;
-  const last = months[months.length - 1];
-  const prev = months[months.length - 2];
-  const s = last.summary;
+// ── KPI CARD ──────────────────────────────────────────────────────────────────
+function kpi(label,value,sub,delta,color){
+  const dHtml=delta!=null?`<div class="kpi-delta ${delta>=0?'up':'down'}">${delta>=0?'▲':'▼'} ${Math.abs(delta).toFixed(1)}%</div>`:'';
+  return`<div class="kpi"><div class="kpi-accent" style="background:${color||'var(--blue)'}"></div><div class="kpi-label">${label}</div><div class="kpi-value">${value}</div>${sub?`<div class="kpi-sub">${sub}</div>`:''}${dHtml}</div>`;
+}
+function prodTag(name){const c=pc(name,0);return`<span class="prod-tag" style="background:${c}22;color:${c}">${name}</span>`;}
 
-  function d(key) {
-    if (!prev?.summary[key]) return null;
-    return ((s[key] - prev.summary[key]) / prev.summary[key]) * 100;
-  }
-
-  // KPIs
-  document.getElementById('ov-kpis').innerHTML = [
-    kpi('Salary Cost',     f.inr0(s.totalCost),       last.month,               d('totalCost'),    '#4f78ff'),
-    kpi('Images',          f.short(s.totalImages),    'Images product only',     d('totalImages'),  '#22d4a0'),
-    kpi('360 SKUs',        f.short(s.total360Skus||0),'SKU count',              null,              '#a07cff'),
-    kpi('Video SKUs',      f.short(s.totalVideoSkus||0),'reqc only',            null,              '#f5a42a'),
-    kpi('Total Units',     f.short(s.totalUnits),     'Billing units',           d('totalUnits'),   '#38c4f0'),
-    kpi('Efficiency',      f.pct(s.efficiency),       'Target / Actual',         d('efficiency'),   '#22d4a0'),
-    kpi('₹ / Unit',        f.inr(s.costPerUnit),      'Blended cost/unit',       d('costPerUnit'),  '#f5a42a'),
-    kpi('Employees',       s.employees,               last.month,                null,              '#a07cff'),
+// ══ OVERVIEW ══════════════════════════════════════════════════════════════════
+function renderOverview(){
+  const months=DATA.months,last=months[months.length-1],prev=months[months.length-2];
+  const s=last.summary;
+  function d(k){if(!prev?.summary[k])return null;return((s[k]-prev.summary[k])/prev.summary[k])*100;}
+  document.getElementById('ov-kpis').innerHTML=[
+    kpi('Salary Cost',f.inr0(s.totalCost),last.month,d('totalCost'),'#4f78ff'),
+    kpi('Images',f.num(s.totalImages),'Images product',d('totalImages'),'#4f78ff'),
+    kpi('360 SKUs',f.num(s.total360Skus),'360 / Spin SKUs',null,'#22d4a0'),
+    kpi('Video SKUs',f.num(s.totalVideoSkus),'reqc only',null,'#f5a42a'),
+    kpi('VINs',f.num(s.totalVins),'Image SKUs = VINs',d('totalVins'),'#a07cff'),
+    kpi('Total Units',f.num(s.totalUnits),'Billing units',d('totalUnits'),'#38c4f0'),
+    kpi('Efficiency',f.pct(s.efficiency),'Target / Actual',d('efficiency'),'#22d4a0'),
+    kpi('₹ / VIN',f.inr(s.costPerVin),'Per unique vehicle',d('costPerVin'),'#f5a42a'),
   ].join('');
 
-  const labels = months.map(m => m.month.replace('-26',''));
+  const labels=months.map(m=>m.month.replace('-26',''));
+  mk('ch-cost',{type:'line',data:{labels,datasets:[{label:'Salary Cost',data:months.map(m=>m.summary.totalCost),borderColor:'#4f78ff',borderWidth:2,backgroundColor:'rgba(79,120,255,.1)',fill:true,tension:.35,pointBackgroundColor:'#4f78ff',pointRadius:4,pointHoverRadius:6}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' ₹'+f.num(ctx.raw)}}},scales:{y:{ticks:{callback:v=>'₹'+f.short(v)}}}}});
+  mk('ch-vol',{type:'bar',data:{labels,datasets:[{label:'Images',data:months.map(m=>m.summary.totalImages),backgroundColor:'#4f78ff',borderRadius:3},{label:'360 SKUs',data:months.map(m=>m.summary.total360Skus||0),backgroundColor:'#22d4a0',borderRadius:3},{label:'Video SKUs',data:months.map(m=>m.summary.totalVideoSkus||0),backgroundColor:'#f5a42a',borderRadius:3}]},options:{scales:{y:{ticks:{callback:v=>f.short(v)}}}}});
+  mk('ch-cpi',{type:'line',data:{labels,datasets:[{label:'₹/Unit',data:months.map(m=>m.summary.costPerUnit),borderColor:'#22d4a0',borderWidth:2,tension:.3,pointBackgroundColor:'#22d4a0',pointRadius:3},{label:'₹/VIN',data:months.map(m=>m.summary.costPerVin||0),borderColor:'#f5a42a',borderWidth:2,tension:.3,pointBackgroundColor:'#f5a42a',pointRadius:3}]},options:{scales:{y:{ticks:{callback:v=>'₹'+v}}}}});
 
-  // Salary cost area
-  mk('ch-cost', {
-    type: 'line',
-    data: { labels, datasets: [{
-      label: 'Salary Cost', data: months.map(m => m.summary.totalCost),
-      borderColor:'#4f78ff', borderWidth:2, backgroundColor:'rgba(79,120,255,.1)',
-      fill:true, tension:.35, pointBackgroundColor:'#4f78ff', pointRadius:4, pointHoverRadius:6,
-    }]},
-    options: {
-      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: ctx => ' ₹' + f.num(ctx.raw) } } },
-      scales:{ y:{ ticks:{ callback: v => '₹'+f.short(v) } } },
-    },
-  });
+  const allProds=[...new Set(months.flatMap(m=>m.productBreakdown.map(p=>p.name)))];
+  mk('ch-prod-stack',{type:'bar',data:{labels,datasets:allProds.map((prod,i)=>({label:prod,data:months.map(m=>(m.productBreakdown.find(p=>p.name===prod)?.units||0)),backgroundColor:pc(prod,i),stack:'a',borderRadius:i===allProds.length-1?3:0}))},options:{scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:v=>f.short(v)}}}}});
 
-  // Volume grouped bar
-  mk('ch-vol', {
-    type:'bar',
-    data:{ labels, datasets:[
-      { label:'Images', data:months.map(m=>m.summary.totalImages), backgroundColor:'#4f78ff', borderRadius:3 },
-      { label:'360 SKUs', data:months.map(m=>m.summary.total360Skus||0), backgroundColor:'#22d4a0', borderRadius:3 },
-      { label:'Video SKUs', data:months.map(m=>m.summary.totalVideoSkus||0), backgroundColor:'#f5a42a', borderRadius:3 },
-    ]},
-    options:{ scales:{ y:{ ticks:{ callback: v => f.short(v) } } } },
-  });
-
-  // Cost efficiency trend
-  mk('ch-cpi', {
-    type:'line',
-    data:{ labels, datasets:[
-      { label:'₹/Unit (blended)', data:months.map(m=>m.summary.costPerUnit), borderColor:'#22d4a0', borderWidth:2, tension:.3, pointBackgroundColor:'#22d4a0', pointRadius:3 },
-      { label:'₹/SKU',           data:months.map(m=>m.summary.costPerSku),  borderColor:'#f5a42a', borderWidth:2, tension:.3, pointBackgroundColor:'#f5a42a', pointRadius:3 },
-    ]},
-    options:{ scales:{ y:{ ticks:{ callback: v => '₹'+v } } } },
-  });
-
-  // Product stacked across months
-  const allProds = [...new Set(months.flatMap(m => m.productBreakdown.map(p => p.name)))];
-  mk('ch-prod-stack', {
-    type:'bar',
-    data:{
-      labels,
-      datasets: allProds.map((prod, i) => ({
-        label: prod,
-        data: months.map(m => (m.productBreakdown.find(p=>p.name===prod)?.units || 0)),
-        backgroundColor: pc(prod, i),
-        borderRadius: i===allProds.length-1 ? 3 : 0,
-        stack:'a',
-      })),
-    },
-    options:{ scales:{ x:{stacked:true}, y:{ stacked:true, ticks:{ callback: v=>f.short(v) } } } },
-  });
-
-  // MoM table with per-product columns
-  document.getElementById('ov-tbody').innerHTML = months.map(m => {
-    const s = m.summary;
-    const img360 = m.productBreakdown.find(p => /360|spin/i.test(p.name));
-    const imgVid = m.productBreakdown.find(p => /video/i.test(p.name));
-    const imgImg = m.productBreakdown.find(p => /image/i.test(p.name));
-    return `<tr>
+  document.getElementById('ov-tbody').innerHTML=months.map(m=>{
+    const s=m.summary;
+    const img=m.productBreakdown.find(p=>/image/i.test(p.name));
+    const s360=m.productBreakdown.find(p=>/360|spin/i.test(p.name));
+    const vid=m.productBreakdown.find(p=>/video/i.test(p.name));
+    return`<tr>
       <td class="bright">${m.month}</td>
       <td class="r">${f.inr0(s.totalCost)}</td>
       <td class="r">${f.num(s.totalImages)}</td>
-      <td class="r">${f.num(img360?.units||0)}</td>
-      <td class="r">${f.num(imgVid?.units||0)}</td>
-      <td class="r" style="color:var(--text);font-weight:600">${f.num(s.totalUnits)}</td>
+      <td class="r">${f.num(s.total360Skus)}</td>
+      <td class="r">${f.num(s.totalVideoSkus)}</td>
+      <td class="r" style="color:var(--purple)">${f.num(s.totalVins)}</td>
+      <td class="r">${f.num(s.totalUnits)}</td>
       <td class="r">${f.mins(s.totalActMins)}</td>
       <td class="r"><span class="${effCls(s.efficiency)}">${f.pct(s.efficiency)}</span></td>
-      <td class="r">${f.inr(imgImg?.costPerUnit||0)}</td>
-      <td class="r">${f.inr(img360?.costPerUnit||0)}</td>
-      <td class="r">${f.inr(imgVid?.costPerUnit||0)}</td>
-      <td class="r" style="color:var(--text)">${f.inr(s.costPerUnit)}</td>
+      <td class="r">${f.inr(img?.costPerUnit||0)}</td>
+      <td class="r">${f.inr(s360?.costPerUnit||0)}</td>
+      <td class="r">${f.inr(vid?.costPerUnit||0)}</td>
+      <td class="r" style="color:var(--amber);font-weight:600">${f.inr(s.costPerVin)}</td>
+      <td class="r">${f.inr(s.costPerUnit)}</td>
       <td class="r">${s.employees}</td>
     </tr>`;
   }).join('');
 }
 
-// ════════════════════════════════════════════════════════
-// COSTING
-// ════════════════════════════════════════════════════════
-function renderCosting() {
-  const m = DATA.months.find(x => x.key === SEL.costing);
-  if (!m) return;
-  const s = m.summary;
-
-  document.getElementById('co-kpis').innerHTML = [
-    kpi('Salary Cost',  f.inr0(s.totalCost),   m.month,               null, '#4f78ff'),
-    kpi('Total Units',  f.short(s.totalUnits),  'Billing units',        null, '#22d4a0'),
-    kpi('₹ / Unit',     f.inr(s.costPerUnit),   'Blended',              null, '#f5a42a'),
-    kpi('₹ / SKU',      f.inr(s.costPerSku),    'All SKUs',             null, '#a07cff'),
-    kpi('Efficiency',   f.pct(s.efficiency),    'Target / Actual',      null, '#38c4f0'),
-    kpi('Employees',    s.employees,            m.month,                null, '#f07832'),
+// ══ COSTING ═══════════════════════════════════════════════════════════════════
+function renderCosting(){
+  const m=DATA.months.find(x=>x.key===SEL.costing);if(!m)return;
+  const s=m.summary;
+  document.getElementById('co-kpis').innerHTML=[
+    kpi('Salary Cost',f.inr0(s.totalCost),m.month,null,'#4f78ff'),
+    kpi('VINs',f.num(s.totalVins),'Unique vehicles',null,'#a07cff'),
+    kpi('Total Units',f.num(s.totalUnits),'Billing units',null,'#22d4a0'),
+    kpi('₹/VIN',f.inr(s.costPerVin),'Per vehicle',null,'#f5a42a'),
+    kpi('₹/Unit',f.inr(s.costPerUnit),'Blended',null,'#38c4f0'),
+    kpi('Efficiency',f.pct(s.efficiency),'Target/Actual',null,'#22d4a0'),
   ].join('');
-
-  document.getElementById('co-prod-sub').textContent = m.month;
-
-  // Product table
-  document.getElementById('co-prod-tbl').innerHTML = m.productBreakdown.map(p => {
-    const bar = Math.round(p.costSharePct * 1.4);
-    return `<tr>
-      <td class="bright">${prodTag(p.name)}</td>
-      <td style="color:var(--sub);font-size:10px">${p.unitLabel}</td>
-      <td class="r">${f.num(p.units)}</td>
-      <td class="r">${f.num(p.skus)}</td>
+  document.getElementById('co-prod-sub').textContent=m.month;
+  document.getElementById('co-prod-tbl').innerHTML=m.productBreakdown.map(p=>{
+    const bar=Math.round(p.costSharePct*1.4);
+    return`<tr><td class="bright">${prodTag(p.name)}</td><td style="color:var(--sub);font-size:10px">${p.unitLabel}</td>
+      <td class="r">${f.num(p.units)}</td><td class="r">${f.num(p.skus)}</td>
       <td class="r">${f.mins(p.actualMins)}</td>
       <td class="r"><span class="${effCls(p.efficiency)}">${f.pct(p.efficiency)}</span></td>
       <td class="r" style="color:var(--text);font-weight:600">${f.inr(p.costPerUnit)}</td>
       <td class="r">${f.inr(p.costPerSku)}</td>
-      <td class="r"><span>${f.pct(p.costSharePct)}</span><span class="mini-bar" style="width:${bar}px"></span></td>
-    </tr>`;
+      <td class="r">${f.pct(p.costSharePct)}<span class="mini-bar" style="width:${bar}px"></span></td></tr>`;
   }).join('');
-
-  // Segment charts
-  const segs = m.segmentBreakdown;
-  document.getElementById('co-seg-sub').textContent = m.month;
-
-  mk('ch-seg-pie', {
-    type:'doughnut',
-    data:{
-      labels: segs.map(s=>s.name),
-      datasets:[{ data: segs.map(s=>s.costShare), backgroundColor: segs.map(s=>sc(s.name)), borderWidth:0, hoverOffset:5 }],
-    },
-    options:{
-      cutout:'62%',
-      scales:{ x:{display:false}, y:{display:false} },
-      plugins:{
-        legend:{ position:'right', labels:{ color:'#6a82a8', font:{size:10}, boxWidth:9 } },
-        tooltip:{ callbacks:{ label: ctx => ` ${ctx.label}: ${ctx.parsed.toFixed(1)}%` } },
-      },
-    },
-  });
-
-  mk('ch-seg-bar', {
-    type:'bar',
-    data:{
-      labels: segs.map(s=>s.name),
-      datasets:[{ label:'₹/Unit', data: segs.map(s=>s.costPerUnit), backgroundColor: segs.map(s=>sc(s.name)), borderRadius:4 }],
-    },
-    options:{
-      plugins:{ legend:{display:false} },
-      scales:{ y:{ ticks:{ callback: v => '₹'+v } } },
-    },
-  });
-
-  // Dealer table
-  document.getElementById('co-dealer-tbl').innerHTML = m.dealerBreakdown.map(d => `<tr>
-    <td class="bright">${d.name}</td>
-    <td class="r">${f.num(d.units)}</td><td class="r">${f.num(d.skus)}</td>
+  const segs=m.segmentBreakdown;
+  document.getElementById('co-seg-sub').textContent=m.month;
+  mk('ch-seg-pie',{type:'doughnut',data:{labels:segs.map(s=>s.name),datasets:[{data:segs.map(s=>s.costShare),backgroundColor:segs.map(s=>sc(s.name)),borderWidth:0,hoverOffset:5}]},options:{cutout:'62%',scales:{x:{display:false},y:{display:false}},plugins:{legend:{position:'right',labels:{color:'#6a82a8',font:{size:10},boxWidth:9}},tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.parsed.toFixed(1)}%`}}}}});
+  mk('ch-seg-bar',{type:'bar',data:{labels:segs.map(s=>s.name),datasets:[{label:'₹/VIN',data:segs.map(s=>s.costPerVin),backgroundColor:segs.map(s=>sc(s.name)),borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'₹'+v}}}}});
+  document.getElementById('co-dealer-tbl').innerHTML=m.dealerBreakdown.map(d=>`<tr>
+    <td class="bright">${d.name}</td><td class="r">${f.num(d.units)}</td><td class="r">${f.num(d.vins)}</td>
     <td class="r">${f.mins(d.actualMins)}</td>
     <td class="r"><span class="${effCls(d.efficiency)}">${f.pct(d.efficiency)}</span></td>
-    <td class="r">${f.inr(d.costPerUnit)}</td><td class="r">${f.inr(d.costPerSku)}</td>
-  </tr>`).join('');
-
-  // Enterprise table
-  document.getElementById('co-ent-tbl').innerHTML = m.enterpriseBreakdown.map((e, i) => `<tr>
+    <td class="r">${f.inr(d.costPerUnit)}</td><td class="r">${f.inr(d.costPerVin)}</td></tr>`).join('');
+  document.getElementById('co-ent-tbl').innerHTML=m.enterpriseBreakdown.map((e,i)=>`<tr>
     <td class="rank-num">${i+1}</td>
     <td class="bright" style="max-width:200px;overflow:hidden;text-overflow:ellipsis">${e.name}</td>
     <td><span class="seg" style="background:${sc(e.segment)}22;color:${sc(e.segment)}">${e.segment}</span></td>
-    <td class="r">${f.num(e.units)}</td><td class="r">${f.num(e.skus)}</td>
+    <td class="r">${f.num(e.units)}</td><td class="r">${f.num(e.vins)}</td>
     <td class="r">${f.mins(e.actualMins)}</td>
     <td class="r"><span class="${effCls(e.efficiency)}">${f.pct(e.efficiency)}</span></td>
-    <td class="r">${f.inr(e.costPerUnit)}</td>
-  </tr>`).join('');
+    <td class="r">${f.inr(e.costPerUnit)}</td><td class="r">${f.inr(e.costPerVin)}</td></tr>`).join('');
 }
 
-// ════════════════════════════════════════════════════════
-// PRODUCT
-// ════════════════════════════════════════════════════════
-function renderProduct() {
-  const m = DATA.months.find(x => x.key === SEL.product);
-  if (!m) return;
-  const prods = m.productBreakdown;
-  const colors = prods.map((p,i) => pc(p.name, i));
-
-  document.getElementById('pr-vol-sub').textContent = m.month;
-  document.getElementById('pr-kpis').innerHTML = prods.map(p =>
-    kpi(p.name, f.short(p.units), p.unitLabel, null, pc(p.name, 0))
-  ).join('');
-
-  mk('ch-pr-vol', {
-    type:'bar',
-    data:{ labels: prods.map(p=>p.name), datasets:[{ label:'Units', data: prods.map(p=>p.units), backgroundColor: colors, borderRadius:4 }] },
-    options:{ plugins:{legend:{display:false}}, scales:{ y:{ ticks:{ callback: v=>f.short(v) } } } },
-  });
-
-  mk('ch-pr-cpu', {
-    type:'bar',
-    data:{ labels: prods.map(p=>p.name), datasets:[{ label:'₹/Unit', data: prods.map(p=>p.costPerUnit), backgroundColor: colors, borderRadius:4 }] },
-    options:{ plugins:{legend:{display:false}}, scales:{ y:{ ticks:{ callback: v=>'₹'+v } } } },
-  });
-
-  mk('ch-pr-eff', {
-    type:'bar',
-    data:{ labels: prods.map(p=>p.name), datasets:[{
-      label:'Efficiency %', data: prods.map(p=>p.efficiency),
-      backgroundColor: prods.map(p=>p.efficiency>=100?'#22d4a0':p.efficiency>=80?'#f5a42a':'#f0566a'),
-      borderRadius:4,
-    }]},
-    options:{
-      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: ctx=>` ${ctx.raw.toFixed(1)}%` } } },
-      scales:{ y:{ ticks:{ callback: v=>v+'%' } } },
-    },
-  });
-
-  // Detail table
-  document.getElementById('pr-tbl').innerHTML = prods.map(p => `<tr>
-    <td class="bright">${prodTag(p.name)}</td>
-    <td style="color:var(--sub);font-size:10px">${p.unitLabel}</td>
+// ══ PRODUCT ═══════════════════════════════════════════════════════════════════
+function renderProduct(){
+  const m=DATA.months.find(x=>x.key===SEL.product);if(!m)return;
+  const prods=m.productBreakdown;const colors=prods.map((p,i)=>pc(p.name,i));
+  document.getElementById('pr-vol-sub').textContent=m.month;
+  document.getElementById('pr-kpis').innerHTML=prods.map(p=>kpi(p.name,f.short(p.units),p.unitLabel,null,pc(p.name,0))).join('');
+  mk('ch-pr-vol',{type:'bar',data:{labels:prods.map(p=>p.name),datasets:[{label:'Units',data:prods.map(p=>p.units),backgroundColor:colors,borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>f.short(v)}}}}});
+  mk('ch-pr-cpu',{type:'bar',data:{labels:prods.map(p=>p.name),datasets:[{label:'₹/Unit',data:prods.map(p=>p.costPerUnit),backgroundColor:colors,borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'₹'+v}}}}});
+  mk('ch-pr-eff',{type:'bar',data:{labels:prods.map(p=>p.name),datasets:[{label:'Efficiency %',data:prods.map(p=>p.efficiency),backgroundColor:prods.map(p=>p.efficiency>=100?'#22d4a0':p.efficiency>=80?'#f5a42a':'#f0566a'),borderRadius:4}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.raw.toFixed(1)}%`}}},scales:{y:{ticks:{callback:v=>v+'%'}}}}});
+  document.getElementById('pr-tbl').innerHTML=prods.map(p=>`<tr>
+    <td class="bright">${prodTag(p.name)}</td><td style="color:var(--sub);font-size:10px">${p.unitLabel}</td>
     <td class="r">${f.num(p.units)}</td><td class="r">${f.num(p.skus)}</td>
     <td class="r">${f.mins(p.actualMins)}</td><td class="r">${f.mins(p.sumTarget)}</td>
     <td class="r"><span class="${effCls(p.efficiency)}">${f.pct(p.efficiency)}</span></td>
     <td class="r" style="color:var(--text);font-weight:600">${f.inr(p.costPerUnit)}</td>
-    <td class="r">${f.inr(p.costPerSku)}</td>
-    <td class="r">${f.pct(p.costSharePct)}</td>
-  </tr>`).join('');
-
-  // Cross-month stacked trend
-  const allProds = [...new Set(DATA.months.flatMap(m => m.productBreakdown.map(p => p.name)))];
-  mk('ch-pr-trend', {
-    type:'bar',
-    data:{
-      labels: DATA.months.map(m => m.month.replace('-26','')),
-      datasets: allProds.map((prod, i) => ({
-        label: prod,
-        data: DATA.months.map(m => (m.productBreakdown.find(p=>p.name===prod)?.units || 0)),
-        backgroundColor: pc(prod, i),
-        stack:'a',
-        borderRadius: i===allProds.length-1 ? 3 : 0,
-      })),
-    },
-    options:{ scales:{ x:{stacked:true}, y:{ stacked:true, ticks:{ callback: v=>f.short(v) } } } },
-  });
+    <td class="r">${f.inr(p.costPerSku)}</td><td class="r">${f.pct(p.costSharePct)}</td></tr>`).join('');
+  const allProds=[...new Set(DATA.months.flatMap(m=>m.productBreakdown.map(p=>p.name)))];
+  mk('ch-pr-trend',{type:'bar',data:{labels:DATA.months.map(m=>m.month.replace('-26','')),datasets:allProds.map((prod,i)=>({label:prod,data:DATA.months.map(m=>(m.productBreakdown.find(p=>p.name===prod)?.units||0)),backgroundColor:pc(prod,i),stack:'a',borderRadius:i===allProds.length-1?3:0}))},options:{scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:v=>f.short(v)}}}}});
 }
 
-// ════════════════════════════════════════════════════════
-// QC EDITOR
-// ════════════════════════════════════════════════════════
-let edData = [];
-
-function renderEditor() {
-  const m = DATA.months.find(x => x.key === SEL.editor);
-  if (!m) return;
-  edData = m.editorBreakdown;
-
-  document.getElementById('ed-sub1').textContent = m.month;
-  document.getElementById('ed-sub2').textContent = m.month;
-
-  const top = edData[0] || {};
-  const avgEff = edData.length ? (edData.reduce((s,e)=>s+e.efficiency,0)/edData.length).toFixed(1) : 0;
-  document.getElementById('ed-kpis').innerHTML = [
-    kpi('Active Editors', f.num(edData.length), m.month, null, '#4f78ff'),
-    kpi('Top Editor', f.email(top.email)||'—', top.email||'', null, '#22d4a0'),
-    kpi('Top Units', f.short(top.units), 'by top editor', null, '#f5a42a'),
-    kpi('Avg Efficiency', f.pct(+avgEff), 'all editors', null, '#a07cff'),
-    kpi('Total Images', f.short(edData.reduce((s,e)=>s+(e.byProduct?.Images||e.images||0),0)), 'Images product', null, '#38c4f0'),
-    kpi('Matched Salary', edData.filter(e=>e.salary>0).length+' / '+edData.length, 'editors matched', null, '#f07832'),
-  ].join('');
-
-  const top10 = [...edData].slice(0,10);
-  mk('ch-ed-vol', {
-    type:'bar',
-    data:{ labels: top10.map(e=>f.email(e.email)), datasets:[{ label:'Units', data: top10.map(e=>e.units), backgroundColor:'#4f78ff', borderRadius:[0,3,3,0] }] },
-    options:{ indexAxis:'y', plugins:{legend:{display:false}}, scales:{ x:{ ticks:{ callback: v=>f.short(v) } }, y:{ticks:{font:{size:10}}} } },
+// ══ SEGMENT ═══════════════════════════════════════════════════════════════════
+// Product filter buttons
+document.querySelectorAll('.ftab[data-prod]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    SG_PROD_FILTER=btn.dataset.prod;
+    document.querySelectorAll('.ftab[data-prod]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    renderSegment();
   });
+});
 
-  const topEff = [...edData].sort((a,b)=>b.efficiency-a.efficiency).slice(0,10);
-  mk('ch-ed-eff', {
-    type:'bar',
-    data:{ labels: topEff.map(e=>f.email(e.email)), datasets:[{
-      label:'Efficiency %', data: topEff.map(e=>e.efficiency),
-      backgroundColor: topEff.map(e=>e.efficiency>=100?'#22d4a0':e.efficiency>=80?'#f5a42a':'#f0566a'),
-      borderRadius:[0,3,3,0],
-    }]},
-    options:{
-      indexAxis:'y', plugins:{legend:{display:false}},
-      scales:{ x:{ ticks:{ callback: v=>v+'%' } }, y:{ticks:{font:{size:10}}} },
-    },
-  });
-
-  renderEditorTable();
+function getSegmentFilteredData(segs){
+  if(SG_PROD_FILTER==='all')return segs;
+  const prodKey=SG_PROD_FILTER; // 'image','360','video'
+  return segs.map(seg=>{
+    // Find matching product entries
+    const matchEntry=Object.entries(seg.byProduct||{}).find(([pName])=>{
+      if(prodKey==='image')return /image/i.test(pName);
+      if(prodKey==='360')return /360|spin/i.test(pName);
+      if(prodKey==='video')return /video/i.test(pName);
+      return false;
+    });
+    if(!matchEntry)return {...seg,units:0,vins:0,images:0,skus:0,actualMins:0,efficiency:0,costPerUnit:0,costPerVin:0};
+    const[pName,pd]=matchEntry;
+    return{
+      ...seg,
+      units:pd.units,
+      vins:pd.vins,
+      images:pd.images,
+      skus:pd.skus,
+      actualMins:pd.actualMins,
+      efficiency:pd.efficiency,
+      costPerUnit:pd.costPerUnit,
+      // costPerVin for image filter = image cost / image vins; for others use unit cost
+      costPerVin:/image/i.test(pName)?pd.costPerUnit:pd.costPerUnit,
+    };
+  }).filter(s=>s.units>0);
 }
 
-function renderEditorTable() {
-  const q = (document.getElementById('ed-search')?.value||'').toLowerCase();
-  const sk = document.getElementById('ed-sort')?.value || 'units';
-  const rows = edData
-    .filter(e => !q || e.email.toLowerCase().includes(q))
-    .sort((a,b) => b[sk] - a[sk]);
+function renderSegment(){
+  const m=DATA.months.find(x=>x.key===SEL.segment);if(!m)return;
+  const rawSegs=m.segmentBreakdown;
+  const segs=getSegmentFilteredData(rawSegs);
+  document.getElementById('sg-vol-sub').textContent=m.month+(SG_PROD_FILTER!=='all'?` · ${SG_PROD_FILTER} filter`:'');
 
-  document.getElementById('ed-tbl').innerHTML = rows.map((e,i) => {
-    const imgUnits = e.byProduct ? (Object.entries(e.byProduct).find(([k])=>/image/i.test(k))?.[1]||0) : e.images;
-    const s360Units = e.byProduct ? (Object.entries(e.byProduct).find(([k])=>/360|spin/i.test(k))?.[1]||0) : 0;
-    const vidUnits = e.byProduct ? (Object.entries(e.byProduct).find(([k])=>/video/i.test(k))?.[1]||0) : 0;
-    return `<tr>
-      <td class="rank-num">${i+1}</td>
-      <td>
-        <div style="color:var(--text);font-weight:500">${f.email(e.email)}</div>
-        <div style="font-size:10px;color:var(--muted)">${e.email}</div>
-      </td>
-      <td class="r">${f.num(imgUnits)}</td>
-      <td class="r">${f.num(s360Units)}</td>
-      <td class="r">${f.num(vidUnits)}</td>
-      <td class="r" style="color:var(--text);font-weight:600">${f.num(e.units)}</td>
-      <td class="r">${f.mins(e.actualMins)}</td>
-      <td class="r"><span class="${effCls(e.efficiency)}">${f.pct(e.efficiency)}</span></td>
-      <td class="r">${f.inr(e.costPerUnit)}</td>
-      <td class="r">${e.salary ? f.inr0(e.salary) : '<span style="color:var(--muted);font-size:10px">—</span>'}</td>
-    </tr>`;
-  }).join('');
-}
-
-document.getElementById('ed-search').addEventListener('input', renderEditorTable);
-document.getElementById('ed-sort').addEventListener('change', renderEditorTable);
-
-
-// ════════════════════════════════════════════════════════
-// SEGMENT SUMMARY
-// ════════════════════════════════════════════════════════
-function renderSegment() {
-  const m = DATA.months.find(x => x.key === SEL.segment);
-  if (!m) return;
-  const segs = m.segmentBreakdown;
-
-  document.getElementById('sg-vol-sub').textContent = m.month;
-
-  // KPI grid — one card per segment
-  document.getElementById('sg-kpis').innerHTML = segs.map(s =>
-    kpi(s.name, f.short(s.units), `${f.num(s.uniqueEnterprises)} enterprises · ${f.pct(s.efficiency)} eff`, null, sc(s.name))
+  // KPI cards per segment (always show all segments, but with filtered numbers)
+  document.getElementById('sg-kpis').innerHTML=segs.map(s=>
+    kpi(s.name,f.num(s.vins?s.vins:s.units),
+      `${f.num(s.uniqueEnterprises)} enterprises · ${f.pct(s.efficiency)} eff`,
+      null,sc(s.name))
   ).join('');
 
-  const labels = segs.map(s => s.name);
-  const colors = segs.map(s => sc(s.name));
+  const labels=segs.map(s=>s.name),colors=segs.map(s=>sc(s.name));
+  mk('ch-sg-vol',{type:'bar',data:{labels,datasets:[{label:'Units',data:segs.map(s=>s.units),backgroundColor:colors,borderRadius:5}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>f.short(v)}}}}});
+  mk('ch-sg-pie',{type:'doughnut',data:{labels,datasets:[{data:segs.map(s=>s.units),backgroundColor:colors,borderWidth:0,hoverOffset:5}]},options:{cutout:'62%',scales:{x:{display:false},y:{display:false}},plugins:{legend:{position:'right',labels:{color:'#6a82a8',font:{size:10},boxWidth:9}},tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${f.num(ctx.raw)}`}}}}});
+  mk('ch-sg-vinc',{type:'bar',data:{labels,datasets:[{label:'₹/VIN',data:segs.map(s=>s.costPerVin),backgroundColor:colors,borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'₹'+v}}}}});
+  mk('ch-sg-eff',{type:'bar',data:{labels,datasets:[{label:'Efficiency %',data:segs.map(s=>s.efficiency),backgroundColor:segs.map(s=>s.efficiency>=100?'#22d4a0':s.efficiency>=80?'#f5a42a':'#f0566a'),borderRadius:4}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.raw.toFixed(1)}%`}}},scales:{y:{ticks:{callback:v=>v+'%'}}}}});
 
-  // Units bar
-  mk('ch-sg-vol', {
-    type: 'bar',
-    data: { labels, datasets: [{ label: 'Units', data: segs.map(s => s.units), backgroundColor: colors, borderRadius: 5 }] },
-    options: {
-      plugins: { legend: { display: false } },
-      scales: { y: { ticks: { callback: v => f.short(v) } } },
-    },
-  });
-
-  // Cost share doughnut
-  mk('ch-sg-pie', {
-    type: 'doughnut',
-    data: {
-      labels,
-      datasets: [{ data: segs.map(s => s.costShare), backgroundColor: colors, borderWidth: 0, hoverOffset: 5 }],
-    },
-    options: {
-      cutout: '62%',
-      scales: { x: { display: false }, y: { display: false } },
-      plugins: {
-        legend: { position: 'right', labels: { color: '#6a82a8', font: { size: 10 }, boxWidth: 9 } },
-        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed.toFixed(1)}%` } },
-      },
-    },
-  });
-
-  // Cost per unit bar
-  mk('ch-sg-cpu', {
-    type: 'bar',
-    data: { labels, datasets: [{ label: '₹/Unit', data: segs.map(s => s.costPerUnit), backgroundColor: colors, borderRadius: 4 }] },
-    options: {
-      plugins: { legend: { display: false } },
-      scales: { y: { ticks: { callback: v => '₹' + v } } },
-    },
-  });
-
-  // Efficiency bar
-  mk('ch-sg-eff', {
-    type: 'bar',
-    data: { labels, datasets: [{
-      label: 'Efficiency %',
-      data: segs.map(s => s.efficiency),
-      backgroundColor: segs.map(s => s.efficiency >= 100 ? '#22d4a0' : s.efficiency >= 80 ? '#f5a42a' : '#f0566a'),
-      borderRadius: 4,
-    }]},
-    options: {
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.raw.toFixed(1)}%` } } },
-      scales: { y: { ticks: { callback: v => v + '%' } } },
-    },
-  });
-
-  // MoM stacked trend (all months)
-  const allSegs = [...new Set(DATA.months.flatMap(mo => mo.segmentBreakdown.map(s => s.name)))];
-  mk('ch-sg-trend', {
-    type: 'bar',
-    data: {
-      labels: DATA.months.map(mo => mo.month.replace('-26', '')),
-      datasets: allSegs.map((seg, i) => ({
-        label: seg,
-        data: DATA.months.map(mo => (mo.segmentBreakdown.find(s => s.name === seg)?.units || 0)),
-        backgroundColor: sc(seg),
-        stack: 'a',
-        borderRadius: i === allSegs.length - 1 ? 3 : 0,
-      })),
-    },
-    options: { scales: { x: { stacked: true }, y: { stacked: true, ticks: { callback: v => f.short(v) } } } },
-  });
+  // MoM trend (unfiltered for trend, or filtered per product)
+  const allSegs=[...new Set(DATA.months.flatMap(mo=>mo.segmentBreakdown.map(s=>s.name)))];
+  mk('ch-sg-trend',{type:'bar',data:{labels:DATA.months.map(mo=>mo.month.replace('-26','')),datasets:allSegs.map((seg,i)=>({label:seg,data:DATA.months.map(mo=>{const s=mo.segmentBreakdown.find(x=>x.name===seg);if(!s)return 0;if(SG_PROD_FILTER==='all')return s.units;const e=Object.entries(s.byProduct||{}).find(([k])=>SG_PROD_FILTER==='image'?/image/i.test(k):SG_PROD_FILTER==='360'?/360|spin/i.test(k):/video/i.test(k));return e?e[1].units:0;}),backgroundColor:sc(seg),stack:'a',borderRadius:i===allSegs.length-1?3:0}))},options:{scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:v=>f.short(v)}}}}});
 
   // Summary table
-  document.getElementById('sg-summary-tbl').innerHTML = segs.map(s => {
-    const bar = Math.round(s.costShare * 1.4);
-    return `<tr>
+  document.getElementById('sg-summary-tbl').innerHTML=rawSegs.map(s=>{
+    const bar=Math.round((s.costShare||0)*1.4);
+    return`<tr>
       <td class="bright"><span class="seg" style="background:${sc(s.name)}22;color:${sc(s.name)}">${s.name}</span></td>
       <td class="r">${f.num(s.uniqueEnterprises)}</td>
-      <td class="r" style="color:var(--text);font-weight:600">${f.num(s.units)}</td>
+      <td class="r" style="color:var(--purple);font-weight:600">${f.num(s.vins)}</td>
+      <td class="r" style="color:var(--text)">${f.num(s.units)}</td>
       <td class="r">${f.num(s.images)}</td>
-      <td class="r">${f.num(s.skus)}</td>
+      <td class="r">${f.num(s.seg360Skus||0)}</td>
+      <td class="r">${f.num(s.segVideoIds||0)}</td>
       <td class="r">${f.mins(s.actualMins)}</td>
       <td class="r"><span class="${effCls(s.efficiency)}">${f.pct(s.efficiency)}</span></td>
-      <td class="r" style="color:var(--text)">${f.inr(s.costPerUnit)}</td>
-      <td class="r">${f.inr(s.costPerSku)}</td>
+      <td class="r" style="color:var(--amber);font-weight:600">${f.inr(s.costPerVin)}</td>
+      <td class="r">${f.inr(s.costPerUnit)}</td>
       <td class="r">${f.pct(s.costShare)}<span class="mini-bar" style="width:${bar}px"></span></td>
     </tr>`;
   }).join('');
 
-  // Per-segment deep dive
-  const deep = document.getElementById('sg-deep');
-  deep.innerHTML = segs.map(s => {
-    // product mix rows for this segment
-    const prodRows = Object.entries(s.byProduct || {}).map(([pName, pd]) => `<tr>
+  // Deep-dive per segment
+  document.getElementById('sg-deep').innerHTML=rawSegs.map(s=>{
+    // product mix rows (respect filter)
+    const prodEntries=Object.entries(s.byProduct||{});
+    const filteredProd=SG_PROD_FILTER==='all'?prodEntries:prodEntries.filter(([k])=>SG_PROD_FILTER==='image'?/image/i.test(k):SG_PROD_FILTER==='360'?/360|spin/i.test(k):/video/i.test(k));
+    const prodRows=filteredProd.map(([pName,pd])=>`<tr>
       <td class="bright">${prodTag(pName)}</td>
-      <td class="r">${f.num(pd.units)}</td>
-      <td class="r">${f.num(pd.skus)}</td>
+      <td class="r">${f.num(pd.vins)}</td><td class="r">${f.num(pd.units)}</td>
       <td class="r">${f.mins(pd.actualMins)}</td>
       <td class="r"><span class="${effCls(pd.efficiency)}">${f.pct(pd.efficiency)}</span></td>
-      <td class="r">${f.inr(pd.costPerUnit)}</td>
-    </tr>`).join('');
-
-    // top enterprises rows
-    const entRows = (s.topEnterprises || []).map((e, i) => `<tr>
-      <td class="rank-num">${i + 1}</td>
-      <td class="bright" style="max-width:200px;overflow:hidden;text-overflow:ellipsis">${e.name}</td>
-      <td class="r">${e.inventoryVersion || '—'}</td>
+      <td class="r">${f.inr(pd.costPerUnit)}</td></tr>`).join('');
+    const entRows=(s.topEnterprises||[]).map((e,i)=>`<tr>
+      <td class="rank-num">${i+1}</td>
+      <td class="bright" style="max-width:190px;overflow:hidden;text-overflow:ellipsis">${e.name}</td>
+      <td class="r" style="color:var(--sub);font-size:10px">${e.inventoryVersion||'—'}</td>
+      <td class="r" style="color:var(--purple)">${f.num(e.vins)}</td>
       <td class="r">${f.num(e.units)}</td>
-      <td class="r">${f.num(e.skus)}</td>
       <td class="r">${f.mins(e.actualMins)}</td>
       <td class="r"><span class="${effCls(e.efficiency)}">${f.pct(e.efficiency)}</span></td>
-      <td class="r">${f.inr(e.costPerUnit)}</td>
-    </tr>`).join('');
-
-    return `<div class="section" style="border-left:3px solid ${sc(s.name)}">
+      <td class="r">${f.inr(e.costPerUnit)}</td></tr>`).join('');
+    return`<div class="section" style="border-left:3px solid ${sc(s.name)}">
       <div class="sec-head">
         <div>
-          <div style="display:flex;align-items:center;gap:8px">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span class="seg" style="background:${sc(s.name)}22;color:${sc(s.name)};font-size:12px;padding:3px 10px">${s.name}</span>
-            <span style="font-weight:700;font-size:14px">${f.num(s.units)} units</span>
+            <span style="font-weight:700;font-size:14px">${f.num(s.vins)} VINs</span>
+            <span style="font-size:11px;color:var(--muted)">·</span>
+            <span style="font-size:11px;color:var(--sub)">${f.num(s.units)} units</span>
             <span style="font-size:11px;color:var(--muted)">·</span>
             <span style="font-size:11px;color:var(--sub)">${f.num(s.uniqueEnterprises)} enterprises</span>
             <span style="font-size:11px;color:var(--muted)">·</span>
             <span class="${effCls(s.efficiency)}" style="font-size:11px">${f.pct(s.efficiency)} efficiency</span>
           </div>
           <div style="margin-top:6px;display:flex;gap:16px;flex-wrap:wrap">
-            <span style="font-size:11px;color:var(--sub)">Cost share: <b style="color:var(--text)">${f.pct(s.costShare)}</b></span>
+            <span style="font-size:11px;color:var(--sub)">Cost Share: <b style="color:var(--text)">${f.pct(s.costShare)}</b></span>
+            <span style="font-size:11px;color:var(--sub)">₹/VIN: <b style="color:var(--amber)">${f.inr(s.costPerVin)}</b></span>
             <span style="font-size:11px;color:var(--sub)">₹/Unit: <b style="color:var(--text)">${f.inr(s.costPerUnit)}</b></span>
-            <span style="font-size:11px;color:var(--sub)">₹/SKU: <b style="color:var(--text)">${f.inr(s.costPerSku)}</b></span>
-            <span style="font-size:11px;color:var(--sub)">Actual mins: <b style="color:var(--text)">${f.mins(s.actualMins)}</b></span>
+            <span style="font-size:11px;color:var(--sub)">Images: <b style="color:var(--text)">${f.num(s.images)}</b></span>
+            <span style="font-size:11px;color:var(--sub)">360 SKUs: <b style="color:var(--text)">${f.num(s.seg360Skus||0)}</b></span>
+            <span style="font-size:11px;color:var(--sub)">Video IDs: <b style="color:var(--text)">${f.num(s.segVideoIds||0)}</b></span>
           </div>
         </div>
       </div>
-
-      <div class="g2" style="margin-bottom:14px">
+      <div class="g2">
         <div>
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px">Product Mix</div>
-          <table>
-            <thead><tr>
-              <th>Product</th><th class="r">Units</th><th class="r">SKUs</th>
-              <th class="r">Minutes</th><th class="r">Efficiency</th><th class="r">₹/Unit</th>
-            </tr></thead>
-            <tbody>${prodRows || '<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:10px">No data</td></tr>'}</tbody>
-          </table>
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px">Product Mix${SG_PROD_FILTER!=='all'?` · ${SG_PROD_FILTER} filter`:''}</div>
+          <table><thead><tr><th>Product</th><th class="r">VINs</th><th class="r">Units</th><th class="r">Minutes</th><th class="r">Efficiency</th><th class="r">₹/Unit</th></tr></thead>
+          <tbody>${prodRows||'<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:10px">No data for filter</td></tr>'}</tbody></table>
         </div>
         <div>
           <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px">Top 10 Enterprises</div>
-          <table>
-            <thead><tr>
-              <th>#</th><th>Enterprise</th><th class="r">Inv.</th>
-              <th class="r">Units</th><th class="r">SKUs</th>
-              <th class="r">Minutes</th><th class="r">Eff.</th><th class="r">₹/Unit</th>
-            </tr></thead>
-            <tbody>${entRows || '<tr><td colspan="8" style="color:var(--muted);text-align:center;padding:10px">No data</td></tr>'}</tbody>
-          </table>
+          <table><thead><tr><th>#</th><th>Enterprise</th><th class="r">Inv.</th><th class="r">VINs</th><th class="r">Units</th><th class="r">Mins</th><th class="r">Eff.</th><th class="r">₹/Unit</th></tr></thead>
+          <tbody>${entRows||'<tr><td colspan="8" style="color:var(--muted);text-align:center;padding:10px">No data</td></tr>'}</tbody></table>
         </div>
       </div>
     </div>`;
   }).join('');
 }
 
-// ─── UI HELPERS ───────────────────────────────────────────────────────────────
-function kpi(label, value, sub, delta, accentColor) {
-  const dHtml = delta != null
-    ? `<div class="kpi-delta ${delta>=0?'up':'down'}">${delta>=0?'▲':'▼'} ${Math.abs(delta).toFixed(1)}%</div>`
-    : '';
-  return `<div class="kpi">
-    <div class="kpi-accent" style="background:${accentColor||'var(--blue)'}"></div>
-    <div class="kpi-label">${label}</div>
-    <div class="kpi-value">${value}</div>
-    ${sub?`<div class="kpi-sub">${sub}</div>`:''}
-    ${dHtml}
-  </div>`;
+// ══ QC EDITOR ═════════════════════════════════════════════════════════════════
+let edData=[];
+function renderEditor(){
+  const m=DATA.months.find(x=>x.key===SEL.editor);if(!m)return;
+  edData=m.editorBreakdown;
+  document.getElementById('ed-sub1').textContent=m.month;
+  document.getElementById('ed-sub2').textContent=m.month;
+  const top=edData[0]||{},avgEff=edData.length?(edData.reduce((s,e)=>s+e.efficiency,0)/edData.length).toFixed(1):0;
+  document.getElementById('ed-kpis').innerHTML=[
+    kpi('Active Editors',f.num(edData.length),m.month,null,'#4f78ff'),
+    kpi('Top Editor',f.email(top.email)||'—',top.email||'',null,'#22d4a0'),
+    kpi('Top Units',f.short(top.units),'by top editor',null,'#f5a42a'),
+    kpi('Avg Efficiency',f.pct(+avgEff),'all editors',null,'#a07cff'),
+    kpi('Total Images',f.short(edData.reduce((s,e)=>s+(e.byProduct?Object.entries(e.byProduct).find(([k])=>/image/i.test(k))?.[1]||0:e.images),0)),'Images product',null,'#38c4f0'),
+    kpi('Salary Matched',edData.filter(e=>e.salary>0).length+' / '+edData.length,'editors with salary',null,'#f07832'),
+  ].join('');
+  const t10=[...edData].slice(0,10);
+  mk('ch-ed-vol',{type:'bar',data:{labels:t10.map(e=>f.email(e.email)),datasets:[{label:'Units',data:t10.map(e=>e.units),backgroundColor:'#4f78ff',borderRadius:[0,3,3,0]}]},options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>f.short(v)}},y:{ticks:{font:{size:10}}}}}});
+  const tEff=[...edData].sort((a,b)=>b.efficiency-a.efficiency).slice(0,10);
+  mk('ch-ed-eff',{type:'bar',data:{labels:tEff.map(e=>f.email(e.email)),datasets:[{label:'Efficiency %',data:tEff.map(e=>e.efficiency),backgroundColor:tEff.map(e=>e.efficiency>=100?'#22d4a0':e.efficiency>=80?'#f5a42a':'#f0566a'),borderRadius:[0,3,3,0]}]},options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>v+'%'}},y:{ticks:{font:{size:10}}}}}});
+  renderEditorTable();
+}
+function renderEditorTable(){
+  const q=(document.getElementById('ed-search')?.value||'').toLowerCase();
+  const sk=document.getElementById('ed-sort')?.value||'units';
+  const rows=edData.filter(e=>!q||e.email.toLowerCase().includes(q)).sort((a,b)=>b[sk]-a[sk]);
+  document.getElementById('ed-tbl').innerHTML=rows.map((e,i)=>{
+    const imgU=e.byProduct?Object.entries(e.byProduct).find(([k])=>/image/i.test(k))?.[1]||0:e.images;
+    const s360=e.byProduct?Object.entries(e.byProduct).find(([k])=>/360|spin/i.test(k))?.[1]||0:0;
+    const vid=e.byProduct?Object.entries(e.byProduct).find(([k])=>/video/i.test(k))?.[1]||0:0;
+    return`<tr><td class="rank-num">${i+1}</td>
+      <td><div style="color:var(--text);font-weight:500">${f.email(e.email)}</div><div style="font-size:10px;color:var(--muted)">${e.email}</div></td>
+      <td class="r">${f.num(imgU)}</td><td class="r">${f.num(s360)}</td><td class="r">${f.num(vid)}</td>
+      <td class="r" style="color:var(--text);font-weight:600">${f.num(e.units)}</td>
+      <td class="r">${f.mins(e.actualMins)}</td>
+      <td class="r"><span class="${effCls(e.efficiency)}">${f.pct(e.efficiency)}</span></td>
+      <td class="r">${f.inr(e.costPerUnit)}</td>
+      <td class="r">${e.salary?f.inr0(e.salary):'<span style="color:var(--muted);font-size:10px">—</span>'}</td></tr>`;
+  }).join('');
+}
+document.getElementById('ed-search').addEventListener('input',renderEditorTable);
+document.getElementById('ed-sort').addEventListener('change',renderEditorTable);
+
+// ══ EXCLUDED USERS ════════════════════════════════════════════════════════════
+function renderExcluded(){
+  // Impact summary table
+  document.getElementById('excl-summary-tbl').innerHTML=DATA.months.map(m=>{
+    const s=m.summary;
+    const exclCount=m.excludedUsers?.length||0;
+    const exclSalary=m.excludedUsers?.reduce((sum,u)=>sum+(u.factorSalary||0),0)||0;
+    const totalWithExcl=s.totalCost+exclSalary;
+    const exclPct=totalWithExcl>0?(exclSalary/totalWithExcl*100).toFixed(1):0;
+    return`<tr>
+      <td class="bright">${m.month}</td>
+      <td class="r">${exclCount?`<span class="excl-badge">${exclCount} excluded</span>`:'<span style="color:var(--muted)">0</span>'}</td>
+      <td class="r">${s.employees}</td>
+      <td class="r">${exclSalary>0?`<span style="color:var(--red)">${f.inr0(exclSalary)}</span>`:'<span style="color:var(--muted)">—</span>'}</td>
+      <td class="r">${f.inr0(s.totalCost)}</td>
+      <td class="r">${exclPct>0?`<span style="color:var(--red)">${exclPct}%</span>`:'<span style="color:var(--muted)">0%</span>'}</td>
+    </tr>`;
+  }).join('');
+
+  // Per-month expanded lists
+  const container=document.getElementById('excl-months');
+  container.innerHTML=DATA.months.map(m=>{
+    const users=m.excludedUsers||[];
+    if(!users.length)return`<div class="section" style="opacity:.5"><div class="sec-head"><div class="sec-title">${m.month}</div><div class="sec-sub" style="margin-top:0;margin-left:8px">No excluded users</div></div></div>`;
+    const rows=users.map((u,i)=>`<tr>
+      <td class="rank-num">${i+1}</td>
+      <td class="bright">${u.name||'—'}</td>
+      <td><span style="color:var(--sub);font-size:11px">${u.email}</span></td>
+      <td style="color:var(--muted);font-size:10px;font-family:var(--mono)">${u.empNo||'—'}</td>
+      <td class="r">${f.inr0(u.salary)}</td>
+      <td class="r"><span style="color:var(--red)">${f.inr0(u.factorSalary)}</span></td>
+    </tr>`).join('');
+    return`<div class="section" style="border-left:3px solid var(--red)">
+      <div class="sec-head">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="sec-title">${m.month}</div>
+          <span class="excl-badge">${users.length} excluded</span>
+          <span style="font-size:11px;color:var(--sub)">Excl. cost: <b style="color:var(--red)">${f.inr0(users.reduce((s,u)=>s+(u.factorSalary||0),0))}</b></span>
+        </div>
+      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Emp No</th><th class="r">Base Salary</th><th class="r">Factor Salary</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>
+    </div>`;
+  }).join('');
 }
 
-function prodTag(name) {
-  const c = pc(name, 0);
-  return `<span class="prod-tag" style="background:${c}22;color:${c}">${name}</span>`;
-}
-
-// ─── BOOT ─────────────────────────────────────────────────────────────────────
 fetchData();
 </script>
 </body>
