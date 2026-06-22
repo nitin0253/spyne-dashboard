@@ -443,20 +443,17 @@ let SG_PROD_FILTER = 'all'; // 'all' | 'image' | '360' | 'video'
 // ── FORMAT ────────────────────────────────────────────────────────────────────
 const f = {
   num:   v => v==null?'—':Number(v).toLocaleString('en-IN'),
-  // inr: always show 2 decimal places; for sub-rupee values show 4 dp so ₹0.58 doesn't round to ₹0
+  // inr: always 2 decimal places for all values
   inr:   v => {
     if(v==null)return'—';
     const n=Number(v);
-    if(n===0)return'₹0';
-    if(Math.abs(n)<1)return'₹'+n.toFixed(4);      // e.g. ₹0.5800
-    if(Math.abs(n)<10)return'₹'+n.toFixed(2);     // e.g. ₹2.49
-    return'₹'+n.toLocaleString('en-IN',{maximumFractionDigits:2});
+    if(n===0)return'₹0.00';
+    return'₹'+n.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
   },
   inr0:  v => v==null?'—':'₹'+Math.round(v).toLocaleString('en-IN'),
-  pct:   v => v==null?'—':Number(v).toFixed(1)+'%',
+  pct:   v => v==null?'—':Number(v).toFixed(2)+'%',
   mins:  v => {if(!v)return'—';const h=Math.floor(v/60),m=Math.round(v%60);return h?`${f.num(h)}h ${m}m`:`${m}m`;},
-  // short: for KPI display — keep 2 significant decimal places
-  short: v => {if(!v&&v!==0)return'—';if(v>=1e7)return(v/1e7).toFixed(1)+'Cr';if(v>=1e5)return(v/1e5).toFixed(1)+'L';if(v>=1e3)return(v/1e3).toFixed(1)+'K';return Number(v).toLocaleString('en-IN');},
+  short: v => {if(!v&&v!==0)return'—';if(v>=1e7)return(v/1e7).toFixed(2)+'Cr';if(v>=1e5)return(v/1e5).toFixed(2)+'L';if(v>=1e3)return(v/1e3).toFixed(2)+'K';return Number(v).toLocaleString('en-IN');},
   email: e => e?e.split('@')[0]:'—',
 };
 
@@ -751,7 +748,7 @@ function renderProduct(){
     <td class="r" style="color:var(--text);font-weight:600">${f.inr(p.costPerUnit)}</td>
     <td class="r">${f.inr(p.costPerSku)}</td><td class="r">${f.pct(p.costSharePct)}</td></tr>`).join('');
   const allProds=[...new Set(DATA.months.flatMap(m=>m.productBreakdown.map(p=>p.name)))];
-  mk('ch-pr-trend',{type:'line',data:{labels:DATA.months.map(m=>m.month.replace('-26','')),datasets:allProds.map((prod,i)=>({label:prod,data:DATA.months.map(m=>(m.productBreakdown.find(p=>p.name===prod)?.costPerUnit||0)),borderColor:pc(prod,i),backgroundColor:pc(prod,i)+'22',borderWidth:2,tension:.3,pointBackgroundColor:pc(prod,i),pointRadius:4,fill:false}))},options:{scales:{y:{ticks:{callback:v=>'₹'+v}}},plugins:{tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': ₹'+Number(ctx.raw).toFixed(4)}}}}});
+  mk('ch-pr-trend',{type:'line',data:{labels:DATA.months.map(m=>m.month.replace('-26','')),datasets:allProds.map((prod,i)=>({label:prod,data:DATA.months.map(m=>(m.productBreakdown.find(p=>p.name===prod)?.costPerUnit||0)),borderColor:pc(prod,i),backgroundColor:pc(prod,i)+'22',borderWidth:2,tension:.3,pointBackgroundColor:pc(prod,i),pointRadius:4,fill:false}))},options:{scales:{y:{ticks:{callback:v=>'₹'+v}}},plugins:{tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': ₹'+Number(ctx.raw).toFixed(2)}}}}});
 }
 
 // ══ SEGMENT ═══════════════════════════════════════════════════════════════════
