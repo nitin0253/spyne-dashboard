@@ -480,7 +480,7 @@ function dlLabels(type, fmtFn, opts={}) {
   const isBar = type==='bar';
   const isHBar = opts.horizontal;
   return {
-    display: true,
+    display: ctx => { const v = ctx.dataset.data[ctx.dataIndex]; return v != null && v !== 0; },
     color: '#dce8f8',
     font: { size: 10, family: "'JetBrains Mono',monospace", weight:'500' },
     formatter: fmtFn || (v => v==null||v===0?'':f.short(v)),
@@ -488,12 +488,6 @@ function dlLabels(type, fmtFn, opts={}) {
     align:  isBar ? (isHBar ? 'right' : 'top') : 'top',
     offset: isBar ? (isHBar ? 4 : 3) : 0,
     clamp:  true,
-    // hide label if value is 0 or too small to show
-    display: ctx => {
-      const v = ctx.dataset.data[ctx.dataIndex];
-      return v != null && v !== 0;
-    },
-    ...opts.extra,
   };
 }
 
