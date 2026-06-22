@@ -1,3 +1,4 @@
+<!-- v2.1 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -455,6 +456,30 @@ function filterBreakdown(arr,type){
   if(type==='editor')return arr.filter(r=>passesFilter('user',r.email));
   return arr;
 }
+// Returns segment+product filtered product rows
+function getFilteredProducts(m){
+  const segActive=FILTERS.segment.selected.size>0&&FILTERS.segment.selected.size<FILTERS.segment.all.length;
+  if(!segActive)return filterBreakdown(m.productBreakdown,'product');
+  const segs=filterBreakdown(m.segmentBreakdown,'segment');
+  const byProd={};
+  segs.forEach(sg=>{
+    Object.entries(sg.byProduct||{}).forEach(([pName,pd])=>{
+      if(!passesFilter('product',pName))return;
+      if(!byProd[pName])byProd[pName]={name:pName,images:0,skus:0,units:0,vins:0,actualMins:0,sumTarget:0};
+      const bp=byProd[pName];
+      bp.images+=pd.images||0;bp.skus+=pd.skus||0;bp.units+=pd.units||0;
+      bp.vins+=pd.vins||0;bp.actualMins+=pd.actualMins||0;bp.sumTarget+=pd.sumTarget||0;
+    });
+  });
+  const totalActMins=Object.values(byProd).reduce((s,p)=>s+p.actualMins,0)||1;
+  const totalCost=m.summary.totalCost*(Object.values(byProd).reduce((s,p)=>s+p.actualMins,0)/(m.summary.totalActMins||1));
+  return Object.values(byProd).map(p=>{
+    const pCost=totalCost*(p.actualMins/totalActMins);
+    const orig=m.productBreakdown.find(x=>x.name===p.name)||{};
+    return{...p,efficiency:p.actualMins>0?+((p.sumTarget/p.actualMins)*100).toFixed(2):0,costPerUnit:p.units>0?+(pCost/p.units).toFixed(2):0,costPerSku:p.skus>0?+(pCost/p.skus).toFixed(2):0,costSharePct:totalCost>0?+((pCost/totalCost)*100).toFixed(1):0,unitLabel:orig.unitLabel||''};
+  }).filter(p=>p.units>0);
+}
+
 function computeFilteredSummary(m){
   // When segment filter is active, compute everything from segmentBreakdown.byProduct
   // (the ONLY source that has segment × product intersection).
@@ -579,15 +604,25 @@ function kpi(label,value,sub,delta,color){
 }
 
 // ── RENDER ALL ───────────────────────────────────────────────────────────────
+function safeRender(name, fn, months){
+  try { fn(months); }
+  catch(e){
+    console.error('[render:'+name+']', e);
+    // Show error visually in the section if possible
+    const sec = document.getElementById('s-'+name.toLowerCase());
+    if(sec){ const err=document.createElement('div'); err.style.cssText='color:#f0566a;padding:12px;font-size:11px;background:#1a0a0e;border-radius:6px;margin:8px 0'; err.textContent='⚠ '+name+' render error: '+e.message; sec.prepend(err); }
+  }
+}
 function renderAll(){
   if(!DATA)return;
   const months=filteredMonths();
   if(!months.length){document.getElementById('ov-kpis').innerHTML='<div style="color:var(--muted);padding:16px">No data matches filter.</div>';return;}
-  renderOverview(months);
-  renderTrends(months);
-  renderSegments(months);
-  renderProducts(months);
-  renderEditors(months);
+  console.log('[renderAll] months:', months.length, 'DATA keys:', DATA ? Object.keys(DATA) : 'null');
+  safeRender('overview', renderOverview, months);
+  safeRender('trend',    renderTrends,   months);
+  safeRender('segment',  renderSegments, months);
+  safeRender('product',  renderProducts, months);
+  safeRender('editor',   renderEditors,  months);
 }
 
 // ── 1. OVERVIEW ──────────────────────────────────────────────────────────────
