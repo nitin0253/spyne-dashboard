@@ -429,11 +429,20 @@ let SG_PROD_FILTER = 'all'; // 'all' | 'image' | '360' | 'video'
 // ── FORMAT ────────────────────────────────────────────────────────────────────
 const f = {
   num:   v => v==null?'—':Number(v).toLocaleString('en-IN'),
-  inr:   v => v==null?'—':'₹'+Number(v).toLocaleString('en-IN',{maximumFractionDigits:2}),
+  // inr: always show 2 decimal places; for sub-rupee values show 4 dp so ₹0.58 doesn't round to ₹0
+  inr:   v => {
+    if(v==null)return'—';
+    const n=Number(v);
+    if(n===0)return'₹0';
+    if(Math.abs(n)<1)return'₹'+n.toFixed(4);      // e.g. ₹0.5800
+    if(Math.abs(n)<10)return'₹'+n.toFixed(2);     // e.g. ₹2.49
+    return'₹'+n.toLocaleString('en-IN',{maximumFractionDigits:2});
+  },
   inr0:  v => v==null?'—':'₹'+Math.round(v).toLocaleString('en-IN'),
   pct:   v => v==null?'—':Number(v).toFixed(1)+'%',
   mins:  v => {if(!v)return'—';const h=Math.floor(v/60),m=Math.round(v%60);return h?`${f.num(h)}h ${m}m`:`${m}m`;},
-  short: v => {if(!v&&v!==0)return'—';if(v>=1e7)return(v/1e7).toFixed(1)+'Cr';if(v>=1e5)return(v/1e5).toFixed(1)+'L';if(v>=1e3)return(v/1e3).toFixed(1)+'K';return String(Math.round(v));},
+  // short: for KPI display — keep 2 significant decimal places
+  short: v => {if(!v&&v!==0)return'—';if(v>=1e7)return(v/1e7).toFixed(1)+'Cr';if(v>=1e5)return(v/1e5).toFixed(1)+'L';if(v>=1e3)return(v/1e3).toFixed(1)+'K';return Number(v).toLocaleString('en-IN');},
   email: e => e?e.split('@')[0]:'—',
 };
 
