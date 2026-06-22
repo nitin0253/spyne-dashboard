@@ -1,13 +1,20 @@
 // api/data.js  –  Vercel Serverless Function
 //
-// Business rules:
-//   Images  → billing unit = Images col (multiple images per SKU)
-//   360     → billing unit = SKU_Count (1 SKU = 1 spin set), ignore Images col
-//   Video   → billing unit = SKU_Count (1 SKU = 1 video), ONLY rows where type = 'reqc'
+// VIN / SKU model:
+//   1 VIN → enterprise with Images+360     → 2 SKUs  (1 Image SKU, 1 360 SKU)
+//   1 VIN → enterprise with Images+360+Vid → 2 SKUs  (1 Image SKU, 1 360 SKU)
+//                                             + Video uses Image SKU → 1 video_id (no new SKU)
+//   So: unique VINs = unique Image SKUs.
+//   For segment VIN count we use Image-product SKU count as the VIN proxy.
 //
-// ENV VARS:
-//   GOOGLE_SERVICE_ACCOUNT_EMAIL
-//   GOOGLE_PRIVATE_KEY
+// Billing units per product:
+//   Images → Images col  (many images per SKU)
+//   360    → SKU_Count   (1 SKU = 1 spin)
+//   Video  → SKU_Count   (1 SKU = 1 video) — ONLY type = 'reqc' rows counted
+//
+// Excluded users: fetched from 'remove_users' tab (col A = emails)
+//
+// ENV VARS: GOOGLE_SERVICE_ACCOUNT_EMAIL  GOOGLE_PRIVATE_KEY
 
 import { google } from 'googleapis';
 
@@ -20,14 +27,24 @@ const SHEETS = [
   { month: 'Jun-26', key: 'jun26', id: '1i3KqktELNb-ykpZeHaMh3wk3FBBV-eHNAw6736oaXbI' },
 ];
 
-// ── Product classification helpers ──────────────────────────────────────────
-function isImage(p) { return /image/i.test(p); }
-function is360(p)   { return /360|spin/i.test(p); }
-function isVideo(p) { return /video/i.test(p); }
-function billingUnits(row) { return isImage(row.product) ? row.images : row.skus; }
+// ── Product helpers ───────────────────────────────────────────────────────────
+const isImage = p => /image/i.test(p);
+const is360   = p => /360|spin/i.test(p);
+const isVideo = p => /video/i.test(p);
 
-// ── Google auth ──────────────────────────────────────────────────────────────
-function getSheets() {
+// Billing unit for cost allocation:
+//   Images → image count, 360 & Video → SKU count
+function billingUnits(row) {
+  return isImage(row.product) ? row.images : row.skus;
+}
+
+// VIN proxy: only Image SKUs map 1:1 to VINs.
+// Video re-uses Image SKU so doesn't add VINs. 360 creates its own SKU per VIN.
+// For segment VIN count we sum Image-product SKUs (= distinct VINs that had images).
+function isVinProduct(product) { return isImage(product); }
+
+// ── Google Sheets auth ────────────────────────────────────────────────────────
+function getSheetsClient() {
   const auth = new google.auth.GoogleAuth({
     credentials: {
       client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
@@ -38,14 +55,19 @@ function getSheets() {
   return google.sheets({ version: 'v4', auth });
 }
 
-async function fetchRange(api, sheetId, range) {
-  const res = await api.spreadsheets.values.get({ spreadsheetId: sheetId, range });
-  return res.data.values || [];
+async function fetchRange(client, sheetId, range) {
+  try {
+    const res = await client.spreadsheets.values.get({ spreadsheetId: sheetId, range });
+    return res.data.values || [];
+  } catch (_) { return []; }
 }
 
-// ── Parsers ──────────────────────────────────────────────────────────────────
-function parseOutput(rows) {
+// ── Parsers ───────────────────────────────────────────────────────────────────
+// output: A=Date B=Product C=Verticle D=Type E=Enterprise
+//         F=DealerType G=QCEditor H=SKU_Count I=Images J=Tools K=SumTarget L=ActualMins M=factor
+function parseOutput(rows, excludedEmails) {
   if (rows.length < 2) return [];
+  const excluded = new Set(excludedEmails.map(e => e.toLowerCase().trim()));
   return rows.slice(1)
     .filter(r => r[0])
     .map(r => ({
@@ -63,21 +85,47 @@ function parseOutput(rows) {
       actualMins: +r[11] || 0,
       factor:     +r[12] || 0,
     }))
+    // Exclude removed users
+    .filter(r => !excluded.has((r.qcEditor || '').toLowerCase().trim()))
+    // Video: only reqc rows
     .filter(r => isVideo(r.product) ? r.type === 'reqc' : true);
 }
 
-function parseSalary(rows) {
-  if (rows.length < 5) return { totalCost: 0, employees: [] };
-  const num = s => parseFloat((s || '').replace(/,/g, '')) || 0;
-  const totalCost = num(rows[3]?.[7]) || num(rows[3]?.[5]) || 0;
-  const employees = rows.slice(5).filter(r => r[0]).map(r => ({
-    empNo: r[0] || '', name: r[1] || '', email: r[2] || '', type: r[4] || '',
-    salary: num(r[5]), prorata: num(r[6]), factor: +r[7] || 1, factorSalary: num(r[8]),
-  }));
-  return { totalCost, employees };
+// remove_users sheet: column A = email addresses (one per row, skip header if any)
+function parseRemovedUsers(rows) {
+  const emails = [];
+  rows.forEach(r => {
+    const val = (r[0] || '').trim();
+    // Skip header row if it looks like a label
+    if (val && val.toLowerCase() !== 'email' && val.includes('@')) {
+      emails.push(val.toLowerCase());
+    }
+  });
+  return emails;
 }
 
-// Returns map: enterpriseName → { segment, inventoryVersion }
+// Salary: rows 1-4 meta, row 5 header, row 6+ employees
+function parseSalary(rows, excludedEmails) {
+  if (rows.length < 5) return { totalCost: 0, employees: [], excludedEmployees: [] };
+  const excluded = new Set(excludedEmails.map(e => e.toLowerCase().trim()));
+  const num = s => parseFloat((s || '').replace(/,/g, '')) || 0;
+
+  const allEmployees = rows.slice(5).filter(r => r[0]).map(r => ({
+    empNo: r[0] || '', name: r[1] || '', email: (r[2] || '').toLowerCase().trim(),
+    type: r[4] || '', salary: num(r[5]), prorata: num(r[6]),
+    factor: +r[7] || 1, factorSalary: num(r[8]),
+  }));
+
+  const excludedEmployees = allEmployees.filter(e => excluded.has(e.email));
+  const employees = allEmployees.filter(e => !excluded.has(e.email));
+
+  // Total cost = sum of factorSalary of INCLUDED employees only
+  const totalCost = employees.reduce((s, e) => s + e.factorSalary, 0);
+
+  return { totalCost, employees, excludedEmployees };
+}
+
+// enterprise_details: A=ID B=Name C=InvVersion D=CustomerSegment
 function parseEnterprise(rows) {
   const map = {};
   rows.slice(1).forEach(r => {
@@ -89,15 +137,16 @@ function parseEnterprise(rows) {
   return map;
 }
 
-// ── Aggregation ──────────────────────────────────────────────────────────────
+// ── Aggregation helpers ───────────────────────────────────────────────────────
 function groupSum(rows, keyFn) {
   const acc = {};
   rows.forEach(r => {
     const k = keyFn(r);
-    if (!acc[k]) acc[k] = { images: 0, skus: 0, units: 0, actualMins: 0, sumTarget: 0, rows: 0 };
+    if (!acc[k]) acc[k] = { images: 0, skus: 0, units: 0, vins: 0, actualMins: 0, sumTarget: 0, rows: 0 };
     acc[k].images     += r.images;
     acc[k].skus       += r.skus;
     acc[k].units      += billingUnits(r);
+    acc[k].vins       += isVinProduct(r.product) ? r.skus : 0; // VIN proxy
     acc[k].actualMins += r.actualMins;
     acc[k].sumTarget  += r.sumTarget;
     acc[k].rows++;
@@ -112,41 +161,47 @@ function enrichGroup(name, g, allocatedCost) {
     images:       Math.round(g.images),
     skus:         Math.round(g.skus),
     units:        Math.round(g.units),
+    vins:         Math.round(g.vins),   // unique VIN proxy (image SKUs)
     actualMins:   Math.round(g.actualMins),
     sumTarget:    Math.round(g.sumTarget),
     rows:         g.rows,
     efficiency:   +eff.toFixed(1),
     costPerUnit:  g.units > 0 ? +(allocatedCost / g.units).toFixed(2) : 0,
     costPerSku:   g.skus  > 0 ? +(allocatedCost / g.skus).toFixed(2)  : 0,
+    costPerVin:   g.vins  > 0 ? +(allocatedCost / g.vins).toFixed(2)  : 0,
     costPerImage: g.images > 0 ? +(allocatedCost / g.images).toFixed(2) : 0,
   };
 }
 
-// ── Per-month compute ────────────────────────────────────────────────────────
-function computeMonth(config, outputRows, salaryRows, enterpriseRows) {
-  const output   = parseOutput(outputRows);
-  const { totalCost, employees } = parseSalary(salaryRows);
-  const entMap   = parseEnterprise(enterpriseRows);  // name → { segment, inventoryVersion }
+// ── Per-month compute ─────────────────────────────────────────────────────────
+function computeMonth(config, outputRows, salaryRows, enterpriseRows, removedRows) {
+  const excludedEmails = parseRemovedUsers(removedRows);
+  const output   = parseOutput(outputRows, excludedEmails);
+  const { totalCost, employees, excludedEmployees } = parseSalary(salaryRows, excludedEmails);
+  const entMap   = parseEnterprise(enterpriseRows);
 
   const editorSalaryMap = {};
   employees.forEach(e => { if (e.email) editorSalaryMap[e.email] = e.factorSalary; });
 
-  // Enrich each row with segment info
+  // Enrich each row with segment + inventory version
   const enriched = output.map(r => ({
     ...r,
-    segment: entMap[r.enterprise]?.segment || 'Unknown',
+    segment:          entMap[r.enterprise]?.segment          || 'Unknown',
     inventoryVersion: entMap[r.enterprise]?.inventoryVersion || '',
   }));
 
-  const totalUnits    = enriched.reduce((s, r) => s + billingUnits(r), 0);
-  const totalImages   = enriched.reduce((s, r) => s + r.images, 0);
-  const totalSkus     = enriched.reduce((s, r) => s + r.skus, 0);
-  const totalActMins  = enriched.reduce((s, r) => s + r.actualMins, 0);
-  const totalTarget   = enriched.reduce((s, r) => s + r.sumTarget, 0);
-  const efficiency    = totalActMins > 0 ? +((totalTarget / totalActMins) * 100).toFixed(1) : 0;
-  const costPerUnit   = totalUnits > 0 ? +(totalCost / totalUnits).toFixed(2) : 0;
-  const costPerSku    = totalSkus  > 0 ? +(totalCost / totalSkus).toFixed(2)  : 0;
-  const total360Skus  = enriched.filter(r => is360(r.product)).reduce((s, r) => s + r.skus, 0);
+  // ── Overall totals
+  const totalUnits     = enriched.reduce((s, r) => s + billingUnits(r), 0);
+  const totalImages    = enriched.reduce((s, r) => s + r.images, 0);
+  const totalSkus      = enriched.reduce((s, r) => s + r.skus, 0);
+  const totalVins      = enriched.filter(r => isVinProduct(r.product)).reduce((s, r) => s + r.skus, 0);
+  const totalActMins   = enriched.reduce((s, r) => s + r.actualMins, 0);
+  const totalTarget    = enriched.reduce((s, r) => s + r.sumTarget, 0);
+  const efficiency     = totalActMins > 0 ? +((totalTarget / totalActMins) * 100).toFixed(1) : 0;
+  const costPerUnit    = totalUnits > 0 ? +(totalCost / totalUnits).toFixed(2) : 0;
+  const costPerSku     = totalSkus  > 0 ? +(totalCost / totalSkus).toFixed(2)  : 0;
+  const costPerVin     = totalVins  > 0 ? +(totalCost / totalVins).toFixed(2)  : 0;
+  const total360Skus   = enriched.filter(r => is360(r.product)).reduce((s, r) => s + r.skus, 0);
   const totalVideoSkus = enriched.filter(r => isVideo(r.product)).reduce((s, r) => s + r.skus, 0);
 
   // ── Product breakdown
@@ -174,32 +229,49 @@ function computeMonth(config, outputRows, salaryRows, enterpriseRows) {
     return { ...enrichGroup(email, g, cost), email, salary: own || 0, byProduct };
   }).sort((a, b) => b.units - a.units);
 
-  // ── Segment breakdown  (rich: per-product split, top enterprises, MoM ready)
+  // ── Segment breakdown (VIN-aware)
+  //
+  // VIN logic per segment:
+  //   - Each VIN processed through Images product = 1 VIN (Image SKU count = VIN count)
+  //   - Same VIN also creates a 360 SKU if enterprise has 360 → counted in 360 SKUs
+  //   - Same VIN's Image SKU generates video_id for Video → NO new SKU for VIN count
+  //   - So: segment VINs = sum of Image-product SKUs in that segment
+  //   - costPerVin = segmentCost / segmentVINs
+  //
   const segGroups = groupSum(enriched, r => r.segment);
   const segmentBreakdown = Object.entries(segGroups).map(([segName, g]) => {
     const segCost = totalActMins > 0 ? (g.actualMins / totalActMins) * totalCost : 0;
-
-    // Per-product breakdown within this segment
     const segRows = enriched.filter(r => r.segment === segName);
+
+    // Per-product detail within segment
     const byProduct = {};
     segRows.forEach(r => {
       const p = r.product;
-      if (!byProduct[p]) byProduct[p] = { units: 0, skus: 0, images: 0, actualMins: 0, sumTarget: 0 };
+      if (!byProduct[p]) byProduct[p] = { units: 0, skus: 0, images: 0, vins: 0, actualMins: 0, sumTarget: 0 };
       byProduct[p].units      += billingUnits(r);
       byProduct[p].skus       += r.skus;
       byProduct[p].images     += r.images;
+      byProduct[p].vins       += isVinProduct(r.product) ? r.skus : 0;
       byProduct[p].actualMins += r.actualMins;
       byProduct[p].sumTarget  += r.sumTarget;
     });
-    // Compute costPerUnit per product within segment
     Object.entries(byProduct).forEach(([pName, pd]) => {
       const pCost = totalActMins > 0 ? (pd.actualMins / totalActMins) * totalCost : 0;
       pd.costPerUnit = pd.units > 0 ? +(pCost / pd.units).toFixed(2) : 0;
       pd.efficiency  = pd.actualMins > 0 ? +((pd.sumTarget / pd.actualMins) * 100).toFixed(1) : 0;
       pd.units       = Math.round(pd.units);
       pd.skus        = Math.round(pd.skus);
+      pd.images      = Math.round(pd.images);
+      pd.vins        = Math.round(pd.vins);
       pd.actualMins  = Math.round(pd.actualMins);
     });
+
+    // Segment-level VINs = Image-product SKUs in this segment
+    const segVins = segRows.filter(r => isVinProduct(r.product)).reduce((s, r) => s + r.skus, 0);
+    // 360 SKUs processed per VIN in this segment
+    const seg360Skus  = segRows.filter(r => is360(r.product)).reduce((s, r) => s + r.skus, 0);
+    // Video IDs = Video SKUs (from reqc rows — already filtered), derived from Image SKUs
+    const segVideoIds = segRows.filter(r => isVideo(r.product)).reduce((s, r) => s + r.skus, 0);
 
     // Top 10 enterprises within this segment
     const entGroups2 = groupSum(segRows, r => r.enterprise);
@@ -211,8 +283,13 @@ function computeMonth(config, outputRows, salaryRows, enterpriseRows) {
       };
     }).sort((a, b) => b.units - a.units).slice(0, 10);
 
+    const base = enrichGroup(segName, g, segCost);
     return {
-      ...enrichGroup(segName, g, segCost),
+      ...base,
+      vins:             Math.round(segVins),
+      seg360Skus:       Math.round(seg360Skus),
+      segVideoIds:      Math.round(segVideoIds),
+      costPerVin:       segVins > 0 ? +(segCost / segVins).toFixed(2) : 0,
       costShare:        totalCost > 0 ? +((segCost / totalCost) * 100).toFixed(1) : 0,
       byProduct,
       topEnterprises,
@@ -233,7 +310,7 @@ function computeMonth(config, outputRows, salaryRows, enterpriseRows) {
     const cost = totalActMins > 0 ? (g.actualMins / totalActMins) * totalCost : 0;
     return {
       ...enrichGroup(name, g, cost),
-      segment: entMap[name]?.segment || 'Unknown',
+      segment:          entMap[name]?.segment          || 'Unknown',
       inventoryVersion: entMap[name]?.inventoryVersion || '',
     };
   }).sort((a, b) => b.units - a.units).slice(0, 25);
@@ -241,19 +318,26 @@ function computeMonth(config, outputRows, salaryRows, enterpriseRows) {
   return {
     month:  config.month,
     key:    config.key,
+    excludedUsers: excludedEmployees.map(e => ({
+      email: e.email, name: e.name, empNo: e.empNo,
+      salary: e.salary, factorSalary: e.factorSalary,
+    })),
     summary: {
       totalCost:       Math.round(totalCost),
       totalImages,
       totalSkus,
       total360Skus:    Math.round(total360Skus),
       totalVideoSkus:  Math.round(totalVideoSkus),
+      totalVins:       Math.round(totalVins),
       totalUnits,
       totalActMins:    Math.round(totalActMins),
       totalTarget:     Math.round(totalTarget),
       efficiency,
       costPerUnit,
       costPerSku,
+      costPerVin,
       employees:       employees.length,
+      excludedCount:   excludedEmployees.length,
     },
     productBreakdown,
     editorBreakdown,
@@ -263,7 +347,7 @@ function computeMonth(config, outputRows, salaryRows, enterpriseRows) {
   };
 }
 
-// ── Handler ──────────────────────────────────────────────────────────────────
+// ── Handler ───────────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -271,15 +355,16 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET')     return res.status(405).json({ error: 'Method not allowed' });
   try {
-    const sheetsApi = getSheets();
+    const client = getSheetsClient();
     const results = await Promise.allSettled(
       SHEETS.map(async cfg => {
-        const [outputRows, salaryRows, entRows] = await Promise.all([
-          fetchRange(sheetsApi, cfg.id, 'output!A:M'),
-          fetchRange(sheetsApi, cfg.id, 'Salary!A:I'),
-          fetchRange(sheetsApi, cfg.id, 'enterprise_details!A:D'),
+        const [outputRows, salaryRows, entRows, removedRows] = await Promise.all([
+          fetchRange(client, cfg.id, 'output!A:M'),
+          fetchRange(client, cfg.id, 'Salary!A:I'),
+          fetchRange(client, cfg.id, 'enterprise_details!A:D'),
+          fetchRange(client, cfg.id, 'remove_users!A:A'),
         ]);
-        return computeMonth(cfg, outputRows, salaryRows, entRows);
+        return computeMonth(cfg, outputRows, salaryRows, entRows, removedRows);
       })
     );
     const months = results.filter(r => r.status === 'fulfilled').map(r => r.value);
