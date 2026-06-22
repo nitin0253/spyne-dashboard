@@ -27,6 +27,46 @@ const SHEETS = [
   { month: 'Jun-26', key: 'jun26', id: '1i3KqktELNb-ykpZeHaMh3wk3FBBV-eHNAw6736oaXbI' },
 ];
 
+// ── Hardcoded exclusion list (backup — also read dynamically from remove_users sheet) ──
+// These emails are ALWAYS excluded regardless of sheet contents
+const ALWAYS_EXCLUDE = new Set([
+  'ranbir.manoranjan@spyne.ai',
+  'ankit.choudhary@spyne.ai',
+  'ddroppova810@gmail.com',
+  'nitin.kumar@spyne.ai',
+  'vinod.singh+1@cariotauto.com',
+  'kishor@spyne.ai',
+  'saloni.sharma+1@cariotauto.com',
+  'mukesh.1+1@cariotauto.com',
+  'mohit.sharma+1@cariotauto.com',
+  'gaurav.3+1@cariotauto.com',
+  'mayank.singh@spyne.ai',
+  'praveen.agarwal@spyne.ai',
+  'amit.bhadauriya@spyne.ai',
+  'heartika.singh@spyne.ai',
+  'swati.subhrajita@spyne.ai',
+  'anurag.kumar1@spyne.ai',
+  'shivam.mishra+1@cariotauto.com',
+  'abhishek.mudgal@cariotauto.com',
+  'priyanka.attri+1@cars24.com',
+  'barkha.rawat@cariotauto.com',
+  'rajni.1@cariotauto.com',
+  'swati.sharma@cariotauto.com',
+  'rajni.1+1@cariotauto.com',
+  'barkha.rawat+1@cariotauto.com',
+  'swati.sharma+1@cariotauto.com',
+  'mohit.10@cars24.com',
+  'vijender.kumar@cariotauto.com',
+  'anuj.1@cariotauto.com',
+  'rohit.chauhan@spyne.ai',
+  'saloni.sharma2@cars24.com',
+  'mohit.sharma11@cars24.com',
+  'saurabh.pandey@spyne.ai',
+  'barkha.rawat@cars24.com',
+  'raj.tripathi@spyne.ai',
+]);
+
+
 // ── Product helpers ───────────────────────────────────────────────────────────
 const isImage = p => /image/i.test(p);
 const is360   = p => /360|spin/i.test(p);
@@ -67,7 +107,10 @@ async function fetchRange(client, sheetId, range) {
 //         F=DealerType G=QCEditor H=SKU_Count I=Images J=Tools K=SumTarget L=ActualMins M=factor
 function parseOutput(rows, excludedEmails) {
   if (rows.length < 2) return [];
-  const excluded = new Set(excludedEmails.map(e => e.toLowerCase().trim()));
+  const excluded = new Set([
+    ...excludedEmails.map(e => e.toLowerCase().trim()),
+    ...ALWAYS_EXCLUDE,
+  ]);
   return rows.slice(1)
     .filter(r => r[0])
     .map(r => ({
@@ -85,29 +128,39 @@ function parseOutput(rows, excludedEmails) {
       actualMins: +r[11] || 0,
       factor:     +r[12] || 0,
     }))
-    // Exclude removed users
-    .filter(r => !excluded.has((r.qcEditor || '').toLowerCase().trim()))
+    // Exclude removed users (sheet list + hardcoded list)
+    .filter(r => {
+      const email = (r.qcEditor || '').toLowerCase().trim();
+      return !excluded.has(email) && !ALWAYS_EXCLUDE.has(email);
+    })
     // Video: only reqc rows
     .filter(r => isVideo(r.product) ? r.type === 'reqc' : true);
 }
 
-// remove_users sheet: column A = email addresses (one per row, skip header if any)
+// remove_users sheet: scan ALL columns for anything that looks like a valid email
+// Handles varying column layouts, extra whitespace, mixed case
 function parseRemovedUsers(rows) {
-  const emails = [];
+  const emails = new Set();
   rows.forEach(r => {
-    const val = (r[0] || '').trim();
-    // Skip header row if it looks like a label
-    if (val && val.toLowerCase() !== 'email' && val.includes('@')) {
-      emails.push(val.toLowerCase());
-    }
+    (r || []).forEach(cell => {
+      const val = (cell || '').toString().trim().toLowerCase();
+      // Valid email: has @ with domain.tld pattern
+      if (val && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+        emails.add(val);
+      }
+    });
   });
-  return emails;
+  return [...emails];
 }
 
 // Salary: rows 1-4 meta, row 5 header, row 6+ employees
 function parseSalary(rows, excludedEmails) {
   if (rows.length < 5) return { totalCost: 0, employees: [], excludedEmployees: [] };
-  const excluded = new Set(excludedEmails.map(e => e.toLowerCase().trim()));
+  // Merge sheet-read exclusions with hardcoded list
+  const excluded = new Set([
+    ...excludedEmails.map(e => e.toLowerCase().trim()),
+    ...ALWAYS_EXCLUDE,
+  ]);
   const num = s => parseFloat((s || '').replace(/,/g, '')) || 0;
 
   const allEmployees = rows.slice(5).filter(r => r[0]).map(r => ({
@@ -176,6 +229,11 @@ function enrichGroup(name, g, allocatedCost) {
 // ── Per-month compute ─────────────────────────────────────────────────────────
 function computeMonth(config, outputRows, salaryRows, enterpriseRows, removedRows) {
   const excludedEmails = parseRemovedUsers(removedRows);
+  // Build the full exclusion set (sheet + hardcoded)
+  const allExcludedSet = new Set([
+    ...excludedEmails,
+    ...ALWAYS_EXCLUDE,
+  ]);
   const output   = parseOutput(outputRows, excludedEmails);
   const { totalCost, employees, excludedEmployees } = parseSalary(salaryRows, excludedEmails);
   const entMap   = parseEnterprise(enterpriseRows);
@@ -315,13 +373,25 @@ function computeMonth(config, outputRows, salaryRows, enterpriseRows, removedRow
     };
   }).sort((a, b) => b.units - a.units).slice(0, 25);
 
+  // Find excluded users who appear in output rows but not in the Salary sheet
+  const rawOutputEmails = new Set(
+    outputRows.slice(1)
+      .filter(r => r[0] && r[6])
+      .map(r => (r[6] || '').toLowerCase().trim())
+      .filter(email => allExcludedSet.has(email))
+  );
+  const excludedSalaryEmails = new Set(excludedEmployees.map(e => e.email));
+  const outputOnlyExcluded = [...rawOutputEmails]
+    .filter(email => !excludedSalaryEmails.has(email))
+    .map(email => ({ email, name: '—', empNo: '—', salary: 0, factorSalary: 0 }));
+
   return {
     month:  config.month,
     key:    config.key,
-    excludedUsers: excludedEmployees.map(e => ({
-      email: e.email, name: e.name, empNo: e.empNo,
-      salary: e.salary, factorSalary: e.factorSalary,
-    })),
+    excludedUsers: [
+      ...excludedEmployees.map(e => ({ email: e.email, name: e.name, empNo: e.empNo, salary: e.salary, factorSalary: e.factorSalary })),
+      ...outputOnlyExcluded,
+    ],
     summary: {
       totalCost:       Math.round(totalCost),
       totalImages,
@@ -362,7 +432,7 @@ export default async function handler(req, res) {
           fetchRange(client, cfg.id, 'output!A:M'),
           fetchRange(client, cfg.id, 'Salary!A:I'),
           fetchRange(client, cfg.id, 'enterprise_details!A:D'),
-          fetchRange(client, cfg.id, 'remove_users!A:A'),
+          fetchRange(client, cfg.id, 'remove_users!A:E'),
         ]);
         return computeMonth(cfg, outputRows, salaryRows, entRows, removedRows);
       })
