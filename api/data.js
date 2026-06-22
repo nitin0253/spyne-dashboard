@@ -3,6 +3,17 @@
 
 const { google } = require('googleapis');
 
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  ADD A NEW MONTH — edit ONLY this array, nothing else needed    ║
+// ║                                                                  ║
+// ║  Steps:                                                          ║
+// ║  1. Copy the new month's Google Sheet URL                        ║
+// ║  2. Extract the Sheet ID from the URL:                           ║
+// ║     https://docs.google.com/spreadsheets/d/ ► SHEET_ID ◄ /edit  ║
+// ║  3. Add one line below following the same format                 ║
+// ║  4. Share the sheet with the service account email (Viewer)      ║
+// ║  5. Commit & push — Vercel auto-deploys                          ║
+// ╚══════════════════════════════════════════════════════════════════╝
 const SHEETS = [
   { month: 'Jan-26', key: 'jan26', id: '1VI-9hxnFIynsTOl3aCdIiR-RRAfRssISOWnZdddCz4Q' },
   { month: 'Feb-26', key: 'feb26', id: '1K2SMR34s0O21BKGpCX-EsUPgOdiAkiuUW8yDyyvFzQU' },
@@ -10,6 +21,9 @@ const SHEETS = [
   { month: 'Apr-26', key: 'apr26', id: '1cKEaxHNOqU2vpnCsnHbf1PfQdVnReg3MsGIgqgE1UhE' },
   { month: 'May-26', key: 'may26', id: '1_3d_XJmSbBziSCicauYEiP1J5N4RRW6pGco49uWuh84' },
   { month: 'Jun-26', key: 'jun26', id: '1i3KqktELNb-ykpZeHaMh3wk3FBBV-eHNAw6736oaXbI' },
+  // ↓ ADD NEW MONTHS HERE ↓
+  // { month: 'Jul-26', key: 'jul26', id: 'PASTE_SHEET_ID_HERE' },
+  // { month: 'Aug-26', key: 'aug26', id: 'PASTE_SHEET_ID_HERE' },
 ];
 
 // Always-excluded emails
