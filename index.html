@@ -552,15 +552,6 @@ function passesFilter(key, value) {
 
 // Apply all 4 filters to the full enriched output rows of a month
 // Returns filtered rows (or null if month is filtered out)
-function applyFilters(monthData) {
-  if (!passesFilter('month', monthData.key)) return null;
-  return {
-    ...monthData,
-    // Re-filter output rows via editorBreakdown/segmentBreakdown proxies
-    // We store filtered views, not raw rows — so filter at aggregation level
-  };
-}
-
 // Get months passing the month filter
 function filteredMonths() {
   if (!DATA) return [];
@@ -570,16 +561,64 @@ function filteredMonths() {
 // Filter breakdown arrays by segment/product/user
 function filterBreakdown(arr, type) {
   if (!arr) return [];
-  if (type === 'product') {
-    return arr.filter(r => passesFilter('product', r.name));
-  }
-  if (type === 'segment') {
-    return arr.filter(r => passesFilter('segment', r.name));
-  }
-  if (type === 'editor') {
-    return arr.filter(r => passesFilter('user', r.email));
-  }
+  if (type === 'product')  return arr.filter(r => passesFilter('product', r.name));
+  if (type === 'segment')  return arr.filter(r => passesFilter('segment', r.name));
+  if (type === 'editor')   return arr.filter(r => passesFilter('user', r.email));
   return arr;
+}
+
+// Re-compute summary KPIs from filtered breakdowns (product + segment filters change the numbers)
+// Called whenever we need live-filtered totals for a month
+function computeFilteredSummary(m) {
+  const prods = filterBreakdown(m.productBreakdown, 'product');
+  const segs  = filterBreakdown(m.segmentBreakdown, 'segment');
+
+  // Use product breakdown as primary source for unit/image/sku counts
+  // (product filter is the most direct — each row in productBreakdown is one product type)
+  const totalImages    = prods.reduce((s,p) => s + (/image/i.test(p.name) ? p.images : 0), 0);
+  const total360Skus   = prods.reduce((s,p) => s + (/360|spin/i.test(p.name) ? p.skus : 0), 0);
+  const totalVideoSkus = prods.reduce((s,p) => s + (/video/i.test(p.name) ? p.skus : 0), 0);
+  const totalVins      = prods.reduce((s,p) => s + (/image/i.test(p.name) ? p.vins : 0), 0);
+  const totalUnits     = prods.reduce((s,p) => s + p.units, 0);
+  const totalSkus      = prods.reduce((s,p) => s + p.skus, 0);
+  const totalActMins   = prods.reduce((s,p) => s + p.actualMins, 0);
+  const totalTarget    = prods.reduce((s,p) => s + p.sumTarget, 0);
+
+  // When segment filter is also active, further restrict by segment
+  // Cost is prorated by actMins share
+  const totalCostBase = m.summary.totalCost;
+  const totalActMinsBase = m.summary.totalActMins || 1;
+
+  // Cost allocated = fraction of total actual mins that these filtered products/segments represent
+  // If both filters active, use intersection (segments within filtered products)
+  let allocatedMins = totalActMins;
+
+  // If segment filter is active, further restrict to those segments
+  const segActive = FILTERS.segment.selected.size > 0 && FILTERS.segment.selected.size < FILTERS.segment.all.length;
+  if (segActive) {
+    // Re-sum from segment breakdown filtered rows
+    allocatedMins = segs.reduce((s, sg) => {
+      // Only count mins from segments that also pass product filter
+      const segProdMins = Object.entries(sg.byProduct || {})
+        .filter(([pName]) => passesFilter('product', pName))
+        .reduce((acc, [, pd]) => acc + pd.actualMins, 0);
+      return s + segProdMins;
+    }, 0);
+  }
+
+  const costShare = totalActMinsBase > 0 ? allocatedMins / totalActMinsBase : 1;
+  const totalCost = Math.round(totalCostBase * costShare);
+  const efficiency = totalActMins > 0 ? +((totalTarget / totalActMins) * 100).toFixed(2) : 0;
+  const costPerUnit = totalUnits > 0 ? +(totalCost / totalUnits).toFixed(2) : 0;
+  const costPerSku  = totalSkus  > 0 ? +(totalCost / totalSkus).toFixed(2)  : 0;
+  const costPerVin  = totalVins  > 0 ? +(totalCost / totalVins).toFixed(2)  : 0;
+
+  return {
+    totalCost, totalImages, total360Skus, totalVideoSkus, totalVins,
+    totalUnits, totalSkus, totalActMins, totalTarget,
+    efficiency, costPerUnit, costPerSku, costPerVin,
+    employees: m.summary.employees,
+  };
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -866,10 +905,12 @@ function prodTag(name){const c=pc(name,0);return'<span class="prod-tag" style="b
 // ═══════════════════════════════════════════════════════════════════
 function renderOverview(){
   const months=filteredMonths();
-  if(!months.length){document.getElementById('ov-kpis').innerHTML='<div style="color:var(--muted);padding:20px">No months match the current filter.</div>';return;}
+  if(!months.length){document.getElementById('ov-kpis').innerHTML='<div style="color:var(--muted);padding:20px">No data matches the current filter.</div>';return;}
   const last=months[months.length-1],prev=months[months.length-2];
-  const s=last.summary;
-  function d(k){if(!prev?.summary[k])return null;return((s[k]-prev.summary[k])/prev.summary[k])*100;}
+  // Use filtered summary (respects product + segment filters)
+  const s=computeFilteredSummary(last);
+  const sp=prev?computeFilteredSummary(prev):null;
+  function d(k){if(!sp||!sp[k])return null;return((s[k]-sp[k])/sp[k])*100;}
   document.getElementById('ov-kpis').innerHTML=[
     kpi('Salary Cost',f.inr0(s.totalCost),last.month,d('totalCost'),'#4f78ff'),
     kpi('Images',f.num(s.totalImages),'Images product',d('totalImages'),'#4f78ff'),
@@ -881,15 +922,18 @@ function renderOverview(){
     kpi('₹ / VIN',f.inr(s.costPerVin),'Per unique vehicle',d('costPerVin'),'#f5a42a'),
   ].join('');
   const labels=months.map(m=>m.month.replace('-26',''));
-  mk('ch-cost',{type:'line',_labelFmt:v=>v?'₹'+f.short(v):'',data:{labels,datasets:[{label:'Salary Cost',data:months.map(m=>m.summary.totalCost),borderColor:'#4f78ff',borderWidth:2,backgroundColor:'rgba(79,120,255,.1)',fill:true,tension:.35,pointBackgroundColor:'#4f78ff',pointRadius:5,pointHoverRadius:7}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' ₹'+f.num(ctx.raw)}}},scales:{y:{ticks:{callback:v=>'₹'+f.short(v)}}}}});
-  mk('ch-vol',{type:'bar',_labelFmt:v=>v>0?f.short(v):'',data:{labels,datasets:[{label:'Images',data:months.map(m=>m.summary.totalImages),backgroundColor:'#4f78ff',borderRadius:3},{label:'360 SKUs',data:months.map(m=>m.summary.total360Skus||0),backgroundColor:'#22d4a0',borderRadius:3},{label:'Video SKUs',data:months.map(m=>m.summary.totalVideoSkus||0),backgroundColor:'#f5a42a',borderRadius:3}]},options:{scales:{y:{ticks:{callback:v=>f.short(v)}}}}});
-  mk('ch-cpi',{type:'line',_labelFmt:v=>v?'₹'+Number(v).toFixed(2):'',data:{labels,datasets:[{label:'₹/Unit',data:months.map(m=>m.summary.costPerUnit),borderColor:'#22d4a0',borderWidth:2,tension:.3,pointBackgroundColor:'#22d4a0',pointRadius:5},{label:'₹/VIN',data:months.map(m=>m.summary.costPerVin||0),borderColor:'#f5a42a',borderWidth:2,tension:.3,pointBackgroundColor:'#f5a42a',pointRadius:5}]},options:{scales:{y:{ticks:{callback:v=>'₹'+v}}}}});
-  mk('ch-eff-trend',{type:'bar',_labelFmt:v=>v?v.toFixed(2)+'%':'',data:{labels,datasets:[{label:'Efficiency %',data:months.map(m=>m.summary.efficiency),backgroundColor:months.map(m=>m.summary.efficiency>=100?'#22d4a0':m.summary.efficiency>=80?'#f5a42a':'#f0566a'),borderRadius:4}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.raw.toFixed(2)+'%'}}},scales:{y:{ticks:{callback:v=>v+'%'}}}}});
-  document.getElementById('ov-tbody').innerHTML=months.map(m=>{
-    const s=m.summary;
-    const img=m.productBreakdown.find(p=>/image/i.test(p.name));
-    const s360=m.productBreakdown.find(p=>/360|spin/i.test(p.name));
-    const vid=m.productBreakdown.find(p=>/video/i.test(p.name));
+  // Charts use filtered summary per month
+  const ms=months.map(m=>computeFilteredSummary(m));
+  mk('ch-cost',{type:'line',_labelFmt:v=>v?'₹'+f.short(v):'',data:{labels,datasets:[{label:'Salary Cost',data:ms.map(s=>s.totalCost),borderColor:'#4f78ff',borderWidth:2,backgroundColor:'rgba(79,120,255,.1)',fill:true,tension:.35,pointBackgroundColor:'#4f78ff',pointRadius:5,pointHoverRadius:7}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' ₹'+f.num(ctx.raw)}}},scales:{y:{ticks:{callback:v=>'₹'+f.short(v)}}}}});
+  mk('ch-vol',{type:'bar',_labelFmt:v=>v>0?f.short(v):'',data:{labels,datasets:[{label:'Images',data:ms.map(s=>s.totalImages),backgroundColor:'#4f78ff',borderRadius:3},{label:'360 SKUs',data:ms.map(s=>s.total360Skus||0),backgroundColor:'#22d4a0',borderRadius:3},{label:'Video SKUs',data:ms.map(s=>s.totalVideoSkus||0),backgroundColor:'#f5a42a',borderRadius:3}]},options:{scales:{y:{ticks:{callback:v=>f.short(v)}}}}});
+  mk('ch-cpi',{type:'line',_labelFmt:v=>v?'₹'+Number(v).toFixed(2):'',data:{labels,datasets:[{label:'₹/Unit',data:ms.map(s=>s.costPerUnit),borderColor:'#22d4a0',borderWidth:2,tension:.3,pointBackgroundColor:'#22d4a0',pointRadius:5},{label:'₹/VIN',data:ms.map(s=>s.costPerVin||0),borderColor:'#f5a42a',borderWidth:2,tension:.3,pointBackgroundColor:'#f5a42a',pointRadius:5}]},options:{scales:{y:{ticks:{callback:v=>'₹'+v}}}}});
+  mk('ch-eff-trend',{type:'bar',_labelFmt:v=>v?v.toFixed(2)+'%':'',data:{labels,datasets:[{label:'Efficiency %',data:ms.map(s=>s.efficiency),backgroundColor:ms.map(s=>s.efficiency>=100?'#22d4a0':s.efficiency>=80?'#f5a42a':'#f0566a'),borderRadius:4}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.raw.toFixed(2)+'%'}}},scales:{y:{ticks:{callback:v=>v+'%'}}}}});
+  document.getElementById('ov-tbody').innerHTML=months.map((m,i)=>{
+    const s=ms[i];
+    const prods=filterBreakdown(m.productBreakdown,'product');
+    const img=prods.find(p=>/image/i.test(p.name));
+    const s360=prods.find(p=>/360|spin/i.test(p.name));
+    const vid=prods.find(p=>/video/i.test(p.name));
     return'<tr><td class="bright">'+m.month+'</td><td class="r">'+f.inr0(s.totalCost)+'</td><td class="r">'+f.num(s.totalImages)+'</td><td class="r">'+f.num(s.total360Skus)+'</td><td class="r">'+f.num(s.totalVideoSkus)+'</td><td class="r" style="color:var(--purple)">'+f.num(s.totalVins)+'</td><td class="r">'+f.num(s.totalUnits)+'</td><td class="r">'+f.mins(s.totalActMins)+'</td><td class="r"><span class="'+effCls(s.efficiency)+'">'+f.pct(s.efficiency)+'</span></td><td class="r">'+f.inr(img?.costPerUnit||0)+'</td><td class="r">'+f.inr(s360?.costPerUnit||0)+'</td><td class="r">'+f.inr(vid?.costPerUnit||0)+'</td><td class="r" style="color:var(--amber);font-weight:600">'+f.inr(s.costPerVin)+'</td><td class="r">'+f.inr(s.costPerUnit)+'</td><td class="r">'+s.employees+'</td></tr>';
   }).join('');
 }
@@ -900,7 +944,7 @@ function renderOverview(){
 function renderCosting(){
   const months=filteredMonths();if(!months.length)return;
   const m=months[months.length-1];
-  const s=m.summary;
+  const s=computeFilteredSummary(m);
   document.getElementById('co-kpis').innerHTML=[
     kpi('Salary Cost',f.inr0(s.totalCost),m.month,null,'#4f78ff'),
     kpi('VINs',f.num(s.totalVins),'Unique vehicles',null,'#a07cff'),
@@ -932,7 +976,8 @@ function renderProduct(){
   const prods=filterBreakdown(m.productBreakdown,'product');
   const colors=prods.map((p,i)=>pc(p.name,i));
   document.getElementById('pr-vol-sub').textContent=m.month;
-  document.getElementById('pr-kpis').innerHTML=prods.map(p=>kpi(p.name,f.short(p.units),p.unitLabel,null,pc(p.name,0))).join('');
+  // Product KPIs use filtered data, show both units and cost per unit
+  document.getElementById('pr-kpis').innerHTML=prods.map(p=>kpi(p.name,f.short(p.units),p.unitLabel+' · '+f.inr(p.costPerUnit)+'/unit',null,pc(p.name,0))).join('');
   mk('ch-pr-vol',{type:'bar',_labelFmt:v=>v>0?f.short(v):'',data:{labels:prods.map(p=>p.name),datasets:[{label:'Units',data:prods.map(p=>p.units),backgroundColor:colors,borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>f.short(v)}}}}});
   mk('ch-pr-cpu',{type:'bar',_labelFmt:v=>v?f.inr(v):'',data:{labels:prods.map(p=>p.name),datasets:[{label:'₹/Unit',data:prods.map(p=>p.costPerUnit),backgroundColor:colors,borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'₹'+v}}}}});
   mk('ch-pr-eff',{type:'bar',_labelFmt:v=>v?v.toFixed(2)+'%':'',data:{labels:prods.map(p=>p.name),datasets:[{label:'Efficiency %',data:prods.map(p=>p.efficiency),backgroundColor:prods.map(p=>p.efficiency>=100?'#22d4a0':p.efficiency>=80?'#f5a42a':'#f0566a'),borderRadius:4}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.raw.toFixed(2)+'%'}}},scales:{y:{ticks:{callback:v=>v+'%'}}}}});
