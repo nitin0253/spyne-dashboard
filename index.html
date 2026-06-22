@@ -542,7 +542,7 @@ async function fetchData(){
     const res=await fetch(API_URL);
     if(!res.ok)throw new Error(`HTTP ${res.status} — ${await res.text()}`);
     const json=await res.json();
-    if(json.error)throw new Error(json.error);
+    if(json.error)throw new Error(json.error + (json.hint ? ' | ' + json.hint : '') + (json.details ? ' | ' + JSON.stringify(json.details) : ''));
     DATA=json;
     const last=DATA.months[DATA.months.length-1]?.key;
     SEL.costing=last;SEL.product=last;SEL.editor=last;SEL.segment=last;
@@ -550,12 +550,32 @@ async function fetchData(){
     document.getElementById('status-text').textContent=`${DATA.months.length} months`;
     if(DATA.fetchedAt)document.getElementById('fetched-at').textContent='as of '+new Date(DATA.fetchedAt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
     renderAll();
-  }catch(err){overlayError(err.message);}
+  }catch(err){
+    const isNetErr = err.message.includes('Failed to fetch') || err.message.includes('NetworkError');
+    overlayError(
+      isNetErr ? 'Cannot reach the API. Is the Vercel function deployed?' : err.message,
+      isNetErr ? 'Network error — check Vercel deployment and function logs' : null
+    );
+  }
 }
 async function refreshData(){const btn=document.getElementById('refresh-btn');btn.classList.add('spinning');await fetchData();btn.classList.remove('spinning');}
 function overlayShow(msg){const el=document.getElementById('overlay');el.style.display='flex';el.innerHTML=`<div class="spinner"></div><div class="overlay-msg">${msg}</div>`;}
 function overlayHide(){document.getElementById('overlay').style.display='none';}
-function overlayError(msg){document.getElementById('overlay').innerHTML=`<div class="err-box"><h3>Failed to load data</h3><p>${msg}</p><p style="margin-top:8px;font-size:10px">Check: Google credentials in Vercel · Sheets shared with service account</p><button onclick="location.reload()">Retry</button></div>`;}
+function overlayError(msg, detail){
+  const d = detail ? `<pre style="margin-top:8px;font-size:9px;color:#6a82a8;text-align:left;white-space:pre-wrap;word-break:break-all;background:#0a0f1a;padding:8px;border-radius:4px;max-height:120px;overflow-y:auto">${detail}</pre>` : '';
+  document.getElementById('overlay').innerHTML=`<div class="err-box">
+    <h3>Failed to load data</h3>
+    <p>${msg}</p>
+    ${d}
+    <p style="margin-top:10px;font-size:10px;line-height:1.6">
+      Common fixes:<br>
+      1. Check <b>GOOGLE_SERVICE_ACCOUNT_EMAIL</b> and <b>GOOGLE_PRIVATE_KEY</b> in Vercel env vars<br>
+      2. Make sure all 6 sheets are shared with the service account email (Viewer)<br>
+      3. Redeploy after adding env vars
+    </p>
+    <button onclick="location.reload()">Retry</button>
+  </div>`;
+}
 
 // ── TABS ──────────────────────────────────────────────────────────────────────
 function buildTabs(cid,key,fn){
