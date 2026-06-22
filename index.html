@@ -230,28 +230,23 @@ select.sel:focus{border-color:var(--blue)}
 <!-- SINGLE PAGE CONTENT -->
 <div id="content">
 
-  <!-- ══ 1. OVERVIEW KPIs ══ -->
+  <!-- ══ 1. OVERVIEW ══ -->
   <div class="dash-section">
     <div class="dash-section-header" onclick="toggleSection('s-kpi')">
       <span class="dash-section-title">📊 Overview</span>
-      <div class="dash-section-line"></div>
-      <span class="dash-section-toggle" id="tog-s-kpi">▾</span>
+      <div class="dash-section-line"></div><span class="dash-section-toggle" id="tog-s-kpi">▾</span>
     </div>
     <div class="dash-section-body" id="s-kpi">
       <div class="kpi-grid" id="ov-kpis"></div>
       <div class="g2">
         <div class="section">
-          <div class="sec-head"><div><div class="sec-title">Salary Cost — Month on Month</div><div class="sec-sub">Total factored salary cost</div></div></div>
-          <div class="ch"><canvas id="ch-cost" height="110"></canvas></div>
+          <div class="sec-head"><div><div class="sec-title">Salary Cost Trend</div><div class="sec-sub">Total factored salary · active employees</div></div></div>
+          <div class="ch"><canvas id="ch-cost" height="120"></canvas></div>
         </div>
         <div class="section">
-          <div class="sec-head"><div><div class="sec-title">Month Snapshot</div></div></div>
+          <div class="sec-head"><div class="sec-title">Month Snapshot</div></div>
           <div class="tbl-wrap"><table>
-            <thead><tr>
-              <th>Month</th><th class="r">Cost</th><th class="r">Images</th>
-              <th class="r">360 SKUs</th><th class="r">Video SKUs</th><th class="r">VINs</th>
-              <th class="r">Efficiency</th><th class="r">₹/VIN</th><th class="r">₹/Unit</th>
-            </tr></thead>
+            <thead><tr><th>Month</th><th class="r">Cost</th><th class="r">Images</th><th class="r">360 SKUs</th><th class="r">Video SKUs</th><th class="r">VINs</th><th class="r">Efficiency</th><th class="r">₹/VIN</th><th class="r">₹/Unit</th></tr></thead>
             <tbody id="ov-tbody"></tbody>
           </table></div>
         </div>
@@ -259,148 +254,70 @@ select.sel:focus{border-color:var(--blue)}
     </div>
   </div>
 
-  <!-- ══ 2. VOLUME & EFFICIENCY TRENDS ══ -->
+  <!-- ══ 2. TRENDS ══ -->
   <div class="dash-section">
     <div class="dash-section-header" onclick="toggleSection('s-trend')">
       <span class="dash-section-title">📈 Trends</span>
-      <div class="dash-section-line"></div>
-      <span class="dash-section-toggle" id="tog-s-trend">▾</span>
+      <div class="dash-section-line"></div><span class="dash-section-toggle" id="tog-s-trend">▾</span>
     </div>
     <div class="dash-section-body" id="s-trend">
-      <div class="g3">
+      <div class="g2">
         <div class="section">
-          <div class="sec-head"><div><div class="sec-title">Volume Trend</div><div class="sec-sub">Images · 360 SKUs · Video SKUs</div></div></div>
+          <div class="sec-head"><div><div class="sec-title">Volume Trend</div><div class="sec-sub">Images · 360 SKUs · Video SKUs per month</div></div></div>
           <div class="ch"><canvas id="ch-vol" height="160"></canvas></div>
         </div>
         <div class="section">
-          <div class="sec-head"><div><div class="sec-title">Cost Efficiency</div><div class="sec-sub">₹/Unit · ₹/VIN</div></div></div>
+          <div class="sec-head"><div><div class="sec-title">Cost Efficiency</div><div class="sec-sub">₹ per unit · ₹ per VIN across months</div></div></div>
           <div class="ch"><canvas id="ch-cpi" height="160"></canvas></div>
         </div>
-        <div class="section">
-          <div class="sec-head"><div><div class="sec-title">Efficiency Trend</div><div class="sec-sub">Target / Actual Mins × 100</div></div></div>
-          <div class="ch"><canvas id="ch-eff-trend" height="160"></canvas></div>
-        </div>
       </div>
     </div>
   </div>
 
-  <!-- ══ 3. PRODUCT BREAKDOWN ══ -->
-  <div class="dash-section">
-    <div class="dash-section-header" onclick="toggleSection('s-product')">
-      <span class="dash-section-title">📦 Product</span>
-      <div class="dash-section-line"></div>
-      <span class="dash-section-toggle" id="tog-s-product">▾</span>
-    </div>
-    <div class="dash-section-body" id="s-product">
-      <div class="section" style="margin-bottom:12px">
-        <div class="sec-head"><div><div class="sec-title">₹/Unit by Product</div><div class="sec-sub" id="pr-vol-sub"></div></div></div>
-        <div class="ch"><canvas id="ch-pr-cpu" height="130"></canvas></div>
-      </div>
-      <div class="g2">
-        <div class="section">
-          <div class="sec-head"><div class="sec-title">Product Breakdown</div></div>
-          <div class="tbl-wrap"><table>
-            <thead><tr>
-              <th>Product</th><th>Basis</th><th class="r">Units</th><th class="r">SKUs</th>
-              <th class="r">Actual Mins</th><th class="r">Efficiency</th>
-              <th class="r">₹/Unit</th><th class="r">₹/SKU</th><th class="r">Cost Share</th>
-            </tr></thead>
-            <tbody id="pr-tbl"></tbody>
-          </table></div>
-        </div>
-        <div class="section">
-          <div class="sec-head"><div><div class="sec-title">₹/Unit Trend — All Months</div><div class="sec-sub">Cost per billing unit per product</div></div></div>
-          <div class="ch"><canvas id="ch-pr-trend" height="160"></canvas></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══ 4. SEGMENT SUMMARY ══ -->
+  <!-- ══ 3. SEGMENTS & COSTING ══ -->
   <div class="dash-section">
     <div class="dash-section-header" onclick="toggleSection('s-segment')">
-      <span class="dash-section-title">🏷️ Segments</span>
-      <div class="dash-section-line"></div>
-      <span class="dash-section-toggle" id="tog-s-segment">▾</span>
+      <span class="dash-section-title">🏷️ Segments &amp; Costing</span>
+      <div class="dash-section-line"></div><span class="dash-section-toggle" id="tog-s-segment">▾</span>
     </div>
     <div class="dash-section-body" id="s-segment">
       <div class="g4" style="margin-bottom:12px">
         <div class="section">
           <div class="sec-head"><div><div class="sec-title">Units by Segment</div><div class="sec-sub" id="sg-vol-sub"></div></div></div>
-          <div class="ch"><canvas id="ch-sg-vol" height="160"></canvas></div>
+          <div class="ch"><canvas id="ch-sg-vol" height="150"></canvas></div>
         </div>
         <div class="section">
           <div class="sec-head"><div><div class="sec-title">Cost Share</div></div></div>
-          <div class="ch"><canvas id="ch-sg-pie" height="160"></canvas></div>
+          <div class="ch"><canvas id="ch-sg-pie" height="150"></canvas></div>
         </div>
         <div class="section">
           <div class="sec-head"><div><div class="sec-title">₹/VIN by Segment</div></div></div>
-          <div class="ch"><canvas id="ch-sg-vinc" height="160"></canvas></div>
+          <div class="ch"><canvas id="ch-sg-vinc" height="150"></canvas></div>
         </div>
         <div class="section">
           <div class="sec-head"><div><div class="sec-title">Efficiency by Segment</div></div></div>
-          <div class="ch"><canvas id="ch-sg-eff" height="160"></canvas></div>
+          <div class="ch"><canvas id="ch-sg-eff" height="150"></canvas></div>
         </div>
       </div>
-      <div class="g2">
-        <div class="section">
-          <div class="sec-head"><div><div class="sec-title">Segment Trend — All Months</div><div class="sec-sub">Units per segment stacked</div></div></div>
-          <div class="ch"><canvas id="ch-sg-trend" height="160"></canvas></div>
-        </div>
+      <div class="g3">
         <div class="section">
           <div class="sec-head"><div class="sec-title">Segment Summary</div></div>
           <div class="tbl-wrap"><table>
-            <thead><tr>
-              <th>Segment</th><th class="r">Enterprises</th><th class="r">VINs</th>
-              <th class="r">Units</th><th class="r">Efficiency</th>
-              <th class="r">₹/VIN</th><th class="r">₹/Unit</th><th class="r">Cost Share</th>
-            </tr></thead>
+            <thead><tr><th>Segment</th><th class="r">VINs</th><th class="r">Units</th><th class="r">Efficiency</th><th class="r">₹/VIN</th><th class="r">Cost %</th></tr></thead>
             <tbody id="sg-summary-tbl"></tbody>
           </table></div>
         </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══ 5. COSTING ══ -->
-  <div class="dash-section">
-    <div class="dash-section-header" onclick="toggleSection('s-costing')">
-      <span class="dash-section-title">💰 Costing</span>
-      <div class="dash-section-line"></div>
-      <span class="dash-section-toggle" id="tog-s-costing">▾</span>
-    </div>
-    <div class="dash-section-body" id="s-costing">
-      <div class="kpi-grid" id="co-kpis"></div>
-      <div class="g2" style="margin-bottom:12px">
         <div class="section">
-          <div class="sec-head"><div><div class="sec-title">Cost Share by Segment</div><div class="sec-sub" id="co-seg-sub"></div></div></div>
-          <div class="ch"><canvas id="ch-seg-pie" height="180"></canvas></div>
-        </div>
-        <div class="section">
-          <div class="sec-head"><div><div class="sec-title">₹/VIN by Segment</div></div></div>
-          <div class="ch"><canvas id="ch-seg-bar" height="180"></canvas></div>
-        </div>
-      </div>
-      <div class="g2">
-        <div class="section">
-          <div class="sec-head"><div class="sec-title">Dealer Type Breakdown</div></div>
+          <div class="sec-head"><div class="sec-title">Dealer Type</div></div>
           <div class="tbl-wrap"><table>
-            <thead><tr>
-              <th>Dealer Type</th><th class="r">Units</th><th class="r">VINs</th>
-              <th class="r">Actual Mins</th><th class="r">Efficiency</th>
-              <th class="r">₹/Unit</th><th class="r">₹/VIN</th>
-            </tr></thead>
+            <thead><tr><th>Dealer Type</th><th class="r">VINs</th><th class="r">Units</th><th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r">₹/VIN</th></tr></thead>
             <tbody id="co-dealer-tbl"></tbody>
           </table></div>
         </div>
         <div class="section">
-          <div class="sec-head"><div class="sec-title">Top 25 Enterprises</div></div>
-          <div class="tbl-wrap"><table>
-            <thead><tr>
-              <th>#</th><th>Enterprise</th><th>Segment</th>
-              <th class="r">Units</th><th class="r">VINs</th>
-              <th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r">₹/VIN</th>
-            </tr></thead>
+          <div class="sec-head"><div class="sec-title">Top Enterprises</div></div>
+          <div class="tbl-wrap" style="max-height:280px;overflow-y:auto"><table>
+            <thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr><th>#</th><th>Enterprise</th><th>Seg.</th><th class="r">VINs</th><th class="r">Eff.</th><th class="r">₹/VIN</th></tr></thead>
             <tbody id="co-ent-tbl"></tbody>
           </table></div>
         </div>
@@ -408,72 +325,55 @@ select.sel:focus{border-color:var(--blue)}
     </div>
   </div>
 
-  <!-- ══ 6. QC EDITORS ══ -->
+  <!-- ══ 4. PRODUCTS & EDITORS ══ -->
   <div class="dash-section">
-    <div class="dash-section-header" onclick="toggleSection('s-editor')">
-      <span class="dash-section-title">👤 QC Editors</span>
-      <div class="dash-section-line"></div>
-      <span class="dash-section-toggle" id="tog-s-editor">▾</span>
+    <div class="dash-section-header" onclick="toggleSection('s-product')">
+      <span class="dash-section-title">📦 Products &amp; Editors</span>
+      <div class="dash-section-line"></div><span class="dash-section-toggle" id="tog-s-product">▾</span>
     </div>
-    <div class="dash-section-body" id="s-editor">
-      <div class="kpi-grid" id="ed-kpis"></div>
+    <div class="dash-section-body" id="s-product">
       <div class="g2" style="margin-bottom:12px">
         <div class="section">
-          <div class="sec-head"><div><div class="sec-title">Top 10 — Units</div><div class="sec-sub" id="ed-sub1"></div></div></div>
-          <div class="ch"><canvas id="ch-ed-vol" height="200"></canvas></div>
+          <div class="sec-head"><div><div class="sec-title">₹/Unit by Product</div><div class="sec-sub" id="pr-vol-sub"></div></div></div>
+          <div class="ch"><canvas id="ch-pr-cpu" height="150"></canvas></div>
         </div>
         <div class="section">
-          <div class="sec-head"><div><div class="sec-title">Top 10 — Efficiency</div><div class="sec-sub" id="ed-sub2"></div></div></div>
-          <div class="ch"><canvas id="ch-ed-eff" height="200"></canvas></div>
+          <div class="sec-head"><div><div class="sec-title">Top 10 Editors — Units</div><div class="sec-sub" id="ed-sub1"></div></div></div>
+          <div class="ch"><canvas id="ch-ed-vol" height="150"></canvas></div>
         </div>
       </div>
-      <div class="section">
-        <div class="sec-head">
-          <div class="sec-title">All Editors</div>
-          <div class="sec-actions">
-            <input type="text" class="search" id="ed-search" placeholder="Search editor…">
-            <select class="sel" id="ed-sort">
-              <option value="units">Sort: Units</option><option value="images">Sort: Images</option>
-              <option value="efficiency">Sort: Efficiency</option>
-              <option value="actualMins">Sort: Minutes</option><option value="costPerUnit">Sort: ₹/Unit</option>
-            </select>
+      <div class="g2">
+        <div class="section">
+          <div class="sec-head"><div class="sec-title">Product Breakdown</div></div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>Product</th><th class="r">Units</th><th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r">Cost Share</th></tr></thead>
+            <tbody id="pr-tbl"></tbody>
+          </table></div>
+        </div>
+        <div class="section">
+          <div class="sec-head">
+            <div class="sec-title">All Editors</div>
+            <div class="sec-actions">
+              <input type="text" class="search" id="ed-search" placeholder="Search editor…">
+              <select class="sel" id="ed-sort">
+                <option value="units">Sort: Units</option>
+                <option value="efficiency">Sort: Efficiency</option>
+                <option value="costPerUnit">Sort: ₹/Unit</option>
+              </select>
+            </div>
           </div>
+          <div class="tbl-wrap" style="max-height:280px;overflow-y:auto"><table>
+            <thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr>
+              <th>#</th><th>Editor</th><th class="r">Images</th><th class="r">360</th><th class="r">Video</th><th class="r">Total</th><th class="r">Efficiency</th><th class="r">₹/Unit</th>
+            </tr></thead>
+            <tbody id="ed-tbl"></tbody>
+          </table></div>
         </div>
-        <div class="tbl-wrap" style="max-height:320px;overflow-y:auto"><table>
-          <thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr>
-            <th>#</th><th>Editor</th><th class="r">Images</th><th class="r">360 SKUs</th>
-            <th class="r">Video SKUs</th><th class="r">Total Units</th><th class="r">Actual Mins</th>
-            <th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r">Salary</th>
-          </tr></thead>
-          <tbody id="ed-tbl"></tbody>
-        </table></div>
       </div>
     </div>
   </div>
 
-  <!-- ══ 7. EXCLUDED USERS ══ -->
-  <div class="dash-section">
-    <div class="dash-section-header" onclick="toggleSection('s-excluded')">
-      <span class="dash-section-title">🚫 Excluded Users</span>
-      <div class="dash-section-line"></div>
-      <span class="dash-section-toggle" id="tog-s-excluded">▾</span>
-    </div>
-    <div class="dash-section-body" id="s-excluded">
-      <div class="section">
-        <div class="sec-head"><div><div class="sec-title">Exclusion Impact</div><div class="sec-sub">Salary removed from calculations per month</div></div></div>
-        <div class="tbl-wrap"><table>
-          <thead><tr>
-            <th>Month</th><th class="r">Excluded</th><th class="r">Active Employees</th>
-            <th class="r">Excl. Salary</th><th class="r">Incl. Salary</th><th class="r">% Excl.</th>
-          </tr></thead>
-          <tbody id="excl-summary-tbl"></tbody>
-        </table></div>
-      </div>
-      <div id="excl-months"></div>
-    </div>
-  </div>
-
-</div><!-- /content -->
+</div>
 
 <script>
 window.onerror=function(msg,src,line,col,err){console.error('[ERR]',msg,line);const el=document.getElementById('overlay-msg');if(el)el.textContent='JS Error: '+msg+' (line '+line+')';return false;};
@@ -672,165 +572,84 @@ function overlayShow(msg){const el=document.getElementById('overlay');el.style.d
 function overlayHide(){document.getElementById('overlay').style.display='none';}
 function overlayError(msg,detail){document.getElementById('overlay').innerHTML='<div class="err-box"><h3>Failed to load data</h3><p>'+msg+'</p><pre style="margin-top:8px;font-size:9px;color:#6a82a8;text-align:left;white-space:pre-wrap;background:#0a0f1a;padding:8px;border-radius:4px;max-height:100px;overflow-y:auto">'+detail+'</pre><p style="margin-top:10px;font-size:10px;line-height:1.6">1. Check GOOGLE_SERVICE_ACCOUNT_EMAIL + GOOGLE_PRIVATE_KEY in Vercel<br>2. Share sheets with service account (Viewer)<br>3. Redeploy after env var changes</p><button onclick="location.reload()">Retry</button></div>';}
 
-// ── KPI HELPER ────────────────────────────────────────────────────────────────
+// ── KPI HELPER ──────────────────────────────────────────────────────────────
 function kpi(label,value,sub,delta,color){
   const dHtml=delta!=null?'<div class="kpi-delta '+(delta>=0?'up':'down')+'">'+(delta>=0?'▲':'▼')+' '+Math.abs(delta).toFixed(2)+'%</div>':'';
   return'<div class="kpi"><div class="kpi-accent" style="background:'+(color||'var(--blue)')+'"></div><div class="kpi-label">'+label+'</div><div class="kpi-value">'+value+'</div>'+(sub?'<div class="kpi-sub">'+sub+'</div>':'')+dHtml+'</div>';
 }
 
-// ── RENDER ALL ────────────────────────────────────────────────────────────────
+// ── RENDER ALL ───────────────────────────────────────────────────────────────
 function renderAll(){
   if(!DATA)return;
   const months=filteredMonths();
-  if(!months.length){
-    document.getElementById('ov-kpis').innerHTML='<div style="color:var(--muted);padding:16px">No data matches the current filter.</div>';
-    return;
-  }
-  renderKPIs(months);
+  if(!months.length){document.getElementById('ov-kpis').innerHTML='<div style="color:var(--muted);padding:16px">No data matches filter.</div>';return;}
+  renderOverview(months);
   renderTrends(months);
-  renderProduct(months);
-  renderSegment(months);
-  renderCosting(months);
-  renderEditor(months);
-  renderExcluded();
+  renderSegments(months);
+  renderProducts(months);
+  renderEditors(months);
 }
 
-// ── 1. KPIs ───────────────────────────────────────────────────────────────────
-function renderKPIs(months){
+// ── 1. OVERVIEW ──────────────────────────────────────────────────────────────
+function renderOverview(months){
   const last=months[months.length-1],prev=months[months.length-2];
-  const s=computeFilteredSummary(last);
-  const sp=prev?computeFilteredSummary(prev):null;
+  const s=computeFilteredSummary(last),sp=prev?computeFilteredSummary(prev):null;
   function d(k){if(!sp||!sp[k])return null;return((s[k]-sp[k])/sp[k])*100;}
   document.getElementById('ov-kpis').innerHTML=[
     kpi('Salary Cost',f.inr0(s.totalCost),last.month,d('totalCost'),'#4f78ff'),
     kpi('Images',f.num(s.totalImages),'Images product',d('totalImages'),'#4f78ff'),
-    kpi('360 SKUs',f.num(s.total360Skus),'360/Spin SKUs',null,'#22d4a0'),
+    kpi('360 SKUs',f.num(s.total360Skus),'360/Spin',null,'#22d4a0'),
     kpi('Video SKUs',f.num(s.totalVideoSkus),'reqc only',null,'#f5a42a'),
-    kpi('VINs',f.num(s.totalVins),'Image SKUs = VINs',d('totalVins'),'#a07cff'),
+    kpi('VINs',f.num(s.totalVins),'Unique vehicles',d('totalVins'),'#a07cff'),
     kpi('Total Units',f.num(s.totalUnits),'Billing units',d('totalUnits'),'#38c4f0'),
     kpi('Efficiency',f.pct(s.efficiency),'Target / Actual',d('efficiency'),'#22d4a0'),
-    kpi('₹ / VIN',f.inr(s.costPerVin),'Per unique vehicle',d('costPerVin'),'#f5a42a'),
+    kpi('₹ / VIN',f.inr(s.costPerVin),'Per vehicle',d('costPerVin'),'#f5a42a'),
   ].join('');
-  const ms=months.map(m=>computeFilteredSummary(m));
-  // Salary cost chart
-  mk('ch-cost',{type:'line',_lf:v=>v?'₹'+f.short(v):'',data:{labels:months.map(m=>m.month.replace('-26','')),datasets:[{label:'Salary Cost',data:ms.map(s=>s.totalCost),borderColor:'#4f78ff',borderWidth:2,backgroundColor:'rgba(79,120,255,.1)',fill:true,tension:.35,pointBackgroundColor:'#4f78ff',pointRadius:4,pointHoverRadius:6}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' ₹'+f.num(ctx.raw)}}},scales:{y:{ticks:{callback:v=>'₹'+f.short(v)}}}}});
-  // Snapshot table
-  document.getElementById('ov-tbody').innerHTML=months.map((m,i)=>{
-    const s=ms[i];
-    return'<tr><td class="bright">'+m.month+'</td><td class="r">'+f.inr0(s.totalCost)+'</td><td class="r">'+f.num(s.totalImages)+'</td><td class="r">'+f.num(s.total360Skus)+'</td><td class="r">'+f.num(s.totalVideoSkus)+'</td><td class="r" style="color:var(--purple)">'+f.num(s.totalVins)+'</td><td class="r"><span class="'+effCls(s.efficiency)+'">'+f.pct(s.efficiency)+'</span></td><td class="r" style="color:var(--amber)">'+f.inr(s.costPerVin)+'</td><td class="r">'+f.inr(s.costPerUnit)+'</td></tr>';
-  }).join('');
+  const ms=months.map(m=>computeFilteredSummary(m)),labels=months.map(m=>m.month.replace('-26',''));
+  mk('ch-cost',{type:'line',_lf:v=>v?'₹'+f.short(v):'',data:{labels,datasets:[{label:'Salary Cost',data:ms.map(s=>s.totalCost),borderColor:'#4f78ff',borderWidth:2,backgroundColor:'rgba(79,120,255,.1)',fill:true,tension:.35,pointBackgroundColor:'#4f78ff',pointRadius:4,pointHoverRadius:6}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' ₹'+f.num(ctx.raw)}}},scales:{y:{ticks:{callback:v=>'₹'+f.short(v)}}}}});
+  document.getElementById('ov-tbody').innerHTML=months.map((m,i)=>{const s=ms[i];return'<tr><td class="bright">'+m.month+'</td><td class="r">'+f.inr0(s.totalCost)+'</td><td class="r">'+f.num(s.totalImages)+'</td><td class="r">'+f.num(s.total360Skus)+'</td><td class="r">'+f.num(s.totalVideoSkus)+'</td><td class="r" style="color:var(--purple)">'+f.num(s.totalVins)+'</td><td class="r"><span class="'+effCls(s.efficiency)+'">'+f.pct(s.efficiency)+'</span></td><td class="r" style="color:var(--amber)">'+f.inr(s.costPerVin)+'</td><td class="r">'+f.inr(s.costPerUnit)+'</td></tr>';}).join('');
 }
 
-// ── 2. TRENDS ─────────────────────────────────────────────────────────────────
+// ── 2. TRENDS ────────────────────────────────────────────────────────────────
 function renderTrends(months){
-  const labels=months.map(m=>m.month.replace('-26',''));
-  const ms=months.map(m=>computeFilteredSummary(m));
+  const labels=months.map(m=>m.month.replace('-26','')),ms=months.map(m=>computeFilteredSummary(m));
   mk('ch-vol',{type:'bar',_lf:v=>v>0?f.short(v):'',data:{labels,datasets:[{label:'Images',data:ms.map(s=>s.totalImages),backgroundColor:'#4f78ff',borderRadius:3},{label:'360 SKUs',data:ms.map(s=>s.total360Skus||0),backgroundColor:'#22d4a0',borderRadius:3},{label:'Video SKUs',data:ms.map(s=>s.totalVideoSkus||0),backgroundColor:'#f5a42a',borderRadius:3}]},options:{scales:{y:{ticks:{callback:v=>f.short(v)}}}}});
   mk('ch-cpi',{type:'line',_lf:v=>v?'₹'+Number(v).toFixed(2):'',data:{labels,datasets:[{label:'₹/Unit',data:ms.map(s=>s.costPerUnit),borderColor:'#22d4a0',borderWidth:2,tension:.3,pointBackgroundColor:'#22d4a0',pointRadius:4},{label:'₹/VIN',data:ms.map(s=>s.costPerVin||0),borderColor:'#f5a42a',borderWidth:2,tension:.3,pointBackgroundColor:'#f5a42a',pointRadius:4}]},options:{scales:{y:{ticks:{callback:v=>'₹'+v}}}}});
-  mk('ch-eff-trend',{type:'bar',_lf:v=>v?v.toFixed(2)+'%':'',data:{labels,datasets:[{label:'Efficiency %',data:ms.map(s=>s.efficiency),backgroundColor:ms.map(s=>s.efficiency>=100?'#22d4a0':s.efficiency>=80?'#f5a42a':'#f0566a'),borderRadius:4}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.raw.toFixed(2)+'%'}}},scales:{y:{ticks:{callback:v=>v+'%'}}}}});
 }
 
-// ── 3. PRODUCT ────────────────────────────────────────────────────────────────
-// Returns segment+product filtered product rows with recomputed costs
-function getFilteredProducts(m){
-  const segActive=FILTERS.segment.selected.size>0&&FILTERS.segment.selected.size<FILTERS.segment.all.length;
-  if(!segActive) return filterBreakdown(m.productBreakdown,'product');
-  // Build product stats from segment×product intersection
-  const segs=filterBreakdown(m.segmentBreakdown,'segment');
-  const byProd={};
-  segs.forEach(sg=>{
-    Object.entries(sg.byProduct||{}).forEach(([pName,pd])=>{
-      if(!passesFilter('product',pName))return;
-      if(!byProd[pName])byProd[pName]={name:pName,images:0,skus:0,units:0,vins:0,actualMins:0,sumTarget:0};
-      const bp=byProd[pName];
-      bp.images+=pd.images||0;bp.skus+=pd.skus||0;bp.units+=pd.units||0;
-      bp.vins+=pd.vins||0;bp.actualMins+=pd.actualMins||0;bp.sumTarget+=pd.sumTarget||0;
-    });
-  });
-  const totalActMins=Object.values(byProd).reduce((s,p)=>s+p.actualMins,0)||1;
-  const totalCost=m.summary.totalCost*(Object.values(byProd).reduce((s,p)=>s+p.actualMins,0)/(m.summary.totalActMins||1));
-  return Object.values(byProd).map(p=>{
-    const pCost=totalCost*(p.actualMins/totalActMins);
-    const orig=m.productBreakdown.find(x=>x.name===p.name)||{};
-    return{
-      ...p,
-      efficiency:p.actualMins>0?+((p.sumTarget/p.actualMins)*100).toFixed(2):0,
-      costPerUnit:p.units>0?+(pCost/p.units).toFixed(2):0,
-      costPerSku:p.skus>0?+(pCost/p.skus).toFixed(2):0,
-      costSharePct:totalCost>0?+((pCost/totalCost)*100).toFixed(1):0,
-      unitLabel:orig.unitLabel||'',
-    };
-  }).filter(p=>p.units>0);
-}
-
-function renderProduct(months){
-  const m=months[months.length-1];
-  const prods=getFilteredProducts(m);
-  const colors=prods.map((p,i)=>pc(p.name,i));
-  document.getElementById('pr-vol-sub').textContent=m.month;
-  mk('ch-pr-cpu',{type:'bar',_lf:v=>v?f.inr(v):'',data:{labels:prods.map(p=>p.name),datasets:[{label:'₹/Unit',data:prods.map(p=>p.costPerUnit),backgroundColor:colors,borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'₹'+v}}}}});
-  document.getElementById('pr-tbl').innerHTML=prods.map(p=>{const bar=Math.round((p.costSharePct||0)*1.4);return'<tr><td class="bright">'+prodTag(p.name)+'</td><td style="color:var(--sub);font-size:10px">'+(p.unitLabel||'')+'</td><td class="r">'+f.num(p.units)+'</td><td class="r">'+f.num(p.skus)+'</td><td class="r">'+f.mins(p.actualMins)+'</td><td class="r"><span class="'+effCls(p.efficiency)+'">'+f.pct(p.efficiency)+'</span></td><td class="r" style="color:var(--text);font-weight:600">'+f.inr(p.costPerUnit)+'</td><td class="r">'+f.inr(p.costPerSku)+'</td><td class="r">'+f.pct(p.costSharePct)+'<span class="mini-bar" style="width:'+bar+'px"></span></td></tr>';}).join('');
-  // ₹/Unit trend — per-product cost per unit across months (segment-aware)
-  const allProdNames=[...new Set(DATA.months.flatMap(mo=>mo.productBreakdown.map(p=>p.name)))].filter(n=>passesFilter('product',n));
-  mk('ch-pr-trend',{type:'line',data:{labels:months.map(mo=>mo.month.replace('-26','')),datasets:allProdNames.map((prod,i)=>({label:prod,data:months.map(mo=>{const fp=getFilteredProducts(mo).find(p=>p.name===prod);return fp?fp.costPerUnit:0;}),borderColor:pc(prod,i),backgroundColor:pc(prod,i)+'22',borderWidth:2,tension:.3,pointBackgroundColor:pc(prod,i),pointRadius:3,fill:false}))},options:{scales:{y:{ticks:{callback:v=>'₹'+v}}},plugins:{tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': ₹'+Number(ctx.raw).toFixed(2)}}}}});
-}
-
-// ── 4. SEGMENT ────────────────────────────────────────────────────────────────
-function renderSegment(months){
+// ── 3. SEGMENTS & COSTING ────────────────────────────────────────────────────
+function renderSegments(months){
   const m=months[months.length-1];
   const segs=filterBreakdown(m.segmentBreakdown,'segment');
   document.getElementById('sg-vol-sub').textContent=m.month;
   const labels=segs.map(s=>s.name),colors=segs.map(s=>sc(s.name));
   mk('ch-sg-vol',{type:'bar',_lf:v=>v>0?f.short(v):'',data:{labels,datasets:[{label:'Units',data:segs.map(s=>s.units),backgroundColor:colors,borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>f.short(v)}}}}});
-  mk('ch-sg-pie',{type:'doughnut',data:{labels,datasets:[{data:segs.map(s=>s.costShare),backgroundColor:colors,borderWidth:0,hoverOffset:4,datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>4,color:'#fff',font:{size:10,weight:'600'},formatter:(v)=>v.toFixed(0)+'%',anchor:'center',align:'center'}}]},options:{cutout:'62%',scales:{x:{display:false},y:{display:false}},plugins:{legend:{position:'right',labels:{color:'#6a82a8',font:{size:10},boxWidth:9}},tooltip:{callbacks:{label:ctx=>ctx.label+': '+ctx.parsed.toFixed(2)+'%'}}}}});
+  mk('ch-sg-pie',{type:'doughnut',data:{labels,datasets:[{data:segs.map(s=>s.costShare),backgroundColor:colors,borderWidth:0,hoverOffset:4,datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>4,color:'#fff',font:{size:10,weight:'600'},formatter:v=>v.toFixed(0)+'%',anchor:'center',align:'center'}}]},options:{cutout:'62%',scales:{x:{display:false},y:{display:false}},plugins:{legend:{position:'right',labels:{color:'#6a82a8',font:{size:10},boxWidth:9}},tooltip:{callbacks:{label:ctx=>ctx.label+': '+ctx.parsed.toFixed(2)+'%'}}}}});
   mk('ch-sg-vinc',{type:'bar',_lf:v=>v?'₹'+Number(v).toFixed(2):'',data:{labels,datasets:[{label:'₹/VIN',data:segs.map(s=>s.costPerVin),backgroundColor:colors,borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'₹'+v}}}}});
   mk('ch-sg-eff',{type:'bar',_lf:v=>v?v.toFixed(2)+'%':'',data:{labels,datasets:[{label:'Efficiency %',data:segs.map(s=>s.efficiency),backgroundColor:segs.map(s=>s.efficiency>=100?'#22d4a0':s.efficiency>=80?'#f5a42a':'#f0566a'),borderRadius:4}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.raw.toFixed(2)+'%'}}},scales:{y:{ticks:{callback:v=>v+'%'}}}}});
-  const allSegs=[...new Set(DATA.months.flatMap(mo=>mo.segmentBreakdown.map(s=>s.name)))];
-  mk('ch-sg-trend',{type:'bar',data:{labels:months.map(mo=>mo.month.replace('-26','')),datasets:allSegs.map((seg,i)=>({label:seg,data:months.map(mo=>{const s=mo.segmentBreakdown.find(x=>x.name===seg);if(!s)return 0;const prodAll=FILTERS.product.selected.size===0||FILTERS.product.selected.size===FILTERS.product.all.length;if(prodAll)return s.units;return Object.entries(s.byProduct||{}).filter(([k])=>passesFilter('product',k)).reduce((sum,[,pd])=>sum+pd.units,0);}),backgroundColor:sc(seg),stack:'a',borderRadius:i===allSegs.length-1?3:0}))},options:{scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:v=>f.short(v)}}}}});
-  document.getElementById('sg-summary-tbl').innerHTML=segs.map(s=>{const bar=Math.round((s.costShare||0)*1.4);return'<tr><td class="bright"><span class="seg" style="background:'+sc(s.name)+'22;color:'+sc(s.name)+'">'+s.name+'</span></td><td class="r">'+f.num(s.uniqueEnterprises)+'</td><td class="r" style="color:var(--purple)">'+f.num(s.vins)+'</td><td class="r">'+f.num(s.units)+'</td><td class="r"><span class="'+effCls(s.efficiency)+'">'+f.pct(s.efficiency)+'</span></td><td class="r" style="color:var(--amber)">'+f.inr(s.costPerVin)+'</td><td class="r">'+f.inr(s.costPerUnit)+'</td><td class="r">'+f.pct(s.costShare)+'<span class="mini-bar" style="width:'+bar+'px"></span></td></tr>';}).join('');
+  document.getElementById('sg-summary-tbl').innerHTML=segs.map(s=>'<tr><td class="bright"><span class="seg" style="background:'+sc(s.name)+'22;color:'+sc(s.name)+'">'+s.name+'</span></td><td class="r" style="color:var(--purple)">'+f.num(s.vins)+'</td><td class="r">'+f.num(s.units)+'</td><td class="r"><span class="'+effCls(s.efficiency)+'">'+f.pct(s.efficiency)+'</span></td><td class="r" style="color:var(--amber)">'+f.inr(s.costPerVin)+'</td><td class="r">'+f.pct(s.costShare)+'</td></tr>').join('');
+  document.getElementById('co-dealer-tbl').innerHTML=m.dealerBreakdown.map(d=>'<tr><td class="bright">'+d.name+'</td><td class="r">'+f.num(d.vins)+'</td><td class="r">'+f.num(d.units)+'</td><td class="r"><span class="'+effCls(d.efficiency)+'">'+f.pct(d.efficiency)+'</span></td><td class="r">'+f.inr(d.costPerUnit)+'</td><td class="r">'+f.inr(d.costPerVin)+'</td></tr>').join('');
+  document.getElementById('co-ent-tbl').innerHTML=m.enterpriseBreakdown.map((e,i)=>'<tr><td class="rank-num">'+(i+1)+'</td><td class="bright" style="max-width:160px;overflow:hidden;text-overflow:ellipsis">'+e.name+'</td><td><span class="seg" style="background:'+sc(e.segment)+'22;color:'+sc(e.segment)+';font-size:9px">'+e.segment+'</span></td><td class="r">'+f.num(e.vins)+'</td><td class="r"><span class="'+effCls(e.efficiency)+'">'+f.pct(e.efficiency)+'</span></td><td class="r">'+f.inr(e.costPerVin)+'</td></tr>').join('');
 }
 
-// ── 5. COSTING ────────────────────────────────────────────────────────────────
-function renderCosting(months){
+// ── 4. PRODUCTS ──────────────────────────────────────────────────────────────
+function renderProducts(months){
   const m=months[months.length-1];
-  const s=computeFilteredSummary(m);
-  document.getElementById('co-kpis').innerHTML=[
-    kpi('Salary Cost',f.inr0(s.totalCost),m.month,null,'#4f78ff'),
-    kpi('VINs',f.num(s.totalVins),'Unique vehicles',null,'#a07cff'),
-    kpi('Total Units',f.num(s.totalUnits),'Billing units',null,'#22d4a0'),
-    kpi('₹/VIN',f.inr(s.costPerVin),'Per vehicle',null,'#f5a42a'),
-    kpi('₹/Unit',f.inr(s.costPerUnit),'Blended',null,'#38c4f0'),
-    kpi('Efficiency',f.pct(s.efficiency),'Target/Actual',null,'#22d4a0'),
-  ].join('');
-  const segs=filterBreakdown(m.segmentBreakdown,'segment');
-  document.getElementById('co-seg-sub').textContent=m.month;
-  mk('ch-seg-pie',{type:'doughnut',data:{labels:segs.map(s=>s.name),datasets:[{data:segs.map(s=>s.costShare),backgroundColor:segs.map(s=>sc(s.name)),borderWidth:0,hoverOffset:4,datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>4,color:'#fff',font:{size:10,weight:'600'},formatter:(v)=>v.toFixed(0)+'%',anchor:'center',align:'center'}}]},options:{cutout:'62%',scales:{x:{display:false},y:{display:false}},plugins:{legend:{position:'right',labels:{color:'#6a82a8',font:{size:10},boxWidth:9}},tooltip:{callbacks:{label:ctx=>ctx.label+': '+ctx.parsed.toFixed(2)+'%'}}}}});
-  mk('ch-seg-bar',{type:'bar',_lf:v=>v?'₹'+Number(v).toFixed(2):'',data:{labels:segs.map(s=>s.name),datasets:[{label:'₹/VIN',data:segs.map(s=>s.costPerVin),backgroundColor:segs.map(s=>sc(s.name)),borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'₹'+v}}}}});
-  document.getElementById('co-dealer-tbl').innerHTML=m.dealerBreakdown.map(d=>'<tr><td class="bright">'+d.name+'</td><td class="r">'+f.num(d.units)+'</td><td class="r">'+f.num(d.vins)+'</td><td class="r">'+f.mins(d.actualMins)+'</td><td class="r"><span class="'+effCls(d.efficiency)+'">'+f.pct(d.efficiency)+'</span></td><td class="r">'+f.inr(d.costPerUnit)+'</td><td class="r">'+f.inr(d.costPerVin)+'</td></tr>').join('');
-  document.getElementById('co-ent-tbl').innerHTML=m.enterpriseBreakdown.map((e,i)=>'<tr><td class="rank-num">'+(i+1)+'</td><td class="bright" style="max-width:190px;overflow:hidden;text-overflow:ellipsis">'+e.name+'</td><td><span class="seg" style="background:'+sc(e.segment)+'22;color:'+sc(e.segment)+'">'+e.segment+'</span></td><td class="r">'+f.num(e.units)+'</td><td class="r">'+f.num(e.vins)+'</td><td class="r"><span class="'+effCls(e.efficiency)+'">'+f.pct(e.efficiency)+'</span></td><td class="r">'+f.inr(e.costPerUnit)+'</td><td class="r">'+f.inr(e.costPerVin)+'</td></tr>').join('');
+  const prods=getFilteredProducts(m);
+  const colors=prods.map((p,i)=>pc(p.name,i));
+  document.getElementById('pr-vol-sub').textContent=m.month;
+  mk('ch-pr-cpu',{type:'bar',_lf:v=>v?f.inr(v):'',data:{labels:prods.map(p=>p.name),datasets:[{label:'₹/Unit',data:prods.map(p=>p.costPerUnit),backgroundColor:colors,borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'₹'+v}}}}});
+  document.getElementById('pr-tbl').innerHTML=prods.map(p=>{const bar=Math.round((p.costSharePct||0)*1.4);return'<tr><td class="bright">'+prodTag(p.name)+'</td><td class="r">'+f.num(p.units)+'</td><td class="r"><span class="'+effCls(p.efficiency)+'">'+f.pct(p.efficiency)+'</span></td><td class="r" style="color:var(--text);font-weight:600">'+f.inr(p.costPerUnit)+'</td><td class="r">'+f.pct(p.costSharePct)+'<span class="mini-bar" style="width:'+bar+'px"></span></td></tr>';}).join('');
 }
 
-// ── 6. QC EDITOR ──────────────────────────────────────────────────────────────
+// ── 5. EDITORS ───────────────────────────────────────────────────────────────
 let edData=[];
-function renderEditor(months){
+function renderEditors(months){
   const m=months[months.length-1];
   edData=filterBreakdown(m.editorBreakdown,'editor');
-  const top=edData[0]||{};
-  const avgEff=edData.length?(edData.reduce((s,e)=>s+e.efficiency,0)/edData.length).toFixed(2):0;
   document.getElementById('ed-sub1').textContent=m.month;
-  document.getElementById('ed-sub2').textContent=m.month;
-  document.getElementById('ed-kpis').innerHTML=[
-    kpi('Active Editors',f.num(edData.length),m.month,null,'#4f78ff'),
-    kpi('Top Editor',f.email(top.email)||'—',top.email||'',null,'#22d4a0'),
-    kpi('Top Units',f.short(top.units),'by top editor',null,'#f5a42a'),
-    kpi('Avg Efficiency',f.pct(+avgEff),'all editors',null,'#a07cff'),
-    kpi('Total Images',f.short(edData.reduce((s,e)=>s+(e.byProduct?Object.entries(e.byProduct).find(([k])=>/image/i.test(k))?.[1]||0:e.images),0)),'Images product',null,'#38c4f0'),
-    kpi('Salary Matched',edData.filter(e=>e.salary>0).length+' / '+edData.length,'editors',null,'#f07832'),
-  ].join('');
   const t10=[...edData].slice(0,10);
   mk('ch-ed-vol',{type:'bar',_lf:v=>v>0?f.short(v):'',data:{labels:t10.map(e=>f.email(e.email)),datasets:[{label:'Units',data:t10.map(e=>e.units),backgroundColor:'#4f78ff',borderRadius:[0,3,3,0]}]},options:{indexAxis:'y',layout:{padding:{right:50}},plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>f.short(v)}},y:{ticks:{font:{size:10}}}}}});
-  const tEff=[...edData].sort((a,b)=>b.efficiency-a.efficiency).slice(0,10);
-  mk('ch-ed-eff',{type:'bar',_lf:v=>v?v.toFixed(2)+'%':'',data:{labels:tEff.map(e=>f.email(e.email)),datasets:[{label:'Efficiency %',data:tEff.map(e=>e.efficiency),backgroundColor:tEff.map(e=>e.efficiency>=100?'#22d4a0':e.efficiency>=80?'#f5a42a':'#f0566a'),borderRadius:[0,3,3,0]}]},options:{indexAxis:'y',layout:{padding:{right:60}},plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>v+'%'}},y:{ticks:{font:{size:10}}}}}});
   renderEditorTable();
 }
 function renderEditorTable(){
@@ -841,27 +660,11 @@ function renderEditorTable(){
     const imgU=e.byProduct?Object.entries(e.byProduct).find(([k])=>/image/i.test(k))?.[1]||0:e.images;
     const s360=e.byProduct?Object.entries(e.byProduct).find(([k])=>/360|spin/i.test(k))?.[1]||0:0;
     const vid=e.byProduct?Object.entries(e.byProduct).find(([k])=>/video/i.test(k))?.[1]||0:0;
-    return'<tr><td class="rank-num">'+(i+1)+'</td><td><div style="color:var(--text);font-weight:500">'+f.email(e.email)+'</div><div style="font-size:10px;color:var(--muted)">'+e.email+'</div></td><td class="r">'+f.num(imgU)+'</td><td class="r">'+f.num(s360)+'</td><td class="r">'+f.num(vid)+'</td><td class="r" style="color:var(--text);font-weight:600">'+f.num(e.units)+'</td><td class="r">'+f.mins(e.actualMins)+'</td><td class="r"><span class="'+effCls(e.efficiency)+'">'+f.pct(e.efficiency)+'</span></td><td class="r">'+f.inr(e.costPerUnit)+'</td><td class="r">'+(e.salary?f.inr0(e.salary):'<span style="color:var(--muted);font-size:10px">—</span>')+'</td></tr>';
+    return'<tr><td class="rank-num">'+(i+1)+'</td><td><div style="color:var(--text);font-weight:500">'+f.email(e.email)+'</div><div style="font-size:10px;color:var(--muted)">'+e.email+'</div></td><td class="r">'+f.num(imgU)+'</td><td class="r">'+f.num(s360)+'</td><td class="r">'+f.num(vid)+'</td><td class="r" style="color:var(--text);font-weight:600">'+f.num(e.units)+'</td><td class="r"><span class="'+effCls(e.efficiency)+'">'+f.pct(e.efficiency)+'</span></td><td class="r">'+f.inr(e.costPerUnit)+'</td></tr>';
   }).join('');
 }
 document.getElementById('ed-search').addEventListener('input',renderEditorTable);
 document.getElementById('ed-sort').addEventListener('change',renderEditorTable);
-
-// ── 7. EXCLUDED ───────────────────────────────────────────────────────────────
-function renderExcluded(){
-  if(!DATA)return;
-  document.getElementById('excl-summary-tbl').innerHTML=DATA.months.map(m=>{
-    const s=m.summary;const exclCount=m.excludedUsers?.length||0;
-    const exclSalary=m.excludedUsers?.reduce((sum,u)=>sum+(u.factorSalary||0),0)||0;
-    const totalWithExcl=s.totalCost+exclSalary;const exclPct=totalWithExcl>0?(exclSalary/totalWithExcl*100).toFixed(2):0;
-    return'<tr><td class="bright">'+m.month+'</td><td class="r">'+(exclCount?'<span class="excl-badge">'+exclCount+' excl</span>':'<span style="color:var(--muted)">0</span>')+'</td><td class="r">'+s.employees+'</td><td class="r">'+(exclSalary>0?'<span style="color:var(--red)">'+f.inr0(exclSalary)+'</span>':'—')+'</td><td class="r">'+f.inr0(s.totalCost)+'</td><td class="r">'+(exclPct>0?'<span style="color:var(--red)">'+exclPct+'%</span>':'0%')+'</td></tr>';
-  }).join('');
-  document.getElementById('excl-months').innerHTML=DATA.months.map(m=>{
-    const users=m.excludedUsers||[];if(!users.length)return'';
-    const rows=users.map((u,i)=>'<tr><td class="rank-num">'+(i+1)+'</td><td class="bright">'+(u.name||'—')+'</td><td style="color:var(--sub);font-size:11px">'+u.email+'</td><td style="color:var(--muted);font-size:10px;font-family:var(--mono)">'+(u.empNo||'—')+'</td><td class="r">'+f.inr0(u.salary)+'</td><td class="r"><span style="color:var(--red)">'+f.inr0(u.factorSalary)+'</span></td></tr>').join('');
-    return'<div class="section" style="border-left:3px solid var(--red);margin-bottom:10px"><div class="sec-head"><div style="display:flex;align-items:center;gap:10px"><div class="sec-title">'+m.month+'</div><span class="excl-badge">'+users.length+' excluded</span></div></div><div class="tbl-wrap"><table><thead><tr><th>#</th><th>Name</th><th>Email</th><th>Emp No</th><th class="r">Base Salary</th><th class="r">Factor Salary</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
-  }).join('');
-}
 
 fetchData();
 </script>
