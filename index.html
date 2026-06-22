@@ -422,6 +422,19 @@ select.sel:focus{border-color:var(--blue)}
 </div><!-- /main -->
 
 <script>
+// Global error handler — catches any uncaught JS errors and shows them on screen
+window.onerror = function(msg, src, line, col, err) {
+  console.error('[GLOBAL ERROR]', msg, 'at', src, line+':'+col, err);
+  const el = document.getElementById('overlay-msg');
+  if(el) el.textContent = 'JS Error: '+msg+' (line '+line+')';
+  return false;
+};
+window.addEventListener('unhandledrejection', function(e){
+  console.error('[UNHANDLED PROMISE]', e.reason);
+  const el = document.getElementById('overlay-msg');
+  if(el) el.textContent = 'Promise error: '+(e.reason?.message||e.reason);
+});
+
 const API_URL = '/api/data';
 let DATA = null, CHARTS = {};
 let SEL = { costing:null, product:null, editor:null, segment:null };
@@ -530,26 +543,44 @@ document.querySelectorAll('.nav-item').forEach(el=>{
 });
 
 // ── FETCH ─────────────────────────────────────────────────────────────────────
+function setMsg(msg){ const el=document.getElementById('overlay-msg'); if(el) el.textContent=msg; console.log('[dash]',msg); }
+
 async function fetchData(){
-  overlayShow('Fetching data from Google Sheets…');
+  overlayShow('Step 1/4: Starting up…');
+  setMsg('Step 1/4: Page loaded, starting fetch…');
+  await new Promise(r=>setTimeout(r,100)); // let overlay render
+
   try{
-    const res=await fetch(API_URL);
-    if(!res.ok)throw new Error(`HTTP ${res.status} — ${await res.text()}`);
-    const json=await res.json();
-    if(json.error)throw new Error(json.error + (json.hint ? ' | ' + json.hint : '') + (json.details ? ' | ' + JSON.stringify(json.details) : ''));
+    setMsg('Step 2/4: Calling '+API_URL+'…');
+    console.log('[dash] fetching', API_URL);
+    const res = await fetch(API_URL);
+    setMsg('Step 3/4: Got HTTP '+res.status+' response, parsing JSON…');
+    console.log('[dash] response status', res.status, res.ok);
+
+    if(!res.ok){
+      const txt = await res.text();
+      console.error('[dash] non-OK response:', txt);
+      throw new Error('HTTP '+res.status+' — '+txt.slice(0,300));
+    }
+
+    const json = await res.json();
+    console.log('[dash] parsed JSON, keys:', Object.keys(json));
+
+    if(json.error) throw new Error(json.error + (json.hint?' | '+json.hint:'') + (json.details?' | '+JSON.stringify(json.details):''));
+
+    setMsg('Step 4/4: Rendering '+json.months?.length+' months…');
     DATA=json;
     const last=DATA.months[DATA.months.length-1]?.key;
     SEL.costing=last;SEL.product=last;SEL.editor=last;SEL.segment=last;
     overlayHide();
-    document.getElementById('status-text').textContent=`${DATA.months.length} months`;
-    if(DATA.fetchedAt)document.getElementById('fetched-at').textContent='as of '+new Date(DATA.fetchedAt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('status-text').textContent=DATA.months.length+' months';
+    if(DATA.fetchedAt) document.getElementById('fetched-at').textContent='as of '+new Date(DATA.fetchedAt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
     renderAll();
+
   }catch(err){
-    const isNetErr = err.message.includes('Failed to fetch') || err.message.includes('NetworkError');
-    overlayError(
-      isNetErr ? 'Cannot reach the API. Is the Vercel function deployed?' : err.message,
-      isNetErr ? 'Network error — check Vercel deployment and function logs' : null
-    );
+    console.error('[dash] fetchData error:', err);
+    const detail = 'URL tried: '+API_URL+'\n\nError: '+err.message+'\n\nOpen DevTools → Console for more.';
+    overlayError(err.message, detail);
   }
 }
 async function refreshData(){const btn=document.getElementById('refresh-btn');btn.classList.add('spinning');await fetchData();btn.classList.remove('spinning');}
