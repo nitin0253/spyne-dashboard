@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <style>
 :root{
   --bg:#080c14;--surface:#0d1422;--card:#111926;--card2:#131f2e;
@@ -456,8 +456,8 @@ function sc(name){return SEG_C[name]||PAL[4];}
 function effCls(v){return v>=100?'eff-hi':v>=80?'eff-md':'eff-lo';}
 
 // ── CHART ─────────────────────────────────────────────────────────────────────
-// Register datalabels plugin globally
-Chart.register(ChartDataLabels);
+// Register datalabels plugin (only if loaded — CDN failure won't crash the app)
+if(typeof ChartDataLabels !== 'undefined') Chart.register(ChartDataLabels);
 
 const BASE={
   responsive:true,maintainAspectRatio:true,animation:{duration:320},
@@ -476,6 +476,7 @@ const BASE={
 
 // Helper: build datalabels config for a chart type
 function dlLabels(type, fmtFn, opts={}) {
+  if(typeof ChartDataLabels === 'undefined') return {display:false};
   const isBar = type==='bar';
   const isHBar = opts.horizontal;
   return {
