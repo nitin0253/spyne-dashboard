@@ -166,10 +166,10 @@ function enrichGroup(name, g, allocatedCost) {
     sumTarget:    Math.round(g.sumTarget),
     rows:         g.rows,
     efficiency:   +eff.toFixed(1),
-    costPerUnit:  g.units  > 0 ? +(allocatedCost / g.units).toFixed(4)  : 0,
-    costPerSku:   g.skus   > 0 ? +(allocatedCost / g.skus).toFixed(4)   : 0,
-    costPerVin:   g.vins   > 0 ? +(allocatedCost / g.vins).toFixed(4)   : 0,
-    costPerImage: g.images > 0 ? +(allocatedCost / g.images).toFixed(4) : 0,
+    costPerUnit:  g.units  > 0 ? +(allocatedCost / g.units).toFixed(2)  : 0,
+    costPerSku:   g.skus   > 0 ? +(allocatedCost / g.skus).toFixed(2)   : 0,
+    costPerVin:   g.vins   > 0 ? +(allocatedCost / g.vins).toFixed(2)   : 0,
+    costPerImage: g.images > 0 ? +(allocatedCost / g.images).toFixed(2) : 0,
   };
 }
 
@@ -198,9 +198,9 @@ function computeMonth(config, outputRows, salaryRows, enterpriseRows, removedRow
   const totalActMins   = enriched.reduce((s, r) => s + r.actualMins, 0);
   const totalTarget    = enriched.reduce((s, r) => s + r.sumTarget, 0);
   const efficiency     = totalActMins > 0 ? +((totalTarget / totalActMins) * 100).toFixed(1) : 0;
-  const costPerUnit    = totalUnits > 0 ? +(totalCost / totalUnits).toFixed(4) : 0;
-  const costPerSku     = totalSkus  > 0 ? +(totalCost / totalSkus).toFixed(4)  : 0;
-  const costPerVin     = totalVins  > 0 ? +(totalCost / totalVins).toFixed(4)  : 0;
+  const costPerUnit    = totalUnits > 0 ? +(totalCost / totalUnits).toFixed(2) : 0;
+  const costPerSku     = totalSkus  > 0 ? +(totalCost / totalSkus).toFixed(2)  : 0;
+  const costPerVin     = totalVins  > 0 ? +(totalCost / totalVins).toFixed(2)  : 0;
   const total360Skus   = enriched.filter(r => is360(r.product)).reduce((s, r) => s + r.skus, 0);
   const totalVideoSkus = enriched.filter(r => isVideo(r.product)).reduce((s, r) => s + r.skus, 0);
 
@@ -247,7 +247,7 @@ function computeMonth(config, outputRows, salaryRows, enterpriseRows, removedRow
     });
     Object.entries(byProduct).forEach(([, pd]) => {
       const pCost = totalActMins > 0 ? (pd.actualMins / totalActMins) * totalCost : 0;
-      pd.costPerUnit = pd.units > 0 ? +(pCost / pd.units).toFixed(4) : 0;
+      pd.costPerUnit = pd.units > 0 ? +(pCost / pd.units).toFixed(2) : 0;
       pd.efficiency  = pd.actualMins > 0 ? +((pd.sumTarget / pd.actualMins) * 100).toFixed(1) : 0;
       pd.units = Math.round(pd.units); pd.skus = Math.round(pd.skus);
       pd.images = Math.round(pd.images); pd.vins = Math.round(pd.vins);
@@ -267,7 +267,7 @@ function computeMonth(config, outputRows, salaryRows, enterpriseRows, removedRow
     return {
       ...enrichGroup(segName, g, segCost),
       vins: Math.round(segVins), seg360Skus: Math.round(seg360Skus), segVideoIds: Math.round(segVideoIds),
-      costPerVin:   segVins > 0 ? +(segCost / segVins).toFixed(4) : 0,
+      costPerVin:   segVins > 0 ? +(segCost / segVins).toFixed(2) : 0,
       costShare:    totalCost > 0 ? +((segCost / totalCost) * 100).toFixed(1) : 0,
       byProduct, topEnterprises,
       uniqueEnterprises: new Set(segRows.map(r => r.enterprise)).size,
