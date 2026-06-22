@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Spyne · Production Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg:       #0c0f18;
+    --surface:  #131929;
+    --card:     #161d2e;
+    --border:   #1e2a42;
+    --hover:    #1c2538;
+    --blue:     #4f78ff;
+    --blue-dim: #1e2f6b;
+    --green:    #2dd4a0;
+    --amber:    #f5a623;
+    --red:      #f06370;
+    --purple:   #9b79ff;
+    --text:     #e2e8f4;
+    --muted:    #5a6a8a;
+    --sub:      #8294b0;
+    --font:     'Inter', system-ui, sans-serif;
+    --mono:     'JetBrains Mono', monospace;
+  }
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.5;min-height:100vh;display:flex}
+
+  /* ── Layout ── */
+  #sidebar{width:220px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto}
+  #main{flex:1;min-width:0;display:flex;flex-direction:column}
+  #topbar{height:52px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px;position:sticky;top:0;z-index:10}
+  #content{flex:1;padding:24px;overflow-y:auto}
+
+  /* ── Sidebar ── */
+  .logo{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+  .logo-icon{width:32px;height:32px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;flex-shrink:0}
+  .logo-text{font-weight:600;font-size:13px;line-height:1.3}
+  .logo-sub{color:var(--muted);font-size:11px}
+
+  nav{padding:8px;flex:1}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;transition:all .15s;color:var(--sub);font-size:13px;font-weight:500;margin-bottom:2px;user-select:none}
+  .nav-item:hover{background:var(--hover);color:var(--text)}
+  .nav-item.active{background:var(--blue-dim);color:var(--blue)}
+  .nav-icon{font-size:15px;width:18px;text-align:center;flex-shrink:0}
+
+  .sidebar-footer{padding:8px;border-top:1px solid var(--border)}
+  .refresh-btn{display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;border-radius:8px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;font-family:var(--font);transition:all .15s}
+  .refresh-btn:hover{background:var(--hover);color:var(--text)}
+  .refresh-btn.spinning svg{animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ── Topbar ── */
+  .topbar-title{font-weight:600;font-size:14px}
+  .topbar-sub{color:var(--muted);font-size:12px;margin-left:4px}
+  .status-pill{margin-left:auto;display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;background:#0a2419;border:1px solid #1a4a30;font-size:11px;font-weight:500;color:var(--green)}
+  .status-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+  /* ── Month tabs ── */
+  .month-tabs{display:flex;gap:4px;flex-wrap:wrap}
+  .mtab{padding:5px 12px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:500;font-family:var(--font);transition:all .15s;background:var(--hover);color:var(--sub)}
+  .mtab:hover{color:var(--text)}
+  .mtab.active{background:var(--blue);color:#fff}
+
+  /* ── Cards ── */
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px}
+  .kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;transition:border-color .2s}
+  .kpi:hover{border-color:var(--blue-dim)}
+  .kpi-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px}
+  .kpi-value{font-size:22px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums;line-height:1.1}
+  .kpi-sub{font-size:11px;color:var(--muted);margin-top:5px}
+  .kpi-delta{font-size:11px;font-weight:500;margin-top:4px}
+  .kpi-delta.up{color:var(--green)}
+  .kpi-delta.down{color:var(--red)}
+
+  /* ── Section cards ── */
+  .section{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
+  .sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+  .sec-title{font-weight:600;font-size:14px}
+  .sec-sub{font-size:11px;color:var(--muted);margin-top:2px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+  @media(max-width:900px){.grid2,.grid3{grid-template-columns:1fr}}
+
+  /* ── Table ── */
+  .tbl-wrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead th{padding:0 12px 10px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);white-space:nowrap;border-bottom:1px solid var(--border)}
+  thead th.r{text-align:right}
+  tbody tr{border-bottom:1px solid #131929;transition:background .1s}
+  tbody tr:hover{background:var(--hover)}
+  tbody td{padding:10px 12px;color:var(--sub);white-space:nowrap}
+  tbody td.r{text-align:right;font-variant-numeric:tabular-nums}
+  tbody td.bright{color:var(--text)}
+  .eff-good{color:var(--green);font-weight:500}
+  .eff-mid{color:var(--amber);font-weight:500}
+  .eff-low{color:var(--red);font-weight:500}
+
+  /* ── Segment pill ── */
+  .seg-pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500}
+
+  /* ── Chart canvas wrapper ── */
+  .chart-wrap{position:relative}
+
+  /* ── Loading / Error ── */
+  #loading-overlay{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:999;font-size:14px;color:var(--sub)}
+  .spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite}
+  .error-box{background:#1a0a0e;border:1px solid #5a1d28;border-radius:10px;padding:20px 24px;max-width:480px;color:var(--red)}
+
+  /* ── Search input ── */
+  .search-input{background:var(--hover);border:1px solid var(--border);border-radius:8px;padding:6px 12px;color:var(--text);font-size:12px;font-family:var(--font);outline:none;width:200px;transition:border-color .15s}
+  .search-input:focus{border-color:var(--blue)}
+  .search-input::placeholder{color:var(--muted)}
+  select.filter-sel{background:var(--hover);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--sub);font-size:12px;font-family:var(--font);outline:none;cursor:pointer}
+  select.filter-sel:focus{border-color:var(--blue)}
+
+  /* ── Page visibility ── */
+  .page{display:none}
+  .page.active{display:block}
+</style>
+</head>
+<body>
+
+<!-- Loading overlay -->
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <div id="loading-msg">Connecting to Spyne data…</div>
+</div>
+
+<!-- Sidebar -->
+<div id="sidebar">
+  <div class="logo">
+    <div class="logo-icon">S</div>
+    <div>
+      <div class="logo-text">Spyne</div>
+      <div class="logo-sub">Production Dashboard</div>
+    </div>
+  </div>
+  <nav>
+    <div class="nav-item active" data-page="overview">
+      <span class="nav-icon">📊</span>Monthly Overview
+    </div>
+    <div class="nav-item" data-page="costing">
+      <span class="nav-icon">💰</span>Costing Report
+    </div>
+    <div class="nav-item" data-page="product">
+      <span class="nav-icon">📦</span>Product Report
+    </div>
+    <div class="nav-item" data-page="editor">
+      <span class="nav-icon">👤</span>QC Editor Report
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="refresh-btn" onclick="refreshData()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+        <path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+        <path d="M8 16H3v5"/>
+      </svg>
+      Refresh Data
+    </button>
+  </div>
+</div>
+
+<!-- Main area -->
+<div id="main">
+  <div id="topbar">
+    <span class="topbar-title" id="topbar-title">Monthly Overview</span>
+    <span class="topbar-sub">Jan – Jun 2026</span>
+    <div class="status-pill">
+      <span class="status-dot"></span>
+      <span id="status-text">Loading…</span>
+    </div>
+  </div>
+
+  <div id="content">
+
+    <!-- ══ PAGE: Overview ══════════════════════════════════════════════ -->
+    <div class="page active" id="page-overview">
+      <div class="kpi-grid" id="ov-kpis"></div>
+      <div class="section">
+        <div class="sec-header">
+          <div><div class="sec-title">Monthly Salary Cost</div><div class="sec-sub">Total factored salary cost per month</div></div>
+        </div>
+        <div class="chart-wrap"><canvas id="ch-cost" height="90"></canvas></div>
+      </div>
+      <div class="grid2">
+        <div class="section">
+          <div class="sec-header"><div><div class="sec-title">Volume Trend</div><div class="sec-sub">Images & SKUs processed</div></div></div>
+          <div class="chart-wrap"><canvas id="ch-volume" height="140"></canvas></div>
+        </div>
+        <div class="section">
+          <div class="sec-header"><div><div class="sec-title">Cost Efficiency Trend</div><div class="sec-sub">₹ per image and ₹ per SKU</div></div></div>
+          <div class="chart-wrap"><canvas id="ch-cpi" height="140"></canvas></div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="sec-header"><div class="sec-title">Month-by-Month Breakdown</div></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Month</th><th class="r">Salary Cost</th><th class="r">Images</th>
+                <th class="r">SKUs</th><th class="r">Actual Mins</th><th class="r">Efficiency</th>
+                <th class="r">Cost/Image</th><th class="r">Cost/SKU</th><th class="r">Employees</th>
+              </tr>
+            </thead>
+            <tbody id="ov-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PAGE: Costing ══════════════════════════════════════════════ -->
+    <div class="page" id="page-costing">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="font-weight:600;font-size:16px">Costing Report</div>
+          <div style="font-size:12px;color:var(--muted)">Cost breakdown by segment, dealer type & enterprise</div>
+        </div>
+        <div class="month-tabs" id="co-months"></div>
+      </div>
+      <div class="kpi-grid" id="co-kpis"></div>
+      <div class="grid2">
+        <div class="section">
+          <div class="sec-header"><div><div class="sec-title">Cost by Customer Segment</div><div class="sec-sub" id="co-seg-sub"></div></div></div>
+          <div class="chart-wrap"><canvas id="ch-seg-pie" height="200"></canvas></div>
+        </div>
+        <div class="section">
+          <div class="sec-header"><div><div class="sec-title">Cost/Image by Segment</div><div class="sec-sub" id="co-segcpi-sub"></div></div></div>
+          <div class="chart-wrap"><canvas id="ch-seg-bar" height="200"></canvas></div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="sec-header"><div class="sec-title">Dealer Type Breakdown</div></div>
+        <div class="tbl-wrap"><table>
+          <thead><tr>
+            <th>Dealer Type</th><th class="r">Images</th><th class="r">SKUs</th>
+            <th class="r">Minutes</th><th class="r">Efficiency</th>
+            <th class="r">Cost/Image</th><th class="r">Cost/SKU</th>
+          </tr></thead>
+          <tbody id="co-dealer-tbl"></tbody>
+        </table></div>
+      </div>
+      <div class="section">
+        <div class="sec-header"><div class="sec-title">Top 25 Enterprises by Volume</div></div>
+        <div class="tbl-wrap"><table>
+          <thead><tr>
+            <th>Enterprise</th><th>Segment</th><th class="r">Images</th>
+            <th class="r">SKUs</th><th class="r">Minutes</th>
+            <th class="r">Efficiency</th><th class="r">Cost/Image</th>
+          </tr></thead>
+          <tbody id="co-ent-tbl"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ══ PAGE: Product ══════════════════════════════════════════════ -->
+    <div class="page" id="page-product">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="font-weight:600;font-size:16px">Product Report</div>
+          <div style="font-size:12px;color:var(--muted)">Images, Videos & other product breakdown</div>
+        </div>
+        <div class="month-tabs" id="pr-months"></div>
+      </div>
+      <div class="grid2">
+        <div class="section">
+          <div class="sec-header"><div><div class="sec-title">Images by Product</div><div class="sec-sub" id="pr-img-sub"></div></div></div>
+          <div class="chart-wrap"><canvas id="ch-pr-bar" height="200"></canvas></div>
+        </div>
+        <div class="section">
+          <div class="sec-header"><div><div class="sec-title">Cost/Image by Product</div><div class="sec-sub" id="pr-cpi-sub"></div></div></div>
+          <div class="chart-wrap"><canvas id="ch-pr-cpi" height="200"></canvas></div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="sec-header"><div class="sec-title">Product Detail Table</div></div>
+        <div class="tbl-wrap"><table>
+          <thead><tr>
+            <th>Product</th><th class="r">Images</th><th class="r">SKUs</th>
+            <th class="r">Actual Mins</th><th class="r">Target Mins</th>
+            <th class="r">Efficiency</th><th class="r">Cost/Image</th>
+            <th class="r">Cost/SKU</th><th class="r">Cost Share</th>
+          </tr></thead>
+          <tbody id="pr-tbl"></tbody>
+        </table></div>
+      </div>
+      <div class="section">
+        <div class="sec-header"><div><div class="sec-title">Product Volume Trend (All Months)</div><div class="sec-sub">Stacked by product type</div></div></div>
+        <div class="chart-wrap"><canvas id="ch-pr-trend" height="90"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ══ PAGE: QC Editor ══════════════════════════════════════════════ -->
+    <div class="page" id="page-editor">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="font-weight:600;font-size:16px">QC Editor Report</div>
+          <div style="font-size:12px;color:var(--muted)">Per-editor production, efficiency & cost metrics</div>
+        </div>
+        <div class="month-tabs" id="ed-months"></div>
+      </div>
+      <div class="kpi-grid" id="ed-kpis"></div>
+      <div class="grid2">
+        <div class="section">
+          <div class="sec-header"><div><div class="sec-title">Top 10 by Images</div><div class="sec-sub" id="ed-sub1"></div></div></div>
+          <div class="chart-wrap"><canvas id="ch-ed-img" height="220"></canvas></div>
+        </div>
+        <div class="section">
+          <div class="sec-header"><div><div class="sec-title">Top 10 by Efficiency</div><div class="sec-sub" id="ed-sub2"></div></div></div>
+          <div class="chart-wrap"><canvas id="ch-ed-eff" height="220"></canvas></div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="sec-header">
+          <div class="sec-title">All Editors</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <input type="text" class="search-input" id="ed-search" placeholder="Search editor…">
+            <select class="filter-sel" id="ed-sort">
+              <option value="images">Sort: Images</option>
+              <option value="skus">Sort: SKUs</option>
+              <option value="efficiency">Sort: Efficiency</option>
+              <option value="actualMins">Sort: Minutes</option>
+              <option value="costPerImage">Sort: Cost/Image</option>
+            </select>
+          </div>
+        </div>
+        <div class="tbl-wrap"><table>
+          <thead><tr>
+            <th>#</th><th>Editor</th><th class="r">Images</th><th class="r">SKUs</th>
+            <th class="r">Minutes</th><th class="r">Efficiency</th>
+            <th class="r">Cost/Image</th><th class="r">Salary (₹)</th>
+          </tr></thead>
+          <tbody id="ed-tbl"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════════════════════════════
+const API_URL = '/api/data';  // proxied by Vercel rewrite
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════════════════
+let DATA = null;          // raw API response { months: [...] }
+let CHARTS = {};          // chart instances keyed by canvas id
+let SELECTED = {          // per-page selected month key
+  costing: null,
+  product: null,
+  editor:  null,
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FORMATTERS
+// ═══════════════════════════════════════════════════════════════════════════════
+const fmt = {
+  num:  v => v == null ? '—' : Number(v).toLocaleString('en-IN'),
+  inr:  v => v == null ? '—' : '₹' + Number(v).toLocaleString('en-IN', { maximumFractionDigits: 2 }),
+  pct:  v => v == null ? '—' : v.toFixed(1) + '%',
+  mins: v => { if (!v) return '—'; const h = Math.floor(v/60), m = v%60; return h ? `${fmt.num(h)}h ${m}m` : `${m}m`; },
+  short:v => { if (!v) return '0'; if (v>=1e7) return (v/1e7).toFixed(1)+'Cr'; if (v>=1e5) return (v/1e5).toFixed(1)+'L'; if (v>=1e3) return (v/1e3).toFixed(1)+'K'; return v; },
+  email:e => e ? e.split('@')[0] : '—',
+};
+
+const SEG_COLORS = { Ent:'#4f78ff', Enterprise:'#4f78ff', Mid:'#9b79ff', SMB:'#2dd4a0', Resellers:'#f5a623', Unknown:'#5a6a8a' };
+const PROD_COLORS = { Images:'#4f78ff', Videos:'#9b79ff', 'Spin (360)':'#2dd4a0', '360':'#2dd4a0' };
+const PALETTE = ['#4f78ff','#2dd4a0','#f5a623','#9b79ff','#f06370','#38bdf8','#fb923c'];
+function prodColor(name, i) { return PROD_COLORS[name] || PALETTE[i % PALETTE.length]; }
+function segColor(name) { return SEG_COLORS[name] || PALETTE[Object.keys(SEG_COLORS).indexOf(name) % PALETTE.length] || '#5a6a8a'; }
+
+function effClass(v) { return v >= 100 ? 'eff-good' : v >= 80 ? 'eff-mid' : 'eff-low'; }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CHART HELPERS
+// ═══════════════════════════════════════════════════════════════════════════════
+const BASE_CHART_OPTIONS = {
+  responsive: true,
+  maintainAspectRatio: true,
+  animation: { duration: 400 },
+  plugins: {
+    legend: { labels: { color: '#8294b0', font: { size: 11 }, boxWidth: 10 } },
+    tooltip: {
+      backgroundColor: '#161d2e',
+      borderColor: '#1e2a42',
+      borderWidth: 1,
+      titleColor: '#8294b0',
+      bodyColor: '#e2e8f4',
+      titleFont: { size: 11 },
+      bodyFont: { size: 12 },
+      padding: 10,
+    },
+  },
+  scales: {
+    x: { ticks: { color: '#5a6a8a', font: { size: 11 } }, grid: { color: '#1e2a42' } },
+    y: { ticks: { color: '#5a6a8a', font: { size: 11 } }, grid: { color: '#1e2a42' } },
+  },
+};
+
+function destroyChart(id) {
+  if (CHARTS[id]) { CHARTS[id].destroy(); delete CHARTS[id]; }
+}
+
+function makeChart(id, config) {
+  destroyChart(id);
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  // Deep merge base options
+  config.options = deepMerge(JSON.parse(JSON.stringify(BASE_CHART_OPTIONS)), config.options || {});
+  CHARTS[id] = new Chart(ctx, config);
+}
+
+function deepMerge(base, override) {
+  for (const k in override) {
+    if (override[k] && typeof override[k] === 'object' && !Array.isArray(override[k])) {
+      base[k] = deepMerge(base[k] || {}, override[k]);
+    } else {
+      base[k] = override[k];
+    }
+  }
+  return base;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DATA FETCHING
+// ═══════════════════════════════════════════════════════════════════════════════
+async function fetchData() {
+  setLoading(true, 'Fetching data from Google Sheets…');
+  try {
+    const res = await fetch(API_URL);
+    if (!res.ok) throw new Error(`API error ${res.status}: ${await res.text()}`);
+    const json = await res.json();
+    if (json.error) throw new Error(json.error);
+    DATA = json;
+
+    // Set defaults
+    const lastKey = DATA.months[DATA.months.length - 1]?.key;
+    SELECTED.costing = lastKey;
+    SELECTED.product = lastKey;
+    SELECTED.editor  = lastKey;
+
+    setLoading(false);
+    document.getElementById('status-text').textContent = `${DATA.months.length} months loaded`;
+    renderAll();
+  } catch (err) {
+    setLoading(false, null, err.message);
+  }
+}
+
+function setLoading(show, msg, err) {
+  const el = document.getElementById('loading-overlay');
+  if (!show) { el.style.display = 'none'; return; }
+  el.style.display = 'flex';
+  if (msg) document.getElementById('loading-msg').textContent = msg;
+  if (err) {
+    el.innerHTML = `<div class="error-box"><b>Failed to load data</b><br><br>${err}<br><br>
+      <small>Check: API_URL in index.html · Google credentials in Vercel · Sheets shared with service account</small>
+      <br><br><button onclick="location.reload()" style="background:var(--red);border:none;color:#fff;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px">Retry</button>
+    </div>`;
+  }
+}
+
+async function refreshData() {
+  const btn = document.querySelector('.refresh-btn');
+  btn.classList.add('spinning');
+  await fetchData();
+  btn.classList.remove('spinning');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════════════════════
+const PAGE_TITLES = { overview:'Monthly Overview', costing:'Costing Report', product:'Product Report', editor:'QC Editor Report' };
+
+document.querySelectorAll('.nav-item').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    const page = el.dataset.page;
+    document.getElementById('page-' + page).classList.add('active');
+    document.getElementById('topbar-title').textContent = PAGE_TITLES[page];
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RENDER ALL
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderAll() {
+  buildMonthTabs();
+  renderOverview();
+  renderCosting();
+  renderProduct();
+  renderEditor();
+}
+
+function buildMonthTabs() {
+  ['co','pr','ed'].forEach(prefix => {
+    const pageKey = { co:'costing', pr:'product', ed:'editor' }[prefix];
+    const container = document.getElementById(prefix + '-months');
+    container.innerHTML = '';
+    DATA.months.forEach(m => {
+      const btn = document.createElement('button');
+      btn.className = 'mtab' + (m.key === SELECTED[pageKey] ? ' active' : '');
+      btn.textContent = m.month.replace('-26','');
+      btn.onclick = () => {
+        SELECTED[pageKey] = m.key;
+        container.querySelectorAll('.mtab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        if (pageKey === 'costing') renderCosting();
+        if (pageKey === 'product') renderProduct();
+        if (pageKey === 'editor')  renderEditor();
+      };
+      container.appendChild(btn);
+    });
+  });
+}
+
+// ─── OVERVIEW ────────────────────────────────────────────────────────────────
+function renderOverview() {
+  const months = DATA.months;
+  const latest = months[months.length - 1];
+  const prev   = months[months.length - 2];
+
+  function delta(key) {
+    if (!prev || !prev.summary[key]) return null;
+    return ((latest.summary[key] - prev.summary[key]) / prev.summary[key]) * 100;
+  }
+
+  // KPI cards
+  const s = latest.summary;
+  document.getElementById('ov-kpis').innerHTML = [
+    kpiCard('Total Salary Cost', fmt.inr(s.totalCost), 'vs prev month', delta('totalCost')),
+    kpiCard('Images Processed',  fmt.short(s.totalImages), '', delta('totalImages')),
+    kpiCard('SKUs Processed',    fmt.short(s.totalSkus), '', delta('totalSkus')),
+    kpiCard('Actual Minutes',    fmt.mins(s.totalActMins), '', delta('totalActMins')),
+    kpiCard('Efficiency',        fmt.pct(s.efficiency), 'Target / Actual', delta('efficiency')),
+    kpiCard('Cost / Image',      fmt.inr(s.costPerImage), '₹ per image', delta('costPerImage')),
+  ].join('');
+
+  const labels = months.map(m => m.month.replace('-26',''));
+
+  // Cost area chart
+  makeChart('ch-cost', {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Salary Cost',
+        data: months.map(m => m.summary.totalCost),
+        borderColor: '#4f78ff', borderWidth: 2,
+        backgroundColor: 'rgba(79,120,255,.15)',
+        fill: true, tension: .35,
+        pointBackgroundColor: '#4f78ff', pointRadius: 4,
+      }],
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: { y: { ticks: { callback: v => fmt.short(v) } } },
+    },
+  });
+
+  // Volume bar chart
+  makeChart('ch-volume', {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Images', data: months.map(m => m.summary.totalImages), backgroundColor: '#4f78ff', borderRadius: 4 },
+        { label: 'SKUs',   data: months.map(m => m.summary.totalSkus),   backgroundColor: '#9b79ff', borderRadius: 4 },
+      ],
+    },
+    options: { scales: { y: { ticks: { callback: v => fmt.short(v) } } } },
+  });
+
+  // Cost/image trend
+  makeChart('ch-cpi', {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: '₹/Image', data: months.map(m => m.summary.costPerImage), borderColor: '#2dd4a0', borderWidth: 2, pointBackgroundColor: '#2dd4a0', tension: .35 },
+        { label: '₹/SKU',   data: months.map(m => m.summary.costPerSku),   borderColor: '#f5a623', borderWidth: 2, pointBackgroundColor: '#f5a623', tension: .35 },
+      ],
+    },
+    options: { scales: { y: { ticks: { callback: v => '₹'+v } } } },
+  });
+
+  // Summary table
+  document.getElementById('ov-table').innerHTML = months.map(m => {
+    const s = m.summary;
+    return `<tr>
+      <td class="bright">${m.month}</td>
+      <td class="r">${fmt.inr(s.totalCost)}</td>
+      <td class="r">${fmt.num(s.totalImages)}</td>
+      <td class="r">${fmt.num(s.totalSkus)}</td>
+      <td class="r">${fmt.mins(s.totalActMins)}</td>
+      <td class="r"><span class="${effClass(s.efficiency)}">${fmt.pct(s.efficiency)}</span></td>
+      <td class="r">${fmt.inr(s.costPerImage)}</td>
+      <td class="r">${fmt.inr(s.costPerSku)}</td>
+      <td class="r">${s.employees}</td>
+    </tr>`;
+  }).join('');
+}
+
+function kpiCard(label, value, sub, d) {
+  const deltaHtml = d != null
+    ? `<div class="kpi-delta ${d >= 0 ? 'up' : 'down'}">${d >= 0 ? '↑' : '↓'} ${Math.abs(d).toFixed(1)}%</div>`
+    : '';
+  return `<div class="kpi">
+    <div class="kpi-label">${label}</div>
+    <div class="kpi-value">${value}</div>
+    ${sub ? `<div class="kpi-sub">${sub}</div>` : ''}
+    ${deltaHtml}
+  </div>`;
+}
+
+// ─── COSTING ─────────────────────────────────────────────────────────────────
+function renderCosting() {
+  const m = DATA.months.find(m => m.key === SELECTED.costing);
+  if (!m) return;
+  const s = m.summary;
+
+  document.getElementById('co-kpis').innerHTML = [
+    kpiCard('Total Cost',    fmt.inr(s.totalCost), m.month),
+    kpiCard('Cost / Image',  fmt.inr(s.costPerImage), '₹ per image'),
+    kpiCard('Cost / SKU',    fmt.inr(s.costPerSku),   '₹ per SKU'),
+    kpiCard('Efficiency',    fmt.pct(s.efficiency),   'Target / Actual'),
+  ].join('');
+
+  const segs = m.segmentBreakdown;
+  document.getElementById('co-seg-sub').textContent    = m.month;
+  document.getElementById('co-segcpi-sub').textContent = m.month;
+
+  // Pie
+  makeChart('ch-seg-pie', {
+    type: 'doughnut',
+    data: {
+      labels: segs.map(s => s.name),
+      datasets: [{
+        data: segs.map(s => s.costShare),
+        backgroundColor: segs.map(s => segColor(s.name)),
+        borderWidth: 0, hoverOffset: 4,
+      }],
+    },
+    options: {
+      cutout: '65%',
+      scales: { x: { display: false }, y: { display: false } },
+      plugins: {
+        legend: { position: 'right', labels: { color: '#8294b0', boxWidth: 10, font: { size: 11 } } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed.toFixed(1)}%` } },
+      },
+    },
+  });
+
+  // Segment CPI bar
+  makeChart('ch-seg-bar', {
+    type: 'bar',
+    data: {
+      labels: segs.map(s => s.name),
+      datasets: [{
+        label: 'Cost/Image',
+        data: segs.map(s => s.costPerImage),
+        backgroundColor: segs.map(s => segColor(s.name)),
+        borderRadius: 4,
+      }],
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: { y: { ticks: { callback: v => '₹'+v } } },
+    },
+  });
+
+  // Dealer table
+  document.getElementById('co-dealer-tbl').innerHTML = m.dealerBreakdown.map(d => `<tr>
+    <td class="bright">${d.name}</td>
+    <td class="r">${fmt.num(d.images)}</td><td class="r">${fmt.num(d.skus)}</td>
+    <td class="r">${fmt.mins(d.actualMins)}</td>
+    <td class="r"><span class="${effClass(d.efficiency)}">${fmt.pct(d.efficiency)}</span></td>
+    <td class="r">${fmt.inr(d.costPerImage)}</td><td class="r">${fmt.inr(d.costPerSku)}</td>
+  </tr>`).join('');
+
+  // Enterprise table
+  document.getElementById('co-ent-tbl').innerHTML = m.enterpriseBreakdown.map(e => `<tr>
+    <td class="bright" style="max-width:220px;overflow:hidden;text-overflow:ellipsis">${e.name}</td>
+    <td><span class="seg-pill" style="background:${segColor(e.segment)}22;color:${segColor(e.segment)}">${e.segment}</span></td>
+    <td class="r">${fmt.num(e.images)}</td><td class="r">${fmt.num(e.skus)}</td>
+    <td class="r">${fmt.mins(e.actualMins)}</td>
+    <td class="r"><span class="${effClass(e.efficiency)}">${fmt.pct(e.efficiency)}</span></td>
+    <td class="r">${fmt.inr(e.costPerImage)}</td>
+  </tr>`).join('');
+}
+
+// ─── PRODUCT ──────────────────────────────────────────────────────────────────
+function renderProduct() {
+  const m = DATA.months.find(m => m.key === SELECTED.product);
+  if (!m) return;
+  const prods = m.productBreakdown;
+
+  document.getElementById('pr-img-sub').textContent = m.month;
+  document.getElementById('pr-cpi-sub').textContent = m.month;
+
+  const colors = prods.map((p, i) => prodColor(p.name, i));
+
+  makeChart('ch-pr-bar', {
+    type: 'bar',
+    data: {
+      labels: prods.map(p => p.name),
+      datasets: [{ label: 'Images', data: prods.map(p => p.images), backgroundColor: colors, borderRadius: 4 }],
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: { y: { ticks: { callback: v => fmt.short(v) } } },
+    },
+  });
+
+  makeChart('ch-pr-cpi', {
+    type: 'bar',
+    data: {
+      labels: prods.map(p => p.name),
+      datasets: [{ label: 'Cost/Image', data: prods.map(p => p.costPerImage), backgroundColor: colors, borderRadius: 4 }],
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: { y: { ticks: { callback: v => '₹'+v } } },
+    },
+  });
+
+  // Total cost for share calc
+  const totalCost = m.summary.totalCost;
+  const totalActMins = m.summary.totalActMins;
+  document.getElementById('pr-tbl').innerHTML = prods.map(p => {
+    const costShare = totalActMins > 0 ? ((p.actualMins / totalActMins) * 100).toFixed(1) : '—';
+    return `<tr>
+      <td class="bright">${p.name}</td>
+      <td class="r">${fmt.num(p.images)}</td><td class="r">${fmt.num(p.skus)}</td>
+      <td class="r">${fmt.mins(p.actualMins)}</td><td class="r">${fmt.mins(p.sumTarget)}</td>
+      <td class="r"><span class="${effClass(p.efficiency)}">${fmt.pct(p.efficiency)}</span></td>
+      <td class="r">${fmt.inr(p.costPerImage)}</td><td class="r">${fmt.inr(p.costPerSku)}</td>
+      <td class="r">${costShare}%</td>
+    </tr>`;
+  }).join('');
+
+  // Trend chart (all months stacked)
+  const allProds = [...new Set(DATA.months.flatMap(m => m.productBreakdown.map(p => p.name)))];
+  makeChart('ch-pr-trend', {
+    type: 'bar',
+    data: {
+      labels: DATA.months.map(m => m.month.replace('-26','')),
+      datasets: allProds.map((prod, i) => ({
+        label: prod,
+        data: DATA.months.map(m => (m.productBreakdown.find(p => p.name === prod)?.images || 0)),
+        backgroundColor: prodColor(prod, i),
+        borderRadius: i === allProds.length - 1 ? 4 : 0,
+        stack: 'a',
+      })),
+    },
+    options: { scales: { y: { ticks: { callback: v => fmt.short(v) }, stacked: true }, x: { stacked: true } } },
+  });
+}
+
+// ─── EDITOR ───────────────────────────────────────────────────────────────────
+let edCurrentData = [];
+
+function renderEditor() {
+  const m = DATA.months.find(m => m.key === SELECTED.editor);
+  if (!m) return;
+  edCurrentData = m.editorBreakdown;
+
+  document.getElementById('ed-sub1').textContent = m.month;
+  document.getElementById('ed-sub2').textContent = m.month;
+
+  const top = edCurrentData[0] || {};
+  document.getElementById('ed-kpis').innerHTML = [
+    kpiCard('Active Editors', fmt.num(edCurrentData.length), m.month),
+    kpiCard('Top Editor',     fmt.email(top.email) || '—', top.email || ''),
+    kpiCard('Top Images',     fmt.num(top.images), 'by top editor'),
+    kpiCard('Avg Efficiency', fmt.pct(edCurrentData.reduce((s,e) => s + e.efficiency, 0) / (edCurrentData.length || 1)), 'across all editors'),
+  ].join('');
+
+  // Top 10 by images
+  const t10 = [...edCurrentData].slice(0, 10);
+  makeChart('ch-ed-img', {
+    type: 'bar',
+    data: {
+      labels: t10.map(e => fmt.email(e.email)),
+      datasets: [{ label: 'Images', data: t10.map(e => e.images), backgroundColor: '#4f78ff', borderRadius: [0,4,4,0] }],
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { callback: v => fmt.short(v) } },
+        y: { ticks: { font: { size: 11 } } },
+      },
+    },
+  });
+
+  // Top 10 by efficiency
+  const te = [...edCurrentData].sort((a,b) => b.efficiency - a.efficiency).slice(0, 10);
+  makeChart('ch-ed-eff', {
+    type: 'bar',
+    data: {
+      labels: te.map(e => fmt.email(e.email)),
+      datasets: [{ label: 'Efficiency %', data: te.map(e => e.efficiency), backgroundColor: '#2dd4a0', borderRadius: [0,4,4,0] }],
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { callback: v => v + '%' } },
+        y: { ticks: { font: { size: 11 } } },
+      },
+    },
+  });
+
+  renderEditorTable();
+}
+
+function renderEditorTable() {
+  const search = document.getElementById('ed-search')?.value.toLowerCase() || '';
+  const sortKey = document.getElementById('ed-sort')?.value || 'images';
+
+  let rows = edCurrentData
+    .filter(e => !search || e.email.toLowerCase().includes(search))
+    .sort((a, b) => b[sortKey] - a[sortKey]);
+
+  document.getElementById('ed-tbl').innerHTML = rows.map((e, i) => `<tr>
+    <td style="color:var(--muted);font-size:11px">${i+1}</td>
+    <td>
+      <div class="bright">${fmt.email(e.email)}</div>
+      <div style="font-size:11px;color:var(--muted)">${e.email}</div>
+    </td>
+    <td class="r">${fmt.num(e.images)}</td><td class="r">${fmt.num(e.skus)}</td>
+    <td class="r">${fmt.mins(e.actualMins)}</td>
+    <td class="r"><span class="${effClass(e.efficiency)}">${fmt.pct(e.efficiency)}</span></td>
+    <td class="r">${fmt.inr(e.costPerImage)}</td>
+    <td class="r">${e.salary ? fmt.inr(e.salary) : '<span style="color:var(--muted);font-size:11px">not matched</span>'}</td>
+  </tr>`).join('');
+}
+
+document.getElementById('ed-search')?.addEventListener('input', renderEditorTable);
+document.getElementById('ed-sort')?.addEventListener('change', renderEditorTable);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════════════════════════════
+fetchData();
+</script>
+</body>
+</html>
