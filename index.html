@@ -333,43 +333,44 @@ select.sel:focus{border-color:var(--blue)}
       <div class="dash-section-line"></div><span class="dash-section-toggle" id="tog-s-product">▾</span>
     </div>
     <div class="dash-section-body" id="s-product">
+      <!-- Product Breakdown table on top, compact -->
+      <div class="section" style="margin-bottom:12px">
+        <div class="sec-head"><div class="sec-title">Product Breakdown</div></div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>Product</th><th class="r">Units</th><th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r">Cost Share</th></tr></thead>
+          <tbody id="pr-tbl"></tbody>
+        </table></div>
+      </div>
+      <!-- Charts row below -->
       <div class="g2" style="margin-bottom:12px">
         <div class="section">
           <div class="sec-head"><div><div class="sec-title">₹/Unit by Product</div><div class="sec-sub" id="pr-vol-sub"></div></div></div>
-          <div class="ch"><canvas id="ch-pr-cpu" height="150"></canvas></div>
+          <div class="ch"><canvas id="ch-pr-cpu" height="110"></canvas></div>
         </div>
         <div class="section">
           <div class="sec-head"><div><div class="sec-title">Top 10 Editors — Units</div><div class="sec-sub" id="ed-sub1"></div></div></div>
-          <div class="ch"><canvas id="ch-ed-vol" height="150"></canvas></div>
+          <div class="ch"><canvas id="ch-ed-vol" height="110"></canvas></div>
         </div>
       </div>
-      <div class="g2">
-        <div class="section">
-          <div class="sec-head"><div class="sec-title">Product Breakdown</div></div>
-          <div class="tbl-wrap"><table>
-            <thead><tr><th>Product</th><th class="r">Units</th><th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r">Cost Share</th></tr></thead>
-            <tbody id="pr-tbl"></tbody>
-          </table></div>
-        </div>
-        <div class="section">
-          <div class="sec-head">
-            <div class="sec-title">All Editors</div>
-            <div class="sec-actions">
-              <input type="text" class="search" id="ed-search" placeholder="Search editor…">
-              <select class="sel" id="ed-sort">
-                <option value="units">Sort: Units</option>
-                <option value="efficiency">Sort: Efficiency</option>
-                <option value="costPerUnit">Sort: ₹/Unit</option>
-              </select>
-            </div>
+      <!-- All Editors table -->
+      <div class="section">
+        <div class="sec-head">
+          <div class="sec-title">All Editors</div>
+          <div class="sec-actions">
+            <input type="text" class="search" id="ed-search" placeholder="Search editor…">
+            <select class="sel" id="ed-sort">
+              <option value="units">Sort: Units</option>
+              <option value="efficiency">Sort: Efficiency</option>
+              <option value="costPerUnit">Sort: ₹/Unit</option>
+            </select>
           </div>
-          <div class="tbl-wrap" style="max-height:280px;overflow-y:auto"><table>
-            <thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr>
-              <th>#</th><th>Editor</th><th class="r">Images</th><th class="r">360</th><th class="r">Video</th><th class="r">Total</th><th class="r">Efficiency</th><th class="r">₹/Unit</th>
-            </tr></thead>
-            <tbody id="ed-tbl"></tbody>
-          </table></div>
         </div>
+        <div class="tbl-wrap" style="max-height:280px;overflow-y:auto"><table>
+          <thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr>
+            <th>#</th><th>Editor</th><th class="r">Images</th><th class="r">360</th><th class="r">Video</th><th class="r">Total</th><th class="r">Efficiency</th><th class="r">₹/Unit</th>
+          </tr></thead>
+          <tbody id="ed-tbl"></tbody>
+        </table></div>
       </div>
     </div>
   </div>
