@@ -160,7 +160,7 @@ select.sel:focus{border-color:var(--blue)}
 <div id="main">
   <div id="topbar">
     <span class="tb-title" id="tb-title">Monthly Overview</span>
-    <span class="tb-crumb">Jan – Jun 2026</span>
+    <span class="tb-crumb" id="tb-range">Jan – Jun 2026</span>
     <div class="tb-right">
       <div class="pill pill-green"><span class="pill-dot"></span><span id="status-text">Loading…</span></div>
       <div class="tb-time" id="fetched-at"></div>
@@ -585,6 +585,13 @@ async function fetchData(){
     SEL.costing=last;SEL.product=last;SEL.editor=last;SEL.segment=last;
     overlayHide();
     document.getElementById('status-text').textContent=DATA.months.length+' months';
+    // Update date range in topbar dynamically from loaded data
+    if(DATA.months.length>0){
+      const first=DATA.months[0].month.replace('-26','');
+      const last2=DATA.months[DATA.months.length-1].month.replace('-26','');
+      const yr='20'+DATA.months[0].month.split('-')[1];
+      document.getElementById('tb-range').textContent=first+' – '+last2+' '+yr;
+    }
     if(DATA.fetchedAt) document.getElementById('fetched-at').textContent='as of '+new Date(DATA.fetchedAt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
     renderAll();
 
