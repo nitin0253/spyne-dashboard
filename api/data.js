@@ -1,14 +1,16 @@
 // api/data.js  –  Vercel Serverless Function
-// Reads all 6 Google Sheets (output + Salary + enterprise_details per month)
-// and returns computed analytics. No auth required on the client side.
 //
-// ENV VARS needed in Vercel dashboard:
+// Business rules:
+//   Images  → billing unit = Images col (multiple images per SKU)
+//   360     → billing unit = SKU_Count (1 SKU = 1 spin set), ignore Images col
+//   Video   → billing unit = SKU_Count (1 SKU = 1 video), ONLY rows where type = 'reqc'
+//
+// ENV VARS:
 //   GOOGLE_SERVICE_ACCOUNT_EMAIL
-//   GOOGLE_PRIVATE_KEY          (paste the full key, Vercel keeps \n as-is)
+//   GOOGLE_PRIVATE_KEY
 
 import { google } from 'googleapis';
 
-// ─── Sheet registry ─────────────────────────────────────────────────────────
 const SHEETS = [
   { month: 'Jan-26', key: 'jan26', id: '1VI-9hxnFIynsTOl3aCdIiR-RRAfRssISOWnZdddCz4Q' },
   { month: 'Feb-26', key: 'feb26', id: '1K2SMR34s0O21BKGpCX-EsUPgOdiAkiuUW8yDyyvFzQU' },
@@ -18,12 +20,18 @@ const SHEETS = [
   { month: 'Jun-26', key: 'jun26', id: '1i3KqktELNb-ykpZeHaMh3wk3FBBV-eHNAw6736oaXbI' },
 ];
 
-// ─── Google auth ─────────────────────────────────────────────────────────────
+// ── Product classification helpers ──────────────────────────────────────────
+function isImage(p) { return /image/i.test(p); }
+function is360(p)   { return /360|spin/i.test(p); }
+function isVideo(p) { return /video/i.test(p); }
+function billingUnits(row) { return isImage(row.product) ? row.images : row.skus; }
+
+// ── Google auth ──────────────────────────────────────────────────────────────
 function getSheets() {
   const auth = new google.auth.GoogleAuth({
     credentials: {
       client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      private_key:  process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
     },
     scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
   });
@@ -35,74 +43,61 @@ async function fetchRange(api, sheetId, range) {
   return res.data.values || [];
 }
 
-// ─── Parsers ──────────────────────────────────────────────────────────────────
-// output sheet: A=Hourly_Date B=Product C=Verticle D=Type E=Enterprise
-//               F=Dealer_Type G=QC H=SKU_Count I=Images J=Tool_Count
-//               K=Sum_Target L=Actual_Mins M=factor
+// ── Parsers ──────────────────────────────────────────────────────────────────
 function parseOutput(rows) {
   if (rows.length < 2) return [];
   return rows.slice(1)
     .filter(r => r[0])
     .map(r => ({
-      date:        r[0]  || '',
-      product:     r[1]  || '',
-      verticle:    r[2]  || '',
-      type:        r[3]  || '',
-      enterprise:  r[4]  || '',
-      dealerType:  r[5]  || '',
-      qcEditor:    r[6]  || '',
-      skus:        +r[7]  || 0,
-      images:      +r[8]  || 0,
-      tools:       +r[9]  || 0,
-      sumTarget:   +r[10] || 0,
-      actualMins:  +r[11] || 0,
-      factor:      +r[12] || 0,
-    }));
+      date:       r[0]  || '',
+      product:    r[1]  || '',
+      verticle:   r[2]  || '',
+      type:       (r[3] || '').toLowerCase().trim(),
+      enterprise: r[4]  || '',
+      dealerType: r[5]  || '',
+      qcEditor:   r[6]  || '',
+      skus:       +r[7]  || 0,
+      images:     +r[8]  || 0,
+      tools:      +r[9]  || 0,
+      sumTarget:  +r[10] || 0,
+      actualMins: +r[11] || 0,
+      factor:     +r[12] || 0,
+    }))
+    .filter(r => isVideo(r.product) ? r.type === 'reqc' : true);
 }
 
-// Salary sheet rows 1-4 = meta, row 5 = header, row 6+ = employees
-// cols: A=EmpNo B=Name C=Email D=(blank) E=Type F=Salary G=Prorata H=Factor I=factor_Salary
 function parseSalary(rows) {
   if (rows.length < 5) return { totalCost: 0, employees: [] };
-
   const num = s => parseFloat((s || '').replace(/,/g, '')) || 0;
-
-  // Row index 3 (row 4) has total salary in col F (index 5) and H (index 7)
   const totalCost = num(rows[3]?.[7]) || num(rows[3]?.[5]) || 0;
-
-  const employees = rows.slice(5)
-    .filter(r => r[0])
-    .map(r => ({
-      empNo:        r[0] || '',
-      name:         r[1] || '',
-      email:        r[2] || '',
-      type:         r[4] || '',
-      salary:       num(r[5]),
-      prorata:      num(r[6]),
-      factor:       +r[7] || 1,
-      factorSalary: num(r[8]),
-    }));
-
+  const employees = rows.slice(5).filter(r => r[0]).map(r => ({
+    empNo: r[0] || '', name: r[1] || '', email: r[2] || '', type: r[4] || '',
+    salary: num(r[5]), prorata: num(r[6]), factor: +r[7] || 1, factorSalary: num(r[8]),
+  }));
   return { totalCost, employees };
 }
 
-// enterprise_details: A=ID B=Name C=InvVersion D=CustomerSegment
+// Returns map: enterpriseName → { segment, inventoryVersion }
 function parseEnterprise(rows) {
   const map = {};
   rows.slice(1).forEach(r => {
-    if (r[1]) map[r[1].trim()] = r[3] || 'Unknown';
+    if (r[1]) map[r[1].trim()] = {
+      segment:          r[3] || 'Unknown',
+      inventoryVersion: r[2] || '',
+    };
   });
   return map;
 }
 
-// ─── Aggregation helpers ──────────────────────────────────────────────────────
+// ── Aggregation ──────────────────────────────────────────────────────────────
 function groupSum(rows, keyFn) {
   const acc = {};
   rows.forEach(r => {
     const k = keyFn(r);
-    if (!acc[k]) acc[k] = { images: 0, skus: 0, actualMins: 0, sumTarget: 0, rows: 0 };
+    if (!acc[k]) acc[k] = { images: 0, skus: 0, units: 0, actualMins: 0, sumTarget: 0, rows: 0 };
     acc[k].images     += r.images;
     acc[k].skus       += r.skus;
+    acc[k].units      += billingUnits(r);
     acc[k].actualMins += r.actualMins;
     acc[k].sumTarget  += r.sumTarget;
     acc[k].rows++;
@@ -116,93 +111,149 @@ function enrichGroup(name, g, allocatedCost) {
     name,
     images:       Math.round(g.images),
     skus:         Math.round(g.skus),
+    units:        Math.round(g.units),
     actualMins:   Math.round(g.actualMins),
     sumTarget:    Math.round(g.sumTarget),
     rows:         g.rows,
     efficiency:   +eff.toFixed(1),
+    costPerUnit:  g.units > 0 ? +(allocatedCost / g.units).toFixed(2) : 0,
+    costPerSku:   g.skus  > 0 ? +(allocatedCost / g.skus).toFixed(2)  : 0,
     costPerImage: g.images > 0 ? +(allocatedCost / g.images).toFixed(2) : 0,
-    costPerSku:   g.skus   > 0 ? +(allocatedCost / g.skus).toFixed(2)   : 0,
   };
 }
 
-// ─── Per-month compute ────────────────────────────────────────────────────────
+// ── Per-month compute ────────────────────────────────────────────────────────
 function computeMonth(config, outputRows, salaryRows, enterpriseRows) {
-  const output    = parseOutput(outputRows);
+  const output   = parseOutput(outputRows);
   const { totalCost, employees } = parseSalary(salaryRows);
-  const segMap    = parseEnterprise(enterpriseRows);
+  const entMap   = parseEnterprise(enterpriseRows);  // name → { segment, inventoryVersion }
 
-  // Build editor salary map  email → factorSalary
   const editorSalaryMap = {};
   employees.forEach(e => { if (e.email) editorSalaryMap[e.email] = e.factorSalary; });
 
-  // Enrich output rows
+  // Enrich each row with segment info
   const enriched = output.map(r => ({
     ...r,
-    segment: segMap[r.enterprise] || 'Unknown',
+    segment: entMap[r.enterprise]?.segment || 'Unknown',
+    inventoryVersion: entMap[r.enterprise]?.inventoryVersion || '',
   }));
 
-  const totalImages    = enriched.reduce((s, r) => s + r.images, 0);
-  const totalSkus      = enriched.reduce((s, r) => s + r.skus, 0);
-  const totalActMins   = enriched.reduce((s, r) => s + r.actualMins, 0);
-  const totalTarget    = enriched.reduce((s, r) => s + r.sumTarget, 0);
-  const efficiency     = totalActMins > 0 ? +((totalTarget / totalActMins) * 100).toFixed(1) : 0;
-  const costPerImage   = totalImages > 0 ? +(totalCost / totalImages).toFixed(2) : 0;
-  const costPerSku     = totalSkus   > 0 ? +(totalCost / totalSkus).toFixed(2)   : 0;
+  const totalUnits    = enriched.reduce((s, r) => s + billingUnits(r), 0);
+  const totalImages   = enriched.reduce((s, r) => s + r.images, 0);
+  const totalSkus     = enriched.reduce((s, r) => s + r.skus, 0);
+  const totalActMins  = enriched.reduce((s, r) => s + r.actualMins, 0);
+  const totalTarget   = enriched.reduce((s, r) => s + r.sumTarget, 0);
+  const efficiency    = totalActMins > 0 ? +((totalTarget / totalActMins) * 100).toFixed(1) : 0;
+  const costPerUnit   = totalUnits > 0 ? +(totalCost / totalUnits).toFixed(2) : 0;
+  const costPerSku    = totalSkus  > 0 ? +(totalCost / totalSkus).toFixed(2)  : 0;
+  const total360Skus  = enriched.filter(r => is360(r.product)).reduce((s, r) => s + r.skus, 0);
+  const totalVideoSkus = enriched.filter(r => isVideo(r.product)).reduce((s, r) => s + r.skus, 0);
 
   // ── Product breakdown
   const prodGroups = groupSum(enriched, r => r.product);
   const productBreakdown = Object.entries(prodGroups).map(([name, g]) => {
     const costShare = totalActMins > 0 ? (g.actualMins / totalActMins) * totalCost : 0;
-    return enrichGroup(name, g, costShare);
-  }).sort((a, b) => b.images - a.images);
+    return {
+      ...enrichGroup(name, g, costShare),
+      costSharePct: totalCost > 0 ? +((costShare / totalCost) * 100).toFixed(1) : 0,
+      unitLabel: isImage(name) ? 'Images' : is360(name) ? 'SKUs (spins)' : 'SKUs (videos)',
+    };
+  }).sort((a, b) => b.actualMins - a.actualMins);
 
   // ── QC Editor breakdown
   const editorGroups = groupSum(enriched, r => r.qcEditor);
   const editorBreakdown = Object.entries(editorGroups).map(([email, g]) => {
-    const own = editorSalaryMap[email];
-    const cost = own != null ? own
-      : totalActMins > 0 ? (g.actualMins / totalActMins) * totalCost : 0;
-    return { ...enrichGroup(email, g, cost), email, salary: own || 0 };
-  }).sort((a, b) => b.images - a.images);
+    const own  = editorSalaryMap[email];
+    const cost = own != null ? own : totalActMins > 0 ? (g.actualMins / totalActMins) * totalCost : 0;
+    const edRows = enriched.filter(r => r.qcEditor === email);
+    const byProduct = {};
+    edRows.forEach(r => {
+      if (!byProduct[r.product]) byProduct[r.product] = 0;
+      byProduct[r.product] += billingUnits(r);
+    });
+    return { ...enrichGroup(email, g, cost), email, salary: own || 0, byProduct };
+  }).sort((a, b) => b.units - a.units);
 
-  // ── Segment breakdown
+  // ── Segment breakdown  (rich: per-product split, top enterprises, MoM ready)
   const segGroups = groupSum(enriched, r => r.segment);
-  const segmentBreakdown = Object.entries(segGroups).map(([name, g]) => {
-    const cost = totalActMins > 0 ? (g.actualMins / totalActMins) * totalCost : 0;
+  const segmentBreakdown = Object.entries(segGroups).map(([segName, g]) => {
+    const segCost = totalActMins > 0 ? (g.actualMins / totalActMins) * totalCost : 0;
+
+    // Per-product breakdown within this segment
+    const segRows = enriched.filter(r => r.segment === segName);
+    const byProduct = {};
+    segRows.forEach(r => {
+      const p = r.product;
+      if (!byProduct[p]) byProduct[p] = { units: 0, skus: 0, images: 0, actualMins: 0, sumTarget: 0 };
+      byProduct[p].units      += billingUnits(r);
+      byProduct[p].skus       += r.skus;
+      byProduct[p].images     += r.images;
+      byProduct[p].actualMins += r.actualMins;
+      byProduct[p].sumTarget  += r.sumTarget;
+    });
+    // Compute costPerUnit per product within segment
+    Object.entries(byProduct).forEach(([pName, pd]) => {
+      const pCost = totalActMins > 0 ? (pd.actualMins / totalActMins) * totalCost : 0;
+      pd.costPerUnit = pd.units > 0 ? +(pCost / pd.units).toFixed(2) : 0;
+      pd.efficiency  = pd.actualMins > 0 ? +((pd.sumTarget / pd.actualMins) * 100).toFixed(1) : 0;
+      pd.units       = Math.round(pd.units);
+      pd.skus        = Math.round(pd.skus);
+      pd.actualMins  = Math.round(pd.actualMins);
+    });
+
+    // Top 10 enterprises within this segment
+    const entGroups2 = groupSum(segRows, r => r.enterprise);
+    const topEnterprises = Object.entries(entGroups2).map(([eName, eg]) => {
+      const eCost = totalActMins > 0 ? (eg.actualMins / totalActMins) * totalCost : 0;
+      return {
+        ...enrichGroup(eName, eg, eCost),
+        inventoryVersion: entMap[eName]?.inventoryVersion || '',
+      };
+    }).sort((a, b) => b.units - a.units).slice(0, 10);
+
     return {
-      ...enrichGroup(name, g, cost),
-      costShare: totalCost > 0 ? +((cost / totalCost) * 100).toFixed(1) : 0,
+      ...enrichGroup(segName, g, segCost),
+      costShare:        totalCost > 0 ? +((segCost / totalCost) * 100).toFixed(1) : 0,
+      byProduct,
+      topEnterprises,
+      uniqueEnterprises: new Set(segRows.map(r => r.enterprise)).size,
     };
-  }).sort((a, b) => b.images - a.images);
+  }).sort((a, b) => b.units - a.units);
 
   // ── Dealer type breakdown
   const dealerGroups = groupSum(enriched, r => r.dealerType);
   const dealerBreakdown = Object.entries(dealerGroups).map(([name, g]) => {
     const cost = totalActMins > 0 ? (g.actualMins / totalActMins) * totalCost : 0;
     return enrichGroup(name, g, cost);
-  }).sort((a, b) => b.images - a.images);
+  }).sort((a, b) => b.units - a.units);
 
-  // ── Top enterprises (top 20 by images)
+  // ── Top enterprises
   const entGroups = groupSum(enriched, r => r.enterprise);
   const enterpriseBreakdown = Object.entries(entGroups).map(([name, g]) => {
     const cost = totalActMins > 0 ? (g.actualMins / totalActMins) * totalCost : 0;
-    const seg  = segMap[name] || 'Unknown';
-    return { ...enrichGroup(name, g, cost), segment: seg };
-  }).sort((a, b) => b.images - a.images).slice(0, 25);
+    return {
+      ...enrichGroup(name, g, cost),
+      segment: entMap[name]?.segment || 'Unknown',
+      inventoryVersion: entMap[name]?.inventoryVersion || '',
+    };
+  }).sort((a, b) => b.units - a.units).slice(0, 25);
 
   return {
-    month:   config.month,
-    key:     config.key,
+    month:  config.month,
+    key:    config.key,
     summary: {
-      totalCost:    Math.round(totalCost),
-      totalImages:  Math.round(totalImages),
-      totalSkus:    Math.round(totalSkus),
-      totalActMins: Math.round(totalActMins),
-      totalTarget:  Math.round(totalTarget),
+      totalCost:       Math.round(totalCost),
+      totalImages,
+      totalSkus,
+      total360Skus:    Math.round(total360Skus),
+      totalVideoSkus:  Math.round(totalVideoSkus),
+      totalUnits,
+      totalActMins:    Math.round(totalActMins),
+      totalTarget:     Math.round(totalTarget),
       efficiency,
-      costPerImage,
+      costPerUnit,
       costPerSku,
-      employees:    employees.length,
+      employees:       employees.length,
     },
     productBreakdown,
     editorBreakdown,
@@ -212,20 +263,15 @@ function computeMonth(config, outputRows, salaryRows, enterpriseRows) {
   };
 }
 
-// ─── Handler ──────────────────────────────────────────────────────────────────
+// ── Handler ──────────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
-  // CORS – wide open as requested
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=60');
-
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET')     return res.status(405).json({ error: 'Method not allowed' });
-
   try {
     const sheetsApi = getSheets();
-
-    // Fetch all sheets in parallel
     const results = await Promise.allSettled(
       SHEETS.map(async cfg => {
         const [outputRows, salaryRows, entRows] = await Promise.all([
@@ -236,17 +282,11 @@ export default async function handler(req, res) {
         return computeMonth(cfg, outputRows, salaryRows, entRows);
       })
     );
-
-    const months = results
-      .filter(r => r.status === 'fulfilled')
-      .map(r => r.value);
-
+    const months = results.filter(r => r.status === 'fulfilled').map(r => r.value);
     const errors = results
       .map((r, i) => r.status === 'rejected' ? { month: SHEETS[i].month, error: r.reason?.message } : null)
       .filter(Boolean);
-
     res.status(200).json({ months, errors, fetchedAt: new Date().toISOString() });
-
   } catch (err) {
     console.error('[data.js]', err);
     res.status(500).json({ error: err.message });
