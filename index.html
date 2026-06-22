@@ -525,6 +525,20 @@ function mk(id,cfg){
     if(!opts.layout.padding)opts.layout.padding={};
     opts.layout.padding.top = opts.layout.padding.top || 22;
   }
+  // For stacked charts with _stackTotal, add a datalabels config that shows the stack total on the last dataset
+  if(cfg._stackTotal && cfg.data?.datasets){
+    const lastIdx = cfg.data.datasets.length - 1;
+    cfg.data.datasets.forEach((ds, i) => {
+      ds.datalabels = i === lastIdx ? {
+        display: ctx => { const total = ctx.chart.data.datasets.reduce((s,d)=>s+(+d.data[ctx.dataIndex]||0),0); return total>0; },
+        color: '#dce8f8',
+        font: { size: 9 },
+        anchor: 'end',
+        align: 'top',
+        formatter: (v, ctx) => { const total = ctx.chart.data.datasets.reduce((s,d)=>s+(+d.data[ctx.dataIndex]||0),0); return total>0?f.short(total):''; }
+      } : { display: false };
+    });
+  }
   CHARTS[id]=new Chart(el,{...cfg,options:opts});
 }
 function deepMerge(b,o){for(const k in o){if(o[k]&&typeof o[k]==='object'&&!Array.isArray(o[k]))b[k]=deepMerge(b[k]||{},o[k]);else b[k]=o[k];}return b;}
@@ -651,7 +665,7 @@ function renderOverview(){
   mk('ch-cpi',{type:'line',_labelFmt:v=>v?'₹'+Number(v).toFixed(2):'',data:{labels,datasets:[{label:'₹/Unit',data:months.map(m=>m.summary.costPerUnit),borderColor:'#22d4a0',borderWidth:2,tension:.3,pointBackgroundColor:'#22d4a0',pointRadius:5},{label:'₹/VIN',data:months.map(m=>m.summary.costPerVin||0),borderColor:'#f5a42a',borderWidth:2,tension:.3,pointBackgroundColor:'#f5a42a',pointRadius:5}]},options:{scales:{y:{ticks:{callback:v=>'₹'+v}}}}});
 
   const allProds=[...new Set(months.flatMap(m=>m.productBreakdown.map(p=>p.name)))];
-  mk('ch-prod-stack',{type:'bar',data:{labels,datasets:allProds.map((prod,i)=>({label:prod,data:months.map(m=>(m.productBreakdown.find(p=>p.name===prod)?.units||0)),backgroundColor:pc(prod,i),stack:'a',borderRadius:i===allProds.length-1?3:0,datalabels:{display:i===allProds.length-1,color:'#dce8f8',font:{size:9,family:"'JetBrains Mono',monospace"},anchor:'end',align:'top',formatter:(v,ctx)=>{const total=ctx.chart.data.datasets.reduce((s,ds)=>s+(+ds.data[ctx.dataIndex]||0),0);return total>0?f.short(total):'';}}}))}},options:{scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:v=>f.short(v)}}}}});
+  mk('ch-prod-stack',{type:'bar',_stackTotal:true,data:{labels,datasets:allProds.map((prod,i)=>({label:prod,data:months.map(m=>(m.productBreakdown.find(p=>p.name===prod)?.units||0)),backgroundColor:pc(prod,i),stack:'a',borderRadius:i===allProds.length-1?3:0}))},options:{scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:v=>f.short(v)}}}}});
 
   document.getElementById('ov-tbody').innerHTML=months.map(m=>{
     const s=m.summary;
@@ -703,7 +717,7 @@ function renderCosting(){
   }).join('');
   const segs=m.segmentBreakdown;
   document.getElementById('co-seg-sub').textContent=m.month;
-  mk('ch-seg-pie',{type:'doughnut',data:{labels:segs.map(s=>s.name),datasets:[{data:segs.map(s=>s.costShare),backgroundColor:segs.map(s=>sc(s.name)),borderWidth:0,hoverOffset:5,datalabels:{color:'#fff',font:{size:10,weight:'600'},formatter:(v,ctx)=>v>4?ctx.chart.data.labels[ctx.dataIndex]+'\n'+v.toFixed(0)+'%':'',anchor:'center',align:'center',textAlign:'center'}}]},options:{cutout:'62%',scales:{x:{display:false},y:{display:false}},plugins:{legend:{position:'right',labels:{color:'#6a82a8',font:{size:10},boxWidth:9}},tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.parsed.toFixed(1)}%`}}}}});
+  mk('ch-seg-pie',{type:'doughnut',data:{labels:segs.map(s=>s.name),datasets:[{data:segs.map(s=>s.costShare),backgroundColor:segs.map(s=>sc(s.name)),borderWidth:0,hoverOffset:5,datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>4,color:'#fff',font:{size:10,weight:'600'},formatter:(v,ctx)=>v.toFixed(0)+'%',anchor:'center',align:'center'}}]},options:{cutout:'62%',scales:{x:{display:false},y:{display:false}},plugins:{legend:{position:'right',labels:{color:'#6a82a8',font:{size:10},boxWidth:9}},tooltip:{callbacks:{label:ctx=>ctx.label+': '+ctx.parsed.toFixed(1)+'%'}}}}});
   mk('ch-seg-bar',{type:'bar',_labelFmt:v=>v?'₹'+Number(v).toFixed(2):'',data:{labels:segs.map(s=>s.name),datasets:[{label:'₹/VIN',data:segs.map(s=>s.costPerVin),backgroundColor:segs.map(s=>sc(s.name)),borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'₹'+v}}}}});
   document.getElementById('co-dealer-tbl').innerHTML=m.dealerBreakdown.map(d=>`<tr>
     <td class="bright">${d.name}</td><td class="r">${f.num(d.units)}</td><td class="r">${f.num(d.vins)}</td>
@@ -794,7 +808,7 @@ function renderSegment(){
 
   const labels=segs.map(s=>s.name),colors=segs.map(s=>sc(s.name));
   mk('ch-sg-vol',{type:'bar',_labelFmt:v=>v>0?f.short(v):'',data:{labels,datasets:[{label:'Units',data:segs.map(s=>s.units),backgroundColor:colors,borderRadius:5}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>f.short(v)}}}}});
-  mk('ch-sg-pie',{type:'doughnut',data:{labels,datasets:[{data:segs.map(s=>s.units),backgroundColor:colors,borderWidth:0,hoverOffset:5,datalabels:{color:'#fff',font:{size:10,weight:'600'},formatter:(v,ctx)=>{const total=ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);const pct=(v/total*100);return pct>4?pct.toFixed(0)+'%':'';},anchor:'center',align:'center'}}]},options:{cutout:'62%',scales:{x:{display:false},y:{display:false}},plugins:{legend:{position:'right',labels:{color:'#6a82a8',font:{size:10},boxWidth:9}},tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${f.num(ctx.raw)}`}}}}});
+  mk('ch-sg-pie',{type:'doughnut',data:{labels,datasets:[{data:segs.map(s=>s.units),backgroundColor:colors,borderWidth:0,hoverOffset:5,datalabels:{display:ctx=>{const total=ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);return total>0&&(ctx.dataset.data[ctx.dataIndex]/total*100)>4;},color:'#fff',font:{size:10,weight:'600'},formatter:(v,ctx)=>{const total=ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);return total>0?(v/total*100).toFixed(0)+'%':'';},anchor:'center',align:'center'}}]},options:{cutout:'62%',scales:{x:{display:false},y:{display:false}},plugins:{legend:{position:'right',labels:{color:'#6a82a8',font:{size:10},boxWidth:9}},tooltip:{callbacks:{label:ctx=>ctx.label+': '+f.num(ctx.raw)}}}}});
   mk('ch-sg-vinc',{type:'bar',_labelFmt:v=>v?'₹'+Number(v).toFixed(2):'',data:{labels,datasets:[{label:'₹/VIN',data:segs.map(s=>s.costPerVin),backgroundColor:colors,borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'₹'+v}}}}});
   mk('ch-sg-eff',{type:'bar',_labelFmt:v=>v?v.toFixed(1)+'%':'',data:{labels,datasets:[{label:'Efficiency %',data:segs.map(s=>s.efficiency),backgroundColor:segs.map(s=>s.efficiency>=100?'#22d4a0':s.efficiency>=80?'#f5a42a':'#f0566a'),borderRadius:4}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.raw.toFixed(1)}%`}}},scales:{y:{ticks:{callback:v=>v+'%'}}}}});
 
