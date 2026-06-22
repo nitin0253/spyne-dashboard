@@ -292,15 +292,9 @@ select.sel:focus{border-color:var(--blue)}
       <span class="dash-section-toggle" id="tog-s-product">▾</span>
     </div>
     <div class="dash-section-body" id="s-product">
-      <div class="g2" style="margin-bottom:12px">
-        <div class="section">
-          <div class="sec-head"><div><div class="sec-title">Units by Product</div><div class="sec-sub" id="pr-vol-sub"></div></div></div>
-          <div class="ch"><canvas id="ch-pr-vol" height="160"></canvas></div>
-        </div>
-        <div class="section">
-          <div class="sec-head"><div><div class="sec-title">₹/Unit by Product</div></div></div>
-          <div class="ch"><canvas id="ch-pr-cpu" height="160"></canvas></div>
-        </div>
+      <div class="section" style="margin-bottom:12px">
+        <div class="sec-head"><div><div class="sec-title">₹/Unit by Product</div><div class="sec-sub" id="pr-vol-sub"></div></div></div>
+        <div class="ch"><canvas id="ch-pr-cpu" height="130"></canvas></div>
       </div>
       <div class="g2">
         <div class="section">
@@ -445,8 +439,8 @@ select.sel:focus{border-color:var(--blue)}
             </select>
           </div>
         </div>
-        <div class="tbl-wrap"><table>
-          <thead><tr>
+        <div class="tbl-wrap" style="max-height:320px;overflow-y:auto"><table>
+          <thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr>
             <th>#</th><th>Editor</th><th class="r">Images</th><th class="r">360 SKUs</th>
             <th class="r">Video SKUs</th><th class="r">Total Units</th><th class="r">Actual Mins</th>
             <th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r">Salary</th>
@@ -562,23 +556,46 @@ function filterBreakdown(arr,type){
   return arr;
 }
 function computeFilteredSummary(m){
-  const prods=filterBreakdown(m.productBreakdown,'product');
-  const segs=filterBreakdown(m.segmentBreakdown,'segment');
-  const totalImages=prods.reduce((s,p)=>s+(/image/i.test(p.name)?p.images:0),0);
-  const total360Skus=prods.reduce((s,p)=>s+(/360|spin/i.test(p.name)?p.skus:0),0);
-  const totalVideoSkus=prods.reduce((s,p)=>s+(/video/i.test(p.name)?p.skus:0),0);
-  const totalVins=prods.reduce((s,p)=>s+(/image/i.test(p.name)?p.vins:0),0);
-  const totalUnits=prods.reduce((s,p)=>s+p.units,0);
-  const totalSkus=prods.reduce((s,p)=>s+p.skus,0);
-  const totalActMins=prods.reduce((s,p)=>s+p.actualMins,0);
-  const totalTarget=prods.reduce((s,p)=>s+p.sumTarget,0);
-  const totalCostBase=m.summary.totalCost;
-  const totalActMinsBase=m.summary.totalActMins||1;
+  // When segment filter is active, compute everything from segmentBreakdown.byProduct
+  // (the ONLY source that has segment × product intersection).
+  // When only product filter is active, use productBreakdown filtered rows.
+  // When neither is active, use pre-computed summary totals directly.
   const segActive=FILTERS.segment.selected.size>0&&FILTERS.segment.selected.size<FILTERS.segment.all.length;
-  let allocMins=totalActMins;
-  if(segActive){allocMins=segs.reduce((s,sg)=>s+Object.entries(sg.byProduct||{}).filter(([k])=>passesFilter('product',k)).reduce((a,[,pd])=>a+pd.actualMins,0),0);}
-  const costShare=totalActMinsBase>0?allocMins/totalActMinsBase:1;
-  const totalCost=Math.round(totalCostBase*costShare);
+  const prodActive=FILTERS.product.selected.size>0&&FILTERS.product.selected.size<FILTERS.product.all.length;
+
+  let totalImages=0,total360Skus=0,totalVideoSkus=0,totalVins=0;
+  let totalUnits=0,totalSkus=0,totalActMins=0,totalTarget=0;
+
+  if(segActive){
+    // Aggregate from segment × product intersection
+    const segs=filterBreakdown(m.segmentBreakdown,'segment');
+    segs.forEach(sg=>{
+      Object.entries(sg.byProduct||{}).forEach(([pName,pd])=>{
+        if(!passesFilter('product',pName))return;
+        if(/image/i.test(pName)){totalImages+=pd.images||0;totalVins+=pd.vins||0;}
+        if(/360|spin/i.test(pName))total360Skus+=pd.skus||0;
+        if(/video/i.test(pName))totalVideoSkus+=pd.skus||0;
+        totalUnits+=pd.units||0;totalSkus+=pd.skus||0;
+        totalActMins+=pd.actualMins||0;totalTarget+=pd.sumTarget||0;
+      });
+    });
+  } else {
+    // No segment filter — use product breakdown (already correct)
+    const prods=filterBreakdown(m.productBreakdown,'product');
+    prods.forEach(p=>{
+      if(/image/i.test(p.name)){totalImages+=p.images;totalVins+=p.vins||0;}
+      if(/360|spin/i.test(p.name))total360Skus+=p.skus;
+      if(/video/i.test(p.name))totalVideoSkus+=p.skus;
+      totalUnits+=p.units;totalSkus+=p.skus;
+      totalActMins+=p.actualMins;totalTarget+=p.sumTarget;
+    });
+  }
+
+  // Cost = prorated by share of total actual mins
+  const totalActMinsBase=m.summary.totalActMins||1;
+  const costShare=totalActMinsBase>0?totalActMins/totalActMinsBase:1;
+  const totalCost=Math.round(m.summary.totalCost*costShare);
+
   const efficiency=totalActMins>0?+((totalTarget/totalActMins)*100).toFixed(2):0;
   const costPerUnit=totalUnits>0?+(totalCost/totalUnits).toFixed(2):0;
   const costPerSku=totalSkus>0?+(totalCost/totalSkus).toFixed(2):0;
@@ -714,16 +731,48 @@ function renderTrends(months){
 }
 
 // ── 3. PRODUCT ────────────────────────────────────────────────────────────────
+// Returns segment+product filtered product rows with recomputed costs
+function getFilteredProducts(m){
+  const segActive=FILTERS.segment.selected.size>0&&FILTERS.segment.selected.size<FILTERS.segment.all.length;
+  if(!segActive) return filterBreakdown(m.productBreakdown,'product');
+  // Build product stats from segment×product intersection
+  const segs=filterBreakdown(m.segmentBreakdown,'segment');
+  const byProd={};
+  segs.forEach(sg=>{
+    Object.entries(sg.byProduct||{}).forEach(([pName,pd])=>{
+      if(!passesFilter('product',pName))return;
+      if(!byProd[pName])byProd[pName]={name:pName,images:0,skus:0,units:0,vins:0,actualMins:0,sumTarget:0};
+      const bp=byProd[pName];
+      bp.images+=pd.images||0;bp.skus+=pd.skus||0;bp.units+=pd.units||0;
+      bp.vins+=pd.vins||0;bp.actualMins+=pd.actualMins||0;bp.sumTarget+=pd.sumTarget||0;
+    });
+  });
+  const totalActMins=Object.values(byProd).reduce((s,p)=>s+p.actualMins,0)||1;
+  const totalCost=m.summary.totalCost*(Object.values(byProd).reduce((s,p)=>s+p.actualMins,0)/(m.summary.totalActMins||1));
+  return Object.values(byProd).map(p=>{
+    const pCost=totalCost*(p.actualMins/totalActMins);
+    const orig=m.productBreakdown.find(x=>x.name===p.name)||{};
+    return{
+      ...p,
+      efficiency:p.actualMins>0?+((p.sumTarget/p.actualMins)*100).toFixed(2):0,
+      costPerUnit:p.units>0?+(pCost/p.units).toFixed(2):0,
+      costPerSku:p.skus>0?+(pCost/p.skus).toFixed(2):0,
+      costSharePct:totalCost>0?+((pCost/totalCost)*100).toFixed(1):0,
+      unitLabel:orig.unitLabel||'',
+    };
+  }).filter(p=>p.units>0);
+}
+
 function renderProduct(months){
   const m=months[months.length-1];
-  const prods=filterBreakdown(m.productBreakdown,'product');
+  const prods=getFilteredProducts(m);
   const colors=prods.map((p,i)=>pc(p.name,i));
   document.getElementById('pr-vol-sub').textContent=m.month;
-  mk('ch-pr-vol',{type:'bar',_lf:v=>v>0?f.short(v):'',data:{labels:prods.map(p=>p.name),datasets:[{label:'Units',data:prods.map(p=>p.units),backgroundColor:colors,borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>f.short(v)}}}}});
   mk('ch-pr-cpu',{type:'bar',_lf:v=>v?f.inr(v):'',data:{labels:prods.map(p=>p.name),datasets:[{label:'₹/Unit',data:prods.map(p=>p.costPerUnit),backgroundColor:colors,borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'₹'+v}}}}});
-  document.getElementById('pr-tbl').innerHTML=prods.map(p=>{const bar=Math.round(p.costSharePct*1.4);return'<tr><td class="bright">'+prodTag(p.name)+'</td><td style="color:var(--sub);font-size:10px">'+p.unitLabel+'</td><td class="r">'+f.num(p.units)+'</td><td class="r">'+f.num(p.skus)+'</td><td class="r">'+f.mins(p.actualMins)+'</td><td class="r"><span class="'+effCls(p.efficiency)+'">'+f.pct(p.efficiency)+'</span></td><td class="r" style="color:var(--text);font-weight:600">'+f.inr(p.costPerUnit)+'</td><td class="r">'+f.inr(p.costPerSku)+'</td><td class="r">'+f.pct(p.costSharePct)+'<span class="mini-bar" style="width:'+bar+'px"></span></td></tr>';}).join('');
-  const allProds=[...new Set(DATA.months.flatMap(m=>m.productBreakdown.map(p=>p.name)))];
-  mk('ch-pr-trend',{type:'line',data:{labels:months.map(m=>m.month.replace('-26','')),datasets:allProds.map((prod,i)=>({label:prod,data:months.map(m=>(m.productBreakdown.find(p=>p.name===prod)?.costPerUnit||0)),borderColor:pc(prod,i),backgroundColor:pc(prod,i)+'22',borderWidth:2,tension:.3,pointBackgroundColor:pc(prod,i),pointRadius:3,fill:false}))},options:{scales:{y:{ticks:{callback:v=>'₹'+v}}},plugins:{tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': ₹'+Number(ctx.raw).toFixed(2)}}}}});
+  document.getElementById('pr-tbl').innerHTML=prods.map(p=>{const bar=Math.round((p.costSharePct||0)*1.4);return'<tr><td class="bright">'+prodTag(p.name)+'</td><td style="color:var(--sub);font-size:10px">'+(p.unitLabel||'')+'</td><td class="r">'+f.num(p.units)+'</td><td class="r">'+f.num(p.skus)+'</td><td class="r">'+f.mins(p.actualMins)+'</td><td class="r"><span class="'+effCls(p.efficiency)+'">'+f.pct(p.efficiency)+'</span></td><td class="r" style="color:var(--text);font-weight:600">'+f.inr(p.costPerUnit)+'</td><td class="r">'+f.inr(p.costPerSku)+'</td><td class="r">'+f.pct(p.costSharePct)+'<span class="mini-bar" style="width:'+bar+'px"></span></td></tr>';}).join('');
+  // ₹/Unit trend — per-product cost per unit across months (segment-aware)
+  const allProdNames=[...new Set(DATA.months.flatMap(mo=>mo.productBreakdown.map(p=>p.name)))].filter(n=>passesFilter('product',n));
+  mk('ch-pr-trend',{type:'line',data:{labels:months.map(mo=>mo.month.replace('-26','')),datasets:allProdNames.map((prod,i)=>({label:prod,data:months.map(mo=>{const fp=getFilteredProducts(mo).find(p=>p.name===prod);return fp?fp.costPerUnit:0;}),borderColor:pc(prod,i),backgroundColor:pc(prod,i)+'22',borderWidth:2,tension:.3,pointBackgroundColor:pc(prod,i),pointRadius:3,fill:false}))},options:{scales:{y:{ticks:{callback:v=>'₹'+v}}},plugins:{tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': ₹'+Number(ctx.raw).toFixed(2)}}}}});
 }
 
 // ── 4. SEGMENT ────────────────────────────────────────────────────────────────
