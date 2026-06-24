@@ -341,6 +341,17 @@ select.sel:focus{border-color:var(--blue)}
           <tbody id="pr-tbl"></tbody>
         </table></div>
       </div>
+      <!-- Inhouse vs OS mini summary -->
+      <div class="g2" style="margin-bottom:12px" id="team-breakdown-row">
+        <div class="section" style="border-left:3px solid #22d4a0">
+          <div class="sec-head"><div><div class="sec-title" style="color:#22d4a0">🏢 Inhouse Team</div></div></div>
+          <div id="team-inhouse" style="display:flex;gap:20px;flex-wrap:wrap"></div>
+        </div>
+        <div class="section" style="border-left:3px solid #f5a42a">
+          <div class="sec-head"><div><div class="sec-title" style="color:#f5a42a">🤝 Outsource Team</div></div></div>
+          <div id="team-os" style="display:flex;gap:20px;flex-wrap:wrap"></div>
+        </div>
+      </div>
       <!-- Charts row below -->
       <div class="g2" style="margin-bottom:12px">
         <div class="section">
@@ -367,7 +378,7 @@ select.sel:focus{border-color:var(--blue)}
         </div>
         <div class="tbl-wrap" style="max-height:280px;overflow-y:auto"><table>
           <thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr>
-            <th>#</th><th>Editor</th><th class="r">Images</th><th class="r">360</th><th class="r">Video</th><th class="r">Total</th><th class="r">Efficiency</th><th class="r">₹/Unit</th>
+            <th>#</th><th>Editor</th><th>Team</th><th class="r">Images</th><th class="r">360</th><th class="r">Video</th><th class="r">Total</th><th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r">Cost</th>
           </tr></thead>
           <tbody id="ed-tbl"></tbody>
         </table></div>
@@ -631,15 +642,16 @@ function renderOverview(months){
   const last=months[months.length-1],prev=months[months.length-2];
   const s=computeFilteredSummary(last),sp=prev?computeFilteredSummary(prev):null;
   function d(k){if(!sp||!sp[k])return null;return((s[k]-sp[k])/sp[k])*100;}
+  const tb=last.teamBreakdown||{};
   document.getElementById('ov-kpis').innerHTML=[
-    kpi('Salary Cost',f.inr0(s.totalCost),last.month,d('totalCost'),'#4f78ff'),
-    kpi('Images',f.num(s.totalImages),'Images product',d('totalImages'),'#4f78ff'),
-    kpi('360 SKUs',f.num(s.total360Skus),'360/Spin',null,'#22d4a0'),
-    kpi('Video SKUs',f.num(s.totalVideoSkus),'reqc only',null,'#f5a42a'),
-    kpi('VINs',f.num(s.totalVins),'Unique vehicles',d('totalVins'),'#a07cff'),
-    kpi('Total Units',f.num(s.totalUnits),'Billing units',d('totalUnits'),'#38c4f0'),
-    kpi('Efficiency',f.pct(s.efficiency),'Target / Actual',d('efficiency'),'#22d4a0'),
-    kpi('₹ / VIN',f.inr(s.costPerVin),'Per vehicle',d('costPerVin'),'#f5a42a'),
+    kpi('Total Cost',     f.inr0(s.totalCost),    last.month,                d('totalCost'),    '#4f78ff'),
+    kpi('Inhouse Cost',   f.inr0(s.inhouseCost),  (tb.inhouse?.employees||0)+' employees',     null,              '#22d4a0'),
+    kpi('OS Cost',        f.inr0(s.osCost),        (tb.os?.employees||0)+' contractors',        null,              '#f5a42a'),
+    kpi('VINs',           f.num(s.totalVins),      'Unique vehicles',         d('totalVins'),    '#a07cff'),
+    kpi('Total Units',    f.num(s.totalUnits),     'Billing units',           d('totalUnits'),   '#38c4f0'),
+    kpi('Efficiency',     f.pct(s.efficiency),     'Target / Actual',         d('efficiency'),   '#22d4a0'),
+    kpi('₹ / VIN',        f.inr(s.costPerVin),     'Per vehicle',             d('costPerVin'),   '#f5a42a'),
+    kpi('₹ / Unit',       f.inr(s.costPerUnit),    'Blended',                 d('costPerUnit'),  '#a07cff'),
   ].join('');
   const ms=months.map(m=>computeFilteredSummary(m)),labels=months.map(m=>m.month.replace('-26',''));
   mk('ch-cost',{type:'line',_lf:v=>v?'₹'+f.short(v):'',data:{labels,datasets:[{label:'Salary Cost',data:ms.map(s=>s.totalCost),borderColor:'#4f78ff',borderWidth:2,backgroundColor:'rgba(79,120,255,.1)',fill:true,tension:.35,pointBackgroundColor:'#4f78ff',pointRadius:4,pointHoverRadius:6}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' ₹'+f.num(ctx.raw)}}},scales:{y:{ticks:{callback:v=>'₹'+f.short(v)}}}}});
@@ -671,6 +683,22 @@ function renderSegments(months){
 // ── 4. PRODUCTS ──────────────────────────────────────────────────────────────
 function renderProducts(months){
   const m=months[months.length-1];
+  // Inhouse vs OS team breakdown
+  const tb=m.teamBreakdown||{};
+  function teamStat(label,value){return'<div style="text-align:center"><div style="font-size:18px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums">'+value+'</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:3px">'+label+'</div></div>';}
+  const ih=tb.inhouse||{},os=tb.os||{};
+  document.getElementById('team-inhouse').innerHTML=
+    teamStat('Cost',f.inr0(ih.cost||0))+
+    teamStat('Employees',ih.employees||0)+
+    teamStat('Units',f.short(ih.units||0))+
+    teamStat('₹/Unit',f.inr(ih.costPerUnit||0))+
+    teamStat('Minutes',f.mins(ih.actualMins||0));
+  document.getElementById('team-os').innerHTML=
+    teamStat('Cost',f.inr0(os.cost||0))+
+    teamStat('Contractors',os.employees||0)+
+    teamStat('Units',f.short(os.units||0))+
+    teamStat('₹/Unit',f.inr(os.costPerUnit||0))+
+    teamStat('Minutes',f.mins(os.actualMins||0));
   const prods=getFilteredProducts(m);
   const colors=prods.map((p,i)=>pc(p.name,i));
   document.getElementById('pr-vol-sub').textContent=m.month;
@@ -696,7 +724,9 @@ function renderEditorTable(){
     const imgU=e.byProduct?Object.entries(e.byProduct).find(([k])=>/image/i.test(k))?.[1]||0:e.images;
     const s360=e.byProduct?Object.entries(e.byProduct).find(([k])=>/360|spin/i.test(k))?.[1]||0:0;
     const vid=e.byProduct?Object.entries(e.byProduct).find(([k])=>/video/i.test(k))?.[1]||0:0;
-    return'<tr><td class="rank-num">'+(i+1)+'</td><td><div style="color:var(--text);font-weight:500">'+f.email(e.email)+'</div><div style="font-size:10px;color:var(--muted)">'+e.email+'</div></td><td class="r">'+f.num(imgU)+'</td><td class="r">'+f.num(s360)+'</td><td class="r">'+f.num(vid)+'</td><td class="r" style="color:var(--text);font-weight:600">'+f.num(e.units)+'</td><td class="r"><span class="'+effCls(e.efficiency)+'">'+f.pct(e.efficiency)+'</span></td><td class="r">'+f.inr(e.costPerUnit)+'</td></tr>';
+    const isInhouse=/payroll/i.test(e.teamType);
+    const teamBadge=isInhouse?'<span style="background:rgba(34,212,160,.15);color:#22d4a0;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:600">Inhouse</span>':'<span style="background:rgba(245,164,42,.15);color:#f5a42a;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:600">OS</span>';
+    return'<tr><td class="rank-num">'+(i+1)+'</td><td><div style="color:var(--text);font-weight:500">'+f.email(e.email)+'</div><div style="font-size:10px;color:var(--muted)">'+e.email+'</div></td><td>'+teamBadge+'</td><td class="r">'+f.num(imgU)+'</td><td class="r">'+f.num(s360)+'</td><td class="r">'+f.num(vid)+'</td><td class="r" style="color:var(--text);font-weight:600">'+f.num(e.units)+'</td><td class="r"><span class="'+effCls(e.efficiency)+'">'+f.pct(e.efficiency)+'</span></td><td class="r">'+f.inr(e.costPerUnit)+'</td><td class="r">'+f.inr0(e.salary)+'</td></tr>';
   }).join('');
 }
 document.getElementById('ed-search').addEventListener('input',renderEditorTable);
