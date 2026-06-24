@@ -264,12 +264,12 @@ select.sel:focus{border-color:var(--blue)}
     <!-- CHART 2: Segment Breakdown MoM -->
   <div class="section">
     <div class="sec-head">
-      <div><div class="sec-title">Segment Breakdown — Month on Month</div><div class="sec-sub">Cost · Volume · ₹/VIN per customer segment across months</div></div>
+      <div><div class="sec-title">Segment Breakdown — Month on Month</div><div class="sec-sub">Cost · Volume · ₹/Unit per customer segment across months</div></div>
       <div class="cf-row">
         <span class="cf-label">Metric:</span>
         <button class="cf-pill active" data-chart="seg" onclick="setChartFilter('seg','cost',this)">Cost</button>
         <button class="cf-pill" data-chart="seg" onclick="setChartFilter('seg','units',this)">Volume</button>
-        <button class="cf-pill" data-chart="seg" onclick="setChartFilter('seg','costPerVin',this)">₹/VIN</button>
+        <button class="cf-pill" data-chart="seg" onclick="setChartFilter('seg','costPerUnit',this)">₹/Unit</button>
         <span class="cf-label" style="margin-left:8px">Product:</span>
         <button class="cf-pill active" data-chart="segp" onclick="setChartFilter('segp','all',this)">All</button>
         <button class="cf-pill" data-chart="segp" onclick="setChartFilter('segp','image',this)">Images</button>
@@ -543,7 +543,7 @@ let _snapData=[];let _snapSort={col:null,dir:1};
 window.cycleSortSnap=mkSorter('sa',['totalCost','totalImages','total360Skus','totalVideoSkus','totalVins','efficiency','costPerVin','costPerUnit'],function(col,dir){_snapSort={col,dir};renderSnapTable();});
 function renderSnapTable(){
   const rows=applySortArr(_snapData,_snapSort.col,_snapSort.dir);
-  document.getElementById('ov-tbody').innerHTML=rows.map(r=>'<tr><td class="bright">'+r.month+'</td><td class="r">'+f.inr0(r.totalCost)+'</td><td class="r">'+f.num(r.totalImages)+'</td><td class="r">'+f.num(r.total360Skus)+'</td><td class="r">'+f.num(r.totalVideoSkus)+'</td><td class="r" style="color:var(--purple)">'+f.num(r.totalVins)+'</td><td class="r"><span class="'+effCls(r.efficiency)+'">'+f.pct(r.efficiency)+'</span></td><td class="r" style="color:var(--amber)">'+f.inr(r.costPerVin)+'</td><td class="r">'+f.inr(r.costPerUnit)+'</td></tr>').join('');
+  document.getElementById('ov-tbody').innerHTML=rows.map(r=>'<tr><td class="bright">'+r.month+'</td><td class="r">'+f.inr0(r.totalCost)+'</td><td class="r">'+f.num(r.totalImages)+'</td><td class="r">'+f.num(r.total360Skus)+'</td><td class="r">'+f.num(r.totalVideoSkus)+'</td><td class="r" style="color:var(--purple)">'+f.num(r.totalVins)+'</td><td class="r"><span class="'+effCls(r.efficiency)+'">'+f.pct(r.efficiency)+'</span></td><td class="r" style="color:var(--amber)">'+f.inr(r.costPerUnit)+'</td></tr>').join('');
 }
 
 // Segment sort
@@ -659,13 +659,17 @@ function renderKPIs(months){
   const tb=last.teamBreakdown||{};
   const segMap={};
   filterBreakdown(last.segmentBreakdown,'segment').forEach(sg=>{segMap[sg.name]=sg;});
-  const knownSegs=new Set(['Ent','Enterprise','Mid','SMB','Resellers']);
-  const otherSegs=Object.keys(segMap).filter(n=>!knownSegs.has(n));
-  function segCostPerUnit(names){let cost=0,units=0;names.forEach(n=>{const sg=Object.values(segMap).find(s=>s.name===n);if(sg){cost+=sg.costPerUnit*(sg.units||0);units+=sg.units||0;}});return units>0?+(cost/units).toFixed(2):0;}
-  const entSeg=segMap['Ent']||segMap['Enterprise']||null;
-  const midSeg=segMap['Mid']||null;
-  const smbSeg=segMap['SMB']||null;
-  const resSeg=segMap['Resellers']||null;
+  // Flexible finder: case-insensitive partial match
+  function findSeg(kw){const k=kw.toLowerCase();return Object.values(segMap).find(sg=>sg.name.toLowerCase().includes(k))||null;}
+  const entSeg=findSeg('ent')||findSeg('enterprise');
+  const midSeg=findSeg('mid');
+  const smbSeg=findSeg('smb');
+  const resSeg=findSeg('resell');
+  const knownNames=new Set([entSeg,midSeg,smbSeg,resSeg].filter(Boolean).map(s=>s.name));
+  const otherSegsArr=Object.values(segMap).filter(sg=>!knownNames.has(sg.name));
+  function segCostPerUnit(segs){let cost=0,units=0;segs.forEach(sg=>{cost+=(sg.costPerUnit||0)*(sg.units||0);units+=sg.units||0;});return units>0?+(cost/units).toFixed(2):0;}
+  // Log for debugging
+  console.log('[KPI segs]',Object.keys(segMap),'ent:',entSeg?.name,'mid:',midSeg?.name,'smb:',smbSeg?.name,'res:',resSeg?.name);
   document.getElementById('ov-kpis').innerHTML=[
     kpi('Delivery Cost', f.inr0(s.totalCost),    last.month,                           d('totalCost'), '#4f78ff'),
     kpi('Inhouse Cost',  f.inr0(s.inhouseCost),  (tb.inhouse?.employees||0)+' people', null,           '#22d4a0'),
@@ -688,7 +692,7 @@ function setChartFilter(chartKey,value,btn){
   });
   if(btn){
     const cm={all:'active',image:'active',cost:'active',units:'active-green',
-      costPerVin:'active-amber',efficiency:'active-amber',costPerUnit:'active-amber',
+      efficiency:'active-amber',costPerUnit:'active-amber',
       video:'active-amber','360':'active-green'};
     btn.classList.add(cm[value]||'active');
   }
@@ -737,7 +741,7 @@ function segProdData(m,prodKey){
     if(!entry)return null;
     const pd=entry[1];
     return{...sg,units:pd.units||0,vins:pd.vins||0,actualMins:pd.actualMins||0,
-      costPerVin:pd.costPerUnit||0};
+      costPerUnit:pd.costPerUnit||0};
   }).filter(Boolean).filter(s=>(s.units||0)+(s.vins||0)>0);
 }
 
@@ -779,10 +783,10 @@ function renderChart2(months){
   function segVal(s,metric){
     if(metric==='cost')return Math.round((s.costPerUnit||0)*(s.units||0));
     if(metric==='units')return s.units||0;
-    if(metric==='costPerUnit'||metric==='costPerVin')return s.costPerUnit||0;
+    if(metric==='costPerUnit')return s.costPerUnit||0;
     return 0;
   }
-  const smFmt=sm==='cost'?function(v){return'₹'+f.short(v);}:(sm==='costPerUnit'||sm==='costPerVin')?function(v){return'₹'+Number(v).toFixed(2);}:function(v){return f.short(v);};
+  const smFmt=sm==='cost'?function(v){return'₹'+f.short(v);}:sm==='costPerUnit'?function(v){return'₹'+Number(v).toFixed(2);}:function(v){return f.short(v);};
   const segDS=allSegNames.map(function(sn,i){
     const isLast=(i===allSegNames.length-1);
     return{
