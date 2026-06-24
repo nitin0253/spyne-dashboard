@@ -1,18 +1,15 @@
 // api/data.js — Vercel Serverless Function (CommonJS)
-// Using require() not import — avoids ESM/CJS conflicts in Vercel Node runtime
 
 const { google } = require('googleapis');
 
 // ╔══════════════════════════════════════════════════════════════════╗
 // ║  ADD A NEW MONTH — edit ONLY this array, nothing else needed    ║
 // ║                                                                  ║
-// ║  Steps:                                                          ║
-// ║  1. Copy the new month's Google Sheet URL                        ║
-// ║  2. Extract the Sheet ID from the URL:                           ║
+// ║  1. Extract Sheet ID from the URL:                               ║
 // ║     https://docs.google.com/spreadsheets/d/ ► SHEET_ID ◄ /edit  ║
-// ║  3. Add one line below following the same format                 ║
-// ║  4. Share the sheet with the service account email (Viewer)      ║
-// ║  5. Commit & push — Vercel auto-deploys                          ║
+// ║  2. Add one line below                                           ║
+// ║  3. Share the sheet with the service account email (Viewer)      ║
+// ║  4. Commit & push — Vercel auto-deploys                          ║
 // ╚══════════════════════════════════════════════════════════════════╝
 const SHEETS = [
   { month: 'Jan-26', key: 'jan26', id: '1VI-9hxnFIynsTOl3aCdIiR-RRAfRssISOWnZdddCz4Q' },
@@ -23,7 +20,6 @@ const SHEETS = [
   { month: 'Jun-26', key: 'jun26', id: '1i3KqktELNb-ykpZeHaMh3wk3FBBV-eHNAw6736oaXbI' },
   // ↓ ADD NEW MONTHS HERE ↓
   // { month: 'Jul-26', key: 'jul26', id: 'PASTE_SHEET_ID_HERE' },
-  // { month: 'Aug-26', key: 'aug26', id: 'PASTE_SHEET_ID_HERE' },
 ];
 
 // Always-excluded emails
@@ -42,22 +38,19 @@ const ALWAYS_EXCLUDE = new Set([
   'raj.tripathi@spyne.ai',
 ]);
 
-// ── Product helpers ──────────────────────────────────────────────────────────
+// ── Product helpers ───────────────────────────────────────────────────────────
 const isImage = p => /image/i.test(p);
 const is360   = p => /360|spin/i.test(p);
 const isVideo = p => /video/i.test(p);
 const billingUnits = row => isImage(row.product) ? row.images : row.skus;
 const isVinProduct = p => isImage(p);
 
-// ── Google auth ──────────────────────────────────────────────────────────────
+// ── Google auth ───────────────────────────────────────────────────────────────
 function getSheetsClient() {
-  const privateKey = (process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n');
+  const privateKey  = (process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n');
   const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '';
-
-  if (!clientEmail || !privateKey) {
+  if (!clientEmail || !privateKey)
     throw new Error('Missing GOOGLE_SERVICE_ACCOUNT_EMAIL or GOOGLE_PRIVATE_KEY env vars');
-  }
-
   const auth = new google.auth.GoogleAuth({
     credentials: { client_email: clientEmail, private_key: privateKey },
     scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
@@ -75,7 +68,8 @@ async function fetchRange(client, sheetId, range) {
   }
 }
 
-// ── Parsers ──────────────────────────────────────────────────────────────────
+// ── Parsers ───────────────────────────────────────────────────────────────────
+
 function parseRemovedUsers(rows) {
   const emails = new Set();
   rows.forEach(r => {
@@ -91,8 +85,8 @@ function buildExcludeSet(sheetEmails) {
   return new Set([...sheetEmails.map(e => e.toLowerCase().trim()), ...ALWAYS_EXCLUDE]);
 }
 
-// Output sheet: A=Date B=Product C=Verticle D=Type E=Enterprise
-// F=DealerType G=QCEditor H=SKU_Count I=Images J=Tools K=SumTarget L=ActualMins M=factor
+// Output: A=Date B=Product C=Verticle D=Type E=Enterprise
+//         F=DealerType G=QCEditor H=SKU_Count I=Images J=Tools K=SumTarget L=ActualMins M=factor
 function parseOutput(rows, excludeSet) {
   if (!rows || rows.length < 2) return [];
   return rows.slice(1)
@@ -116,30 +110,44 @@ function parseOutput(rows, excludeSet) {
     .filter(r => isVideo(r.product) ? r.type === 'reqc' : true);
 }
 
-// Salary sheet: A=EmpNo B=Name C=WorkEmail D=Type E=Salary F=ProrataSalary G=Factor H=factor_Salary
-// Row 1-4: meta, Row 5: header, Row 6+: employees
-function parseSalary(rows, excludeSet) {
-  if (!rows || rows.length < 6) return { totalCost: 0, employees: [], excludedEmployees: [] };
+// factor_calculation sheet:
+//   Row 1: summary totals (C=totalMins, D=inhouseCostTotal, E=osCostTotal, F=totalCost)
+//   Row 2: headers (A=QC, B=Type, C=Total Mins, D=Inhouse, E=OS, F=Cost, G=Factor)
+//   Row 3+: one row per editor
+//     A=email  B=type(Payroll|OS)  C=totalMins  D=inhouseCost  E=osCost  F=totalCost  G=factor
+//
+// Type "Payroll" = inhouse employee
+// Type "OS"      = outsourced/contractor
+function parseFactorCalc(rows, excludeSet) {
+  if (!rows || rows.length < 3) return {
+    totalCost: 0, inhouseCost: 0, osCost: 0,
+    employees: [], excludedEmployees: [],
+  };
   const num = s => parseFloat((s || '').toString().replace(/,/g, '')) || 0;
 
-  const allEmployees = rows.slice(5)
-    .filter(r => r && r[0])
+  // Row 0 (row 1 in sheet) = totals summary — use as cross-check
+  // Row 1 (row 2) = headers — skip
+  // Row 2+ = editor data
+  const allEditors = rows.slice(2)
+    .filter(r => r && r[0] && (r[0] || '').toString().includes('@'))
     .map(r => ({
-      empNo:        (r[0] || '').toString().trim(),
-      name:         (r[1] || '').toString().trim(),
-      email:        (r[2] || '').toString().toLowerCase().trim(),
-      type:         (r[3] || '').toString().trim(),
-      salary:       num(r[4]),
-      prorata:      num(r[5]),
-      factor:       +r[6] || 1,
-      factorSalary: num(r[7]),
+      email:       (r[0] || '').toString().toLowerCase().trim(),
+      teamType:    (r[1] || '').toString().trim(),   // 'Payroll' = inhouse, 'OS' = outsource
+      totalMins:   num(r[2]),
+      inhouseCost: num(r[3]),  // col D — inhouse cost portion
+      osCost:      num(r[4]),  // col E — OS cost portion
+      totalCost:   num(r[5]),  // col F — total cost (primary cost figure)
+      factor:      num(r[6]),  // col G — cost per minute
     }));
 
-  const excludedEmployees = allEmployees.filter(e => excludeSet.has(e.email));
-  const employees         = allEmployees.filter(e => !excludeSet.has(e.email));
-  const totalCost         = employees.reduce((s, e) => s + e.factorSalary, 0);
+  const excludedEditors = allEditors.filter(e => excludeSet.has(e.email));
+  const editors         = allEditors.filter(e => !excludeSet.has(e.email));
 
-  return { totalCost, employees, excludedEmployees };
+  const totalCost   = editors.reduce((s, e) => s + e.totalCost,   0);
+  const inhouseCost = editors.reduce((s, e) => s + e.inhouseCost, 0);
+  const osCost      = editors.reduce((s, e) => s + e.osCost,      0);
+
+  return { totalCost, inhouseCost, osCost, employees: editors, excludedEmployees: excludedEditors };
 }
 
 // enterprise_details: A=ID B=Name C=InvVersion D=CustomerSegment
@@ -151,7 +159,7 @@ function parseEnterprise(rows) {
   return map;
 }
 
-// ── Aggregation ──────────────────────────────────────────────────────────────
+// ── Aggregation ───────────────────────────────────────────────────────────────
 function groupSum(rows, keyFn) {
   const acc = {};
   rows.forEach(r => {
@@ -179,7 +187,7 @@ function enrichGroup(name, g, allocatedCost) {
     actualMins:   Math.round(g.actualMins),
     sumTarget:    Math.round(g.sumTarget),
     rows:         g.rows,
-    efficiency:   +eff.toFixed(1),
+    efficiency:   +eff.toFixed(2),
     costPerUnit:  g.units  > 0 ? +(allocatedCost / g.units).toFixed(2)  : 0,
     costPerSku:   g.skus   > 0 ? +(allocatedCost / g.skus).toFixed(2)   : 0,
     costPerVin:   g.vins   > 0 ? +(allocatedCost / g.vins).toFixed(2)   : 0,
@@ -187,22 +195,36 @@ function enrichGroup(name, g, allocatedCost) {
   };
 }
 
-// ── Per-month compute ────────────────────────────────────────────────────────
-function computeMonth(config, outputRows, salaryRows, enterpriseRows, removedRows) {
+// ── Per-month compute ─────────────────────────────────────────────────────────
+function computeMonth(config, outputRows, factorRows, enterpriseRows, removedRows) {
   const sheetExcluded = parseRemovedUsers(removedRows);
   const excludeSet    = buildExcludeSet(sheetExcluded);
 
-  const output   = parseOutput(outputRows, excludeSet);
-  const { totalCost, employees, excludedEmployees } = parseSalary(salaryRows, excludeSet);
-  const entMap   = parseEnterprise(enterpriseRows);
+  const output = parseOutput(outputRows, excludeSet);
+  const {
+    totalCost, inhouseCost, osCost,
+    employees, excludedEmployees,
+  } = parseFactorCalc(factorRows, excludeSet);
+  const entMap = parseEnterprise(enterpriseRows);
 
-  const editorSalaryMap = {};
-  employees.forEach(e => { if (e.email) editorSalaryMap[e.email] = e.factorSalary; });
+  // Editor cost lookup: email → { totalCost, inhouseCost, osCost, teamType, factor }
+  const editorCostMap = {};
+  employees.forEach(e => {
+    editorCostMap[e.email] = {
+      totalCost:   e.totalCost,
+      inhouseCost: e.inhouseCost,
+      osCost:      e.osCost,
+      teamType:    e.teamType,
+      factor:      e.factor,
+    };
+  });
 
   const enriched = output.map(r => ({
     ...r,
     segment:          entMap[r.enterprise]?.segment          || 'Unknown',
     inventoryVersion: entMap[r.enterprise]?.inventoryVersion || '',
+    // Editor team type from factor_calculation
+    teamType: editorCostMap[(r.qcEditor || '').toLowerCase().trim()]?.teamType || 'Unknown',
   }));
 
   const totalUnits     = enriched.reduce((s, r) => s + billingUnits(r), 0);
@@ -211,14 +233,22 @@ function computeMonth(config, outputRows, salaryRows, enterpriseRows, removedRow
   const totalVins      = enriched.filter(r => isVinProduct(r.product)).reduce((s, r) => s + r.skus, 0);
   const totalActMins   = enriched.reduce((s, r) => s + r.actualMins, 0);
   const totalTarget    = enriched.reduce((s, r) => s + r.sumTarget, 0);
-  const efficiency     = totalActMins > 0 ? +((totalTarget / totalActMins) * 100).toFixed(1) : 0;
+  const efficiency     = totalActMins > 0 ? +((totalTarget / totalActMins) * 100).toFixed(2) : 0;
   const costPerUnit    = totalUnits > 0 ? +(totalCost / totalUnits).toFixed(2) : 0;
   const costPerSku     = totalSkus  > 0 ? +(totalCost / totalSkus).toFixed(2)  : 0;
   const costPerVin     = totalVins  > 0 ? +(totalCost / totalVins).toFixed(2)  : 0;
   const total360Skus   = enriched.filter(r => is360(r.product)).reduce((s, r) => s + r.skus, 0);
   const totalVideoSkus = enriched.filter(r => isVideo(r.product)).reduce((s, r) => s + r.skus, 0);
 
-  // Product breakdown
+  // Inhouse vs OS volume split
+  const inhouseRows = enriched.filter(r => /payroll/i.test(r.teamType));
+  const osRows      = enriched.filter(r => /^os$/i.test(r.teamType));
+  const inhouseUnits = inhouseRows.reduce((s, r) => s + billingUnits(r), 0);
+  const osUnits      = osRows.reduce((s, r) => s + billingUnits(r), 0);
+  const inhouseActMins = inhouseRows.reduce((s, r) => s + r.actualMins, 0);
+  const osActMins      = osRows.reduce((s, r) => s + r.actualMins, 0);
+
+  // ── Product breakdown
   const prodGroups = groupSum(enriched, r => r.product);
   const productBreakdown = Object.entries(prodGroups).map(([name, g]) => {
     const costShare = totalActMins > 0 ? (g.actualMins / totalActMins) * totalCost : 0;
@@ -229,20 +259,30 @@ function computeMonth(config, outputRows, salaryRows, enterpriseRows, removedRow
     };
   }).sort((a, b) => b.actualMins - a.actualMins);
 
-  // Editor breakdown
+  // ── Editor breakdown — use exact cost from factor_calculation
   const editorGroups = groupSum(enriched, r => r.qcEditor);
   const editorBreakdown = Object.entries(editorGroups).map(([email, g]) => {
-    const own  = editorSalaryMap[email];
-    const cost = own != null ? own : totalActMins > 0 ? (g.actualMins / totalActMins) * totalCost : 0;
+    const ec   = editorCostMap[email.toLowerCase().trim()];
+    const cost = ec ? ec.totalCost
+               : totalActMins > 0 ? (g.actualMins / totalActMins) * totalCost : 0;
     const byProduct = {};
     enriched.filter(r => r.qcEditor === email).forEach(r => {
       if (!byProduct[r.product]) byProduct[r.product] = 0;
       byProduct[r.product] += billingUnits(r);
     });
-    return { ...enrichGroup(email, g, cost), email, salary: own || 0, byProduct };
+    return {
+      ...enrichGroup(email, g, cost),
+      email,
+      salary:      ec?.totalCost   || 0,   // keep 'salary' key for compat
+      inhouseCost: ec?.inhouseCost || 0,
+      osCost:      ec?.osCost      || 0,
+      teamType:    ec?.teamType    || 'Unknown',
+      factor:      ec?.factor      || 0,
+      byProduct,
+    };
   }).sort((a, b) => b.units - a.units);
 
-  // Segment breakdown
+  // ── Segment breakdown
   const segGroups = groupSum(enriched, r => r.segment);
   const segmentBreakdown = Object.entries(segGroups).map(([segName, g]) => {
     const segCost = totalActMins > 0 ? (g.actualMins / totalActMins) * totalCost : 0;
@@ -262,7 +302,7 @@ function computeMonth(config, outputRows, salaryRows, enterpriseRows, removedRow
     Object.entries(byProduct).forEach(([, pd]) => {
       const pCost = totalActMins > 0 ? (pd.actualMins / totalActMins) * totalCost : 0;
       pd.costPerUnit = pd.units > 0 ? +(pCost / pd.units).toFixed(2) : 0;
-      pd.efficiency  = pd.actualMins > 0 ? +((pd.sumTarget / pd.actualMins) * 100).toFixed(1) : 0;
+      pd.efficiency  = pd.actualMins > 0 ? +((pd.sumTarget / pd.actualMins) * 100).toFixed(2) : 0;
       pd.units = Math.round(pd.units); pd.skus = Math.round(pd.skus);
       pd.images = Math.round(pd.images); pd.vins = Math.round(pd.vins);
       pd.actualMins = Math.round(pd.actualMins);
@@ -281,48 +321,56 @@ function computeMonth(config, outputRows, salaryRows, enterpriseRows, removedRow
     return {
       ...enrichGroup(segName, g, segCost),
       vins: Math.round(segVins), seg360Skus: Math.round(seg360Skus), segVideoIds: Math.round(segVideoIds),
-      costPerVin:   segVins > 0 ? +(segCost / segVins).toFixed(2) : 0,
-      costShare:    totalCost > 0 ? +((segCost / totalCost) * 100).toFixed(1) : 0,
+      costPerVin:        segVins > 0 ? +(segCost / segVins).toFixed(2) : 0,
+      costShare:         totalCost > 0 ? +((segCost / totalCost) * 100).toFixed(2) : 0,
       byProduct, topEnterprises,
       uniqueEnterprises: new Set(segRows.map(r => r.enterprise)).size,
     };
   }).sort((a, b) => b.units - a.units);
 
-  // Dealer breakdown
+  // ── Dealer breakdown
   const dealerGroups = groupSum(enriched, r => r.dealerType);
   const dealerBreakdown = Object.entries(dealerGroups).map(([name, g]) => {
     const cost = totalActMins > 0 ? (g.actualMins / totalActMins) * totalCost : 0;
     return enrichGroup(name, g, cost);
   }).sort((a, b) => b.units - a.units);
 
-  // Enterprise breakdown (top 25)
+  // ── Enterprise breakdown (top 25)
   const entGroups = groupSum(enriched, r => r.enterprise);
   const enterpriseBreakdown = Object.entries(entGroups).map(([name, g]) => {
     const cost = totalActMins > 0 ? (g.actualMins / totalActMins) * totalCost : 0;
-    return { ...enrichGroup(name, g, cost), segment: entMap[name]?.segment || 'Unknown', inventoryVersion: entMap[name]?.inventoryVersion || '' };
+    return {
+      ...enrichGroup(name, g, cost),
+      segment:          entMap[name]?.segment          || 'Unknown',
+      inventoryVersion: entMap[name]?.inventoryVersion || '',
+    };
   }).sort((a, b) => b.units - a.units).slice(0, 25);
 
-  // Output-only excluded (appear in output but not salary sheet)
-  const outputExcludedEmails = new Set(
-    outputRows.slice(1)
-      .filter(r => r && r[0] && r[6])
-      .map(r => (r[6] || '').toLowerCase().trim())
-      .filter(email => excludeSet.has(email))
-  );
-  const excludedSalaryEmails = new Set(excludedEmployees.map(e => e.email));
-  const outputOnlyExcluded = [...outputExcludedEmails]
-    .filter(email => !excludedSalaryEmails.has(email))
-    .map(email => ({ email, name: '—', empNo: '—', salary: 0, factorSalary: 0 }));
+  // ── Inhouse vs OS breakdown
+  const teamBreakdown = {
+    inhouse: {
+      cost:        Math.round(inhouseCost),
+      units:       Math.round(inhouseUnits),
+      actualMins:  Math.round(inhouseActMins),
+      employees:   employees.filter(e => /payroll/i.test(e.teamType)).length,
+      costPerUnit: inhouseUnits > 0 ? +(inhouseCost / inhouseUnits).toFixed(2) : 0,
+    },
+    os: {
+      cost:        Math.round(osCost),
+      units:       Math.round(osUnits),
+      actualMins:  Math.round(osActMins),
+      employees:   employees.filter(e => /^os$/i.test(e.teamType)).length,
+      costPerUnit: osUnits > 0 ? +(osCost / osUnits).toFixed(2) : 0,
+    },
+  };
 
   return {
     month: config.month,
     key:   config.key,
-    excludedUsers: [
-      ...excludedEmployees.map(e => ({ email: e.email, name: e.name, empNo: e.empNo, salary: e.salary, factorSalary: e.factorSalary })),
-      ...outputOnlyExcluded,
-    ],
     summary: {
       totalCost:       Math.round(totalCost),
+      inhouseCost:     Math.round(inhouseCost),
+      osCost:          Math.round(osCost),
       totalImages:     Math.round(totalImages),
       totalSkus:       Math.round(totalSkus),
       total360Skus:    Math.round(total360Skus),
@@ -336,8 +384,8 @@ function computeMonth(config, outputRows, salaryRows, enterpriseRows, removedRow
       costPerSku,
       costPerVin,
       employees:       employees.length,
-      excludedCount:   excludedEmployees.length + outputOnlyExcluded.length,
     },
+    teamBreakdown,
     productBreakdown,
     editorBreakdown,
     segmentBreakdown,
@@ -346,51 +394,37 @@ function computeMonth(config, outputRows, salaryRows, enterpriseRows, removedRow
   };
 }
 
-// ── Handler ──────────────────────────────────────────────────────────────────
+// ── Handler ───────────────────────────────────────────────────────────────────
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=60');
-
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET')     return res.status(405).json({ error: 'Method not allowed' });
-
   try {
     const client = getSheetsClient();
-
     const results = await Promise.allSettled(
       SHEETS.map(async cfg => {
-        const [outputRows, salaryRows, entRows, removedRows] = await Promise.all([
+        const [outputRows, factorRows, entRows, removedRows] = await Promise.all([
           fetchRange(client, cfg.id, 'output!A:M'),
-          fetchRange(client, cfg.id, 'Salary!A:H'),
+          fetchRange(client, cfg.id, 'factor_calculation!A:G'),  // ← changed from Salary
           fetchRange(client, cfg.id, 'enterprise_details!A:D'),
           fetchRange(client, cfg.id, 'remove_users!A:E'),
         ]);
-        return computeMonth(cfg, outputRows, salaryRows, entRows, removedRows);
+        return computeMonth(cfg, outputRows, factorRows, entRows, removedRows);
       })
     );
-
     const months = results.filter(r => r.status === 'fulfilled').map(r => r.value);
     const errors = results
       .map((r, i) => r.status === 'rejected'
         ? { month: SHEETS[i].month, error: r.reason?.message || String(r.reason) }
         : null)
       .filter(Boolean);
-
-    if (months.length === 0) {
-      return res.status(500).json({
-        error: 'All sheet fetches failed',
-        details: errors,
-      });
-    }
-
+    if (months.length === 0)
+      return res.status(500).json({ error: 'All sheet fetches failed', details: errors });
     res.status(200).json({ months, errors, fetchedAt: new Date().toISOString() });
-
   } catch (err) {
     console.error('[data.js error]', err);
-    res.status(500).json({
-      error: err.message,
-      hint: err.message.includes('env') ? 'Check GOOGLE_SERVICE_ACCOUNT_EMAIL and GOOGLE_PRIVATE_KEY in Vercel env vars' : undefined,
-    });
+    res.status(500).json({ error: err.message });
   }
 };
