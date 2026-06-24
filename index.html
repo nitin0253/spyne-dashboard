@@ -259,7 +259,7 @@ select.sel:focus{border-color:var(--blue)}
         <button class="cf-pill" data-chart="cost" onclick="setChartFilter('cost','video',this)">Video</button>
       </div>
     </div>
-    <div class="ch"><canvas id="ch-cost-trend" height="95"></canvas></div>
+    <div class="ch"><canvas id="ch-cost-trend" height="130"></canvas></div>
   </div>
     <!-- CHART 2: Segment Breakdown MoM -->
   <div class="section">
@@ -277,7 +277,7 @@ select.sel:focus{border-color:var(--blue)}
         <button class="cf-pill" data-chart="segp" onclick="setChartFilter('segp','video',this)">Video</button>
       </div>
     </div>
-    <div class="ch"><canvas id="ch-seg-trend" height="95"></canvas></div>
+    <div class="ch"><canvas id="ch-seg-trend" height="130"></canvas></div>
   </div>
   </div>
 
@@ -299,7 +299,7 @@ select.sel:focus{border-color:var(--blue)}
         <button class="cf-pill" data-chart="edp" onclick="setChartFilter('edp','video',this)">Video</button>
       </div>
     </div>
-    <div class="ch"><canvas id="ch-ed-cost" height="120"></canvas></div>
+    <div class="ch"><canvas id="ch-ed-cost" height="180"></canvas></div>
   </div>
     <!-- CHART 4: Product Breakdown MoM -->
   <div class="section">
@@ -317,7 +317,7 @@ select.sel:focus{border-color:var(--blue)}
         <button class="cf-pill" data-chart="prodm" onclick="setChartFilter('prodm','cost',this)">Cost</button>
       </div>
     </div>
-    <div class="ch"><canvas id="ch-prod-trend" height="95"></canvas></div>
+    <div class="ch"><canvas id="ch-prod-trend" height="130"></canvas></div>
   </div>
   </div>
 
@@ -453,7 +453,7 @@ function mk(id,cfg){
   if(CHARTS[id]){CHARTS[id].destroy();delete CHARTS[id];}
   const el=document.getElementById(id);if(!el)return;
   const opts=deepMerge(JSON.parse(JSON.stringify(BASE)),cfg.options||{});
-  if(['bar','line'].includes(cfg.type)){if(!opts.layout)opts.layout={};if(!opts.layout.padding)opts.layout.padding={};opts.layout.padding.top=opts.layout.padding.top||20;}
+  if(['bar','line'].includes(cfg.type)){if(!opts.layout)opts.layout={};if(!opts.layout.padding)opts.layout.padding={};opts.layout.padding.top=opts.layout.padding.top||30;}
   if(cfg._stackTotal&&cfg.data?.datasets){
     const li=cfg.data.datasets.length-1;
     cfg.data.datasets.forEach((ds,i)=>{ds.datalabels=i===li?{display:ctx=>{const t=ctx.chart.data.datasets.reduce((s,d)=>s+(+d.data[ctx.dataIndex]||0),0);return t>0;},color:'#dce8f8',font:{size:10},anchor:'end',align:'top',formatter:(v,ctx)=>{const t=ctx.chart.data.datasets.reduce((s,d)=>s+(+d.data[ctx.dataIndex]||0),0);return t>0?f.short(t):'';}}:{display:false};});
@@ -895,8 +895,8 @@ function renderChart1(months){
   mk('ch-cost-trend',{
     type:'bar',
     data:{labels,datasets:[
-      {label:'Overall Cost',data:cms.map(s=>s.totalCost),backgroundColor:'rgba(79,120,255,.75)',borderRadius:3,yAxisID:'y',order:2,datalabels:dlTop(function(v){return'₹'+f.short(v);})},
-      {label:'Volume',data:cms.map(s=>s.totalUnits),backgroundColor:'rgba(34,212,160,.55)',borderRadius:3,yAxisID:'y1',order:3,datalabels:dlTop(function(v){return f.short(v);},'#22d4a0')},
+      {label:'Overall Cost',data:cms.map(s=>s.totalCost),backgroundColor:'rgba(79,120,255,.75)',borderRadius:3,yAxisID:'y',order:2,barPercentage:0.45,categoryPercentage:0.8,datalabels:dlTop(function(v){return'₹'+f.short(v);})},
+      {label:'Volume',data:cms.map(s=>s.totalUnits),backgroundColor:'rgba(34,212,160,.55)',borderRadius:3,yAxisID:'y1',order:3,barPercentage:0.45,categoryPercentage:0.8,datalabels:dlTop(function(v){return f.short(v);},'#22d4a0')},
       {label:'₹/Unit',data:cms.map(s=>s.costPerUnit),type:'line',borderColor:'#f5a42a',borderWidth:2.5,tension:.3,pointBackgroundColor:'#f5a42a',pointRadius:5,yAxisID:'y2',order:1,fill:false,datalabels:{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:'#f5a42a',font:{size:10,weight:'700'},anchor:'center',align:'top',offset:10,formatter:function(v){return'₹'+Number(v).toFixed(2);}}},
     ]},
     options:{
@@ -939,9 +939,11 @@ function renderChart2(months){
       }),
       backgroundColor:segColors[i],
       borderRadius:3,
+      barPercentage:0.85,
+      categoryPercentage:0.85,
       datalabels:{
         display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},
-        color:'#dce8f8',font:{size:9,weight:'600'},anchor:'end',align:'top',offset:3,
+        color:'#dce8f8',font:{size:10,weight:'600'},anchor:'end',align:'top',offset:2,
         clamp:true,
         formatter:function(v){return smFmt(v);}
       }
@@ -1039,9 +1041,11 @@ function renderChart4(months){
       data:months.map(function(m){var prod=getFilteredProducts(m).find(function(x){return x.name===pn;});return prodVal(prod,pm);}),
       backgroundColor:pc(pn,i),
       borderRadius:3,
+      barPercentage:0.8,
+      categoryPercentage:0.8,
       datalabels:{
         display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},
-        color:'#dce8f8',font:{size:10,weight:'600'},anchor:'end',align:'top',offset:3,
+        color:'#dce8f8',font:{size:10,weight:'600'},anchor:'end',align:'top',offset:2,
         clamp:true,
         formatter:function(v){return pmFmt(v);}
       }
