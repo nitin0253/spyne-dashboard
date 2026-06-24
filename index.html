@@ -351,28 +351,7 @@ select.sel:focus{border-color:var(--blue)}
     </div>
   </div>
 
-  <!-- All Editors -->
-  <div class="section" style="margin-bottom:12px">
-    <div class="sec-head">
-      <div class="sec-title">All Editors</div>
-      <div class="sec-actions">
-        <input type="text" class="search" id="ed-search" placeholder="Search editor…">
-        <select class="sel" id="ed-sort">
-          <option value="units">Sort: Units</option>
-          <option value="efficiency">Sort: Efficiency</option>
-          <option value="costPerUnit">Sort: ₹/Unit</option>
-        </select>
-      </div>
-    </div>
-    <div class="tbl-wrap" style="max-height:300px;overflow-y:auto"><table>
-      <thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr>
-        <th>#</th><th>Editor</th><th>Team</th>
-        <th class="r">Images</th><th class="r">360</th><th class="r">Video</th>
-        <th class="r">Total Units</th><th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r">Cost</th>
-      </tr></thead>
-      <tbody id="ed-tbl"></tbody>
-    </table></div>
-  </div>
+
 
   <!-- USER SUMMARY -->
   <div style="margin-top:16px;margin-bottom:8px;display:flex;align-items:center;gap:10px">
@@ -1165,7 +1144,6 @@ function showEditorDetail(e){
 function renderTables(months){
   const m=months[months.length-1];
   _segData=filterBreakdown(m.segmentBreakdown,'segment');renderSegTable();
-  _dealerData=m.dealerBreakdown;renderDealerTable();
   _entData=m.enterpriseBreakdown;renderEntTable();
 }
 
@@ -1186,7 +1164,8 @@ function renderEditorTable(){
   const q=(document.getElementById('ed-search')?.value||'').toLowerCase();
   const sk=document.getElementById('ed-sort')?.value||'units';
   const rows=edData.filter(e=>!q||e.email.toLowerCase().includes(q)).sort((a,b)=>b[sk]-a[sk]);
-  document.getElementById('ed-tbl').innerHTML=rows.map((e,i)=>{
+  const edTbl=document.getElementById('ed-tbl');if(!edTbl)return;
+  edTbl.innerHTML=rows.map((e,i)=>{
     const imgU=e.byProduct?Object.entries(e.byProduct).find(([k])=>/image/i.test(k))?.[1]||0:e.images;
     const s360=e.byProduct?Object.entries(e.byProduct).find(([k])=>/360|spin/i.test(k))?.[1]||0:0;
     const vid=e.byProduct?Object.entries(e.byProduct).find(([k])=>/video/i.test(k))?.[1]||0:0;
