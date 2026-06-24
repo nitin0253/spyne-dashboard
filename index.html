@@ -20,7 +20,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{height:100%}
-body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13px;min-height:100%;display:flex;flex-direction:column}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;min-height:100%;display:flex;flex-direction:column}
 
 /* ── TOP BAR ── */
 #topbar{height:48px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:14px;flex-shrink:0;position:sticky;top:0;z-index:100}
@@ -90,8 +90,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13
 .kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;position:relative;overflow:hidden;transition:border-color .15s}
 .kpi:hover{border-color:rgba(79,120,255,.35)}
 .kpi-accent{width:3px;position:absolute;left:0;top:0;bottom:0;border-radius:10px 0 0 10px}
-.kpi-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--sub);margin-bottom:5px}
-.kpi-value{font-size:20px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-.5px}
+.kpi-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--sub);margin-bottom:5px}
+.kpi-value{font-size:22px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-.5px}
 .kpi-sub{font-size:10px;color:var(--muted);margin-top:5px}
 .kpi-delta{font-size:10px;font-weight:600;margin-top:3px}
 .kpi-delta.up{color:var(--green)}.kpi-delta.down{color:var(--red)}
@@ -99,7 +99,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13
 /* ── CARDS & GRIDS ── */
 .section{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px}
 .sec-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;gap:8px}
-.sec-title{font-weight:600;font-size:13px}.sec-sub{font-size:10px;color:var(--sub);margin-top:2px}
+.sec-title{font-weight:700;font-size:14px}.sec-sub{font-size:11px;color:var(--sub);margin-top:3px}
 .sec-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;flex-shrink:0}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
@@ -110,13 +110,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13
 
 /* ── TABLE ── */
 .tbl-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:12px}
-thead th{padding:0 10px 8px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);white-space:nowrap;border-bottom:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{padding:0 10px 10px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--sub);white-space:nowrap;border-bottom:1px solid var(--border)}
 thead th.r{text-align:right}
 tbody tr{border-bottom:1px solid rgba(26,37,64,.5);transition:background .1s}
 tbody tr:hover{background:var(--hover)}
-tbody td{padding:8px 10px;color:var(--sub);white-space:nowrap}
-tbody td.r{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:11px}
+tbody td{padding:9px 10px;color:var(--text);white-space:nowrap;font-size:12px}
+tbody td.r{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:12px}
 tbody td.bright{color:var(--text);font-weight:500}
 .eff-hi{color:var(--green);font-weight:600}.eff-md{color:var(--amber);font-weight:600}.eff-lo{color:var(--red);font-weight:600}
 .rank-num{color:var(--muted);font-size:10px;font-family:var(--mono)}
@@ -132,7 +132,7 @@ select.sel:focus{border-color:var(--blue)}
 /* ── CHART INLINE FILTERS ── */
 .cf-row{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:10px}
 .cf-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-right:2px}
-.cf-pill{padding:3px 9px;border-radius:5px;border:1px solid var(--border);font-size:10px;font-weight:600;cursor:pointer;font-family:var(--font);background:transparent;color:var(--sub);transition:all .12s;user-select:none}
+.cf-pill{padding:4px 11px;border-radius:5px;border:1px solid var(--border);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);background:transparent;color:var(--sub);transition:all .12s;user-select:none}
 .cf-pill:hover{color:var(--text);border-color:var(--sub)}
 .cf-pill.active{background:var(--blue);border-color:var(--blue);color:#fff}
 .cf-pill.active-green{background:var(--green);border-color:var(--green);color:#0a0f1a}
@@ -243,11 +243,12 @@ select.sel:focus{border-color:var(--blue)}
 <!-- SINGLE PAGE CONTENT -->
 <div id="content">
 
-  <!-- KPI CARDS -->
   <div class="kpi-grid" id="ov-kpis" style="margin-bottom:14px"></div>
 
-  <!-- CHART 1: Cost Trend MoM -->
-  <div class="section" style="margin-bottom:12px">
+  <!-- ROW 1: Cost Trend + Segment Breakdown side by side -->
+  <div class="g2" style="margin-bottom:12px">
+    <!-- CHART 1: Cost Trend MoM -->
+  <div class="section">
     <div class="sec-head">
       <div><div class="sec-title">Cost Trend — Month on Month</div><div class="sec-sub">Overall Cost (bars) · Volume (bars) · ₹/Unit (line)</div></div>
       <div class="cf-row">
@@ -260,9 +261,8 @@ select.sel:focus{border-color:var(--blue)}
     </div>
     <div class="ch"><canvas id="ch-cost-trend" height="95"></canvas></div>
   </div>
-
-  <!-- CHART 2: Segment Breakdown MoM -->
-  <div class="section" style="margin-bottom:12px">
+    <!-- CHART 2: Segment Breakdown MoM -->
+  <div class="section">
     <div class="sec-head">
       <div><div class="sec-title">Segment Breakdown — Month on Month</div><div class="sec-sub">Cost · Volume · ₹/VIN per customer segment across months</div></div>
       <div class="cf-row">
@@ -279,23 +279,30 @@ select.sel:focus{border-color:var(--blue)}
     </div>
     <div class="ch"><canvas id="ch-seg-trend" height="95"></canvas></div>
   </div>
+  </div>
 
-  <!-- CHART 3: Top 15 Editors -->
-  <div class="section" style="margin-bottom:12px">
+  <!-- ROW 2: Top 15 Editors + Product Breakdown side by side -->
+  <div class="g2" style="margin-bottom:12px">
+    <!-- CHART 3: Top 15 Editors -->
+  <div class="section">
     <div class="sec-head">
       <div><div class="sec-title">Top 15 Editors</div><div class="sec-sub" id="ed-chart-sub"></div></div>
       <div class="cf-row">
-        <span class="cf-label">Sort by:</span>
+        <span class="cf-label">Sort:</span>
         <button class="cf-pill active" data-chart="ed" onclick="setChartFilter('ed','costPerUnit',this)">₹/Unit</button>
         <button class="cf-pill" data-chart="ed" onclick="setChartFilter('ed','units',this)">Volume</button>
         <button class="cf-pill" data-chart="ed" onclick="setChartFilter('ed','efficiency',this)">Efficiency</button>
+        <span class="cf-label" style="margin-left:8px">Product:</span>
+        <button class="cf-pill active" data-chart="edp" onclick="setChartFilter('edp','all',this)">All</button>
+        <button class="cf-pill" data-chart="edp" onclick="setChartFilter('edp','image',this)">Images</button>
+        <button class="cf-pill" data-chart="edp" onclick="setChartFilter('edp','360',this)">360</button>
+        <button class="cf-pill" data-chart="edp" onclick="setChartFilter('edp','video',this)">Video</button>
       </div>
     </div>
     <div class="ch"><canvas id="ch-ed-cost" height="120"></canvas></div>
   </div>
-
-  <!-- CHART 4: Product Breakdown MoM -->
-  <div class="section" style="margin-bottom:20px">
+    <!-- CHART 4: Product Breakdown MoM -->
+  <div class="section">
     <div class="sec-head">
       <div><div class="sec-title">Product Breakdown — Month on Month</div><div class="sec-sub">Volume · Cost · ₹/Unit per product type across months</div></div>
       <div class="cf-row">
@@ -312,72 +319,10 @@ select.sel:focus{border-color:var(--blue)}
     </div>
     <div class="ch"><canvas id="ch-prod-trend" height="95"></canvas></div>
   </div>
-
-  <!-- TABLES: Segment + Dealer + Enterprise + Editors -->
-  <div class="g3" style="margin-bottom:12px">
-    <div class="section">
-      <div class="sec-head"><div class="sec-title">Segment Summary</div></div>
-      <div class="tbl-wrap"><table>
-        <thead><tr>
-          <th>Segment</th>
-          <th class="r" onclick="cycleSortSeg('vins')" style="cursor:pointer">VINs<span id="ss-vins" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-          <th class="r" onclick="cycleSortSeg('units')" style="cursor:pointer">Units<span id="ss-units" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-          <th class="r" onclick="cycleSortSeg('efficiency')" style="cursor:pointer">Eff.<span id="ss-efficiency" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-          <th class="r" onclick="cycleSortSeg('costPerVin')" style="cursor:pointer">₹/VIN<span id="ss-costPerVin" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-          <th class="r" onclick="cycleSortSeg('costShare')" style="cursor:pointer">Cost%<span id="ss-costShare" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-        </tr></thead>
-        <tbody id="sg-summary-tbl"></tbody>
-      </table></div>
-    </div>
-    <div class="section">
-      <div class="sec-head"><div class="sec-title">Dealer Type</div></div>
-      <div class="tbl-wrap"><table>
-        <thead><tr>
-          <th>Type</th>
-          <th class="r" onclick="cycleSortDealer('vins')" style="cursor:pointer">VINs<span id="sd-vins" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-          <th class="r" onclick="cycleSortDealer('units')" style="cursor:pointer">Units<span id="sd-units" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-          <th class="r" onclick="cycleSortDealer('efficiency')" style="cursor:pointer">Eff.<span id="sd-efficiency" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-          <th class="r" onclick="cycleSortDealer('costPerVin')" style="cursor:pointer">₹/VIN<span id="sd-costPerVin" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-        </tr></thead>
-        <tbody id="co-dealer-tbl"></tbody>
-      </table></div>
-    </div>
-    <div class="section">
-      <div class="sec-head"><div class="sec-title">Top Enterprises</div></div>
-      <div class="tbl-wrap" style="max-height:300px;overflow-y:auto"><table>
-        <thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr>
-          <th>#</th><th>Enterprise</th><th>Seg.</th>
-          <th class="r" onclick="cycleSortEnt('vins')" style="cursor:pointer">VINs<span id="se-vins" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-          <th class="r" onclick="cycleSortEnt('efficiency')" style="cursor:pointer">Eff.<span id="se-efficiency" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-          <th class="r" onclick="cycleSortEnt('costPerVin')" style="cursor:pointer">₹/VIN<span id="se-costPerVin" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-        </tr></thead>
-        <tbody id="co-ent-tbl"></tbody>
-      </table></div>
-    </div>
   </div>
 
-  <!-- All Editors -->
-  <div class="section">
-    <div class="sec-head">
-      <div class="sec-title">All Editors</div>
-      <div class="sec-actions">
-        <input type="text" class="search" id="ed-search" placeholder="Search editor…">
-        <select class="sel" id="ed-sort">
-          <option value="units">Sort: Units</option>
-          <option value="efficiency">Sort: Efficiency</option>
-          <option value="costPerUnit">Sort: ₹/Unit</option>
-        </select>
-      </div>
-    </div>
-    <div class="tbl-wrap" style="max-height:300px;overflow-y:auto"><table>
-      <thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr>
-        <th>#</th><th>Editor</th><th>Team</th>
-        <th class="r">Images</th><th class="r">360</th><th class="r">Video</th>
-        <th class="r">Total Units</th><th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r">Cost</th>
-      </tr></thead>
-      <tbody id="ed-tbl"></tbody>
-    </table></div>
-  </div>
+  <!-- TABLES: Segment + Enterprise + Editors -->
+  
 
 </div>
 <script>
@@ -426,14 +371,14 @@ const BASE={
     datalabels:{display:false},
   },
   scales:{
-    x:{ticks:{color:'#3a4e70',font:{size:10}},grid:{color:'rgba(26,37,64,.5)'}},
-    y:{ticks:{color:'#3a4e70',font:{size:10}},grid:{color:'rgba(26,37,64,.5)'}},
+    x:{ticks:{color:'#6a82a8',font:{size:11}},grid:{color:'rgba(26,37,64,.5)'}},
+    y:{ticks:{color:'#6a82a8',font:{size:11}},grid:{color:'rgba(26,37,64,.5)'}},
   },
 };
 function dlL(type,fmt,opts={}){
   if(typeof ChartDataLabels==='undefined')return{display:false};
   const isBar=type==='bar',isH=opts.horizontal;
-  return{display:ctx=>{const v=ctx.dataset.data[ctx.dataIndex];return v!=null&&v!==0;},color:'#dce8f8',font:{size:9,weight:'500'},formatter:fmt||(v=>v==null||v===0?'':f.short(v)),anchor:isBar?'end':'center',align:isBar?(isH?'right':'top'):'top',offset:isBar?(isH?4:3):0,clamp:true};
+  return{display:ctx=>{const v=ctx.dataset.data[ctx.dataIndex];return v!=null&&v!==0;},color:'#dce8f8',font:{size:10,weight:'600'},formatter:fmt||(v=>v==null||v===0?'':f.short(v)),anchor:isBar?'end':'center',align:isBar?(isH?'right':'top'):'top',offset:isBar?(isH?4:3):0,clamp:true};
 }
 function mk(id,cfg){
   if(CHARTS[id]){CHARTS[id].destroy();delete CHARTS[id];}
@@ -442,7 +387,7 @@ function mk(id,cfg){
   if(['bar','line'].includes(cfg.type)){if(!opts.layout)opts.layout={};if(!opts.layout.padding)opts.layout.padding={};opts.layout.padding.top=opts.layout.padding.top||20;}
   if(cfg._stackTotal&&cfg.data?.datasets){
     const li=cfg.data.datasets.length-1;
-    cfg.data.datasets.forEach((ds,i)=>{ds.datalabels=i===li?{display:ctx=>{const t=ctx.chart.data.datasets.reduce((s,d)=>s+(+d.data[ctx.dataIndex]||0),0);return t>0;},color:'#dce8f8',font:{size:9},anchor:'end',align:'top',formatter:(v,ctx)=>{const t=ctx.chart.data.datasets.reduce((s,d)=>s+(+d.data[ctx.dataIndex]||0),0);return t>0?f.short(t):'';}}:{display:false};});
+    cfg.data.datasets.forEach((ds,i)=>{ds.datalabels=i===li?{display:ctx=>{const t=ctx.chart.data.datasets.reduce((s,d)=>s+(+d.data[ctx.dataIndex]||0),0);return t>0;},color:'#dce8f8',font:{size:10},anchor:'end',align:'top',formatter:(v,ctx)=>{const t=ctx.chart.data.datasets.reduce((s,d)=>s+(+d.data[ctx.dataIndex]||0),0);return t>0?f.short(t):'';}}:{display:false};});
   }
   if(cfg.data?.datasets&&cfg._lf){cfg.data.datasets.forEach(ds=>{if(!ds.datalabels)ds.datalabels=dlL(cfg.type,cfg._lf,{horizontal:opts.indexAxis==='y'});});}
   CHARTS[id]=new Chart(el,{...cfg,options:opts});
@@ -603,10 +548,10 @@ function renderSnapTable(){
 
 // Segment sort
 let _segData=[];let _segSort={col:null,dir:-1};
-window.cycleSortSeg=mkSorter('ss',['vins','units','efficiency','costPerVin','costShare'],function(col,dir){_segSort={col,dir};renderSegTable();});
+window.cycleSortSeg=mkSorter('ss',['vins','units','efficiency','costPerUnit','costShare'],function(col,dir){_segSort={col,dir};renderSegTable();});
 function renderSegTable(){
   const rows=applySortArr(_segData,_segSort.col,_segSort.dir);
-  document.getElementById('sg-summary-tbl').innerHTML=rows.map(s=>'<tr><td class="bright"><span class="seg" style="background:'+sc(s.name)+'22;color:'+sc(s.name)+'">'+s.name+'</span></td><td class="r" style="color:var(--purple)">'+f.num(s.vins)+'</td><td class="r">'+f.num(s.units)+'</td><td class="r"><span class="'+effCls(s.efficiency)+'">'+f.pct(s.efficiency)+'</span></td><td class="r" style="color:var(--amber)">'+f.inr(s.costPerVin)+'</td><td class="r">'+f.pct(s.costShare)+'</td></tr>').join('');
+  document.getElementById('sg-summary-tbl').innerHTML=rows.map(s=>'<tr><td class="bright"><span class="seg" style="background:'+sc(s.name)+'22;color:'+sc(s.name)+'">'+s.name+'</span></td><td class="r" style="color:var(--purple)">'+f.num(s.vins)+'</td><td class="r">'+f.num(s.units)+'</td><td class="r"><span class="'+effCls(s.efficiency)+'">'+f.pct(s.efficiency)+'</span></td><td class="r" style="color:var(--amber)">'+f.inr(s.costPerUnit)+'</td><td class="r">'+f.pct(s.costShare)+'</td></tr>').join('');
 }
 
 // Dealer sort
@@ -619,10 +564,10 @@ function renderDealerTable(){
 
 // Enterprise sort
 let _entData=[];let _entSort={col:'units',dir:-1};
-window.cycleSortEnt=mkSorter('se',['vins','efficiency','costPerVin'],function(col,dir){_entSort={col,dir};renderEntTable();});
+window.cycleSortEnt=mkSorter('se',['vins','efficiency','costPerUnit'],function(col,dir){_entSort={col,dir};renderEntTable();});
 function renderEntTable(){
   const rows=applySortArr(_entData,_entSort.col,_entSort.dir);
-  document.getElementById('co-ent-tbl').innerHTML=rows.map((e,i)=>'<tr><td class="rank-num">'+(i+1)+'</td><td class="bright" style="max-width:160px;overflow:hidden;text-overflow:ellipsis">'+e.name+'</td><td><span class="seg" style="background:'+sc(e.segment)+'22;color:'+sc(e.segment)+';font-size:9px">'+e.segment+'</span></td><td class="r">'+f.num(e.vins)+'</td><td class="r"><span class="'+effCls(e.efficiency)+'">'+f.pct(e.efficiency)+'</span></td><td class="r">'+f.inr(e.costPerVin)+'</td></tr>').join('');
+  document.getElementById('co-ent-tbl').innerHTML=rows.map((e,i)=>'<tr><td class="rank-num">'+(i+1)+'</td><td class="bright" style="max-width:160px;overflow:hidden;text-overflow:ellipsis">'+e.name+'</td><td><span class="seg" style="background:'+sc(e.segment)+'22;color:'+sc(e.segment)+';font-size:9px">'+e.segment+'</span></td><td class="r">'+f.num(e.vins)+'</td><td class="r"><span class="'+effCls(e.efficiency)+'">'+f.pct(e.efficiency)+'</span></td><td class="r">'+f.inr(e.costPerUnit)+'</td></tr>').join('');
 }
 
 // Product sort
@@ -716,7 +661,7 @@ function renderKPIs(months){
   filterBreakdown(last.segmentBreakdown,'segment').forEach(sg=>{segMap[sg.name]=sg;});
   const knownSegs=new Set(['Ent','Enterprise','Mid','SMB','Resellers']);
   const otherSegs=Object.keys(segMap).filter(n=>!knownSegs.has(n));
-  function segCostPerVin(names){let cost=0,vins=0;names.forEach(n=>{const sg=Object.values(segMap).find(s=>s.name===n);if(sg){cost+=sg.costPerVin*sg.vins;vins+=sg.vins;}});return vins>0?+(cost/vins).toFixed(2):0;}
+  function segCostPerUnit(names){let cost=0,units=0;names.forEach(n=>{const sg=Object.values(segMap).find(s=>s.name===n);if(sg){cost+=sg.costPerUnit*(sg.units||0);units+=sg.units||0;}});return units>0?+(cost/units).toFixed(2):0;}
   const entSeg=segMap['Ent']||segMap['Enterprise']||null;
   const midSeg=segMap['Mid']||null;
   const smbSeg=segMap['SMB']||null;
@@ -725,16 +670,16 @@ function renderKPIs(months){
     kpi('Delivery Cost', f.inr0(s.totalCost),    last.month,                           d('totalCost'), '#4f78ff'),
     kpi('Inhouse Cost',  f.inr0(s.inhouseCost),  (tb.inhouse?.employees||0)+' people', null,           '#22d4a0'),
     kpi('OS Cost',       f.inr0(s.osCost),        (tb.os?.employees||0)+' contractors', null,           '#f5a42a'),
-    kpi('₹ / Ent',       f.inr(entSeg?.costPerVin||0),    'Enterprise · per VIN', null,'#4f78ff'),
-    kpi('₹ / Mid',       f.inr(midSeg?.costPerVin||0),    'Mid · per VIN',        null,'#a07cff'),
-    kpi('₹ / SMB',       f.inr(smbSeg?.costPerVin||0),    'SMB · per VIN',        null,'#22d4a0'),
-    kpi('₹ / Resellers', f.inr(resSeg?.costPerVin||0),    'Resellers · per VIN',  null,'#f5a42a'),
-    kpi('₹ / Other',     f.inr(segCostPerVin(otherSegs)), 'Other · per VIN',      null,'#38c4f0'),
+    kpi('₹ / Ent',       f.inr(entSeg?.costPerUnit||0),  'Enterprise · per Unit', null,'#4f78ff'),
+    kpi('₹ / Mid',       f.inr(midSeg?.costPerUnit||0),  'Mid · per Unit',        null,'#a07cff'),
+    kpi('₹ / SMB',       f.inr(smbSeg?.costPerUnit||0),  'SMB · per Unit',        null,'#22d4a0'),
+    kpi('₹ / Resellers', f.inr(resSeg?.costPerUnit||0),  'Resellers · per Unit',  null,'#f5a42a'),
+    kpi('₹ / Other',     f.inr(segCostPerUnit(otherSegs)), 'Other · per Unit',      null,'#38c4f0'),
   ].join('');
 }
 
 // ── CHART FILTER STATE ───────────────────────────────────────────────────────
-const CF={cost:'all',seg:'cost',segp:'all',ed:'costPerUnit',prod:'all',prodm:'units'};
+const CF={cost:'all',seg:'cost',segp:'all',ed:'costPerUnit',prod:'all',prodm:'units',edp:'all'};
 
 function setChartFilter(chartKey,value,btn){
   CF[chartKey]=value;
@@ -749,7 +694,15 @@ function setChartFilter(chartKey,value,btn){
   }
   if(!DATA)return;
   const months=filteredMonths();
-  if(months.length)renderCharts(months);
+  if(!months.length)return;
+  // Only re-render the affected chart (not all 4)
+  const chartRenderMap={
+    cost:renderChart1, seg:renderChart2, segp:renderChart2,
+    ed:renderChart3,  edp:renderChart3,
+    prod:renderChart4, prodm:renderChart4
+  };
+  const fn=chartRenderMap[chartKey];
+  if(fn)fn(months); else renderCharts(months);
 }
 
 // Get filtered summary for a specific product key
@@ -788,60 +741,48 @@ function segProdData(m,prodKey){
   }).filter(Boolean).filter(s=>(s.units||0)+(s.vins||0)>0);
 }
 
-function renderCharts(months){
+function renderChart1(months){
   const labels=months.map(m=>m.month.replace('-26',''));
-
-  // ── CHART 1: Cost Trend MoM — bars for Cost + Volume, line for ₹/Unit ──
   const cp=CF.cost;
   const cms=months.map(m=>prodFilteredSummary(m,cp));
+  const dlTop=function(fmt,clr){return{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:clr||'#dce8f8',font:{size:10,weight:'600'},anchor:'end',align:'top',offset:3,clamp:true,formatter:fmt};};
   mk('ch-cost-trend',{
     type:'bar',
     data:{labels,datasets:[
-      {label:'Overall Cost',data:cms.map(s=>s.totalCost),
-       backgroundColor:'rgba(79,120,255,.75)',borderRadius:3,yAxisID:'y',order:2,
-       datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,color:'#dce8f8',
-         font:{size:9,weight:'500'},anchor:'end',align:'top',offset:2,
-         formatter:v=>'₹'+f.short(v)}},
-      {label:'Volume',data:cms.map(s=>s.totalUnits),
-       backgroundColor:'rgba(34,212,160,.55)',borderRadius:3,yAxisID:'y1',order:3,
-       datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,color:'#22d4a0',
-         font:{size:9,weight:'500'},anchor:'end',align:'top',offset:2,
-         formatter:v=>f.short(v)}},
-      {label:'₹/Unit',data:cms.map(s=>s.costPerUnit),
-       type:'line',borderColor:'#f5a42a',borderWidth:2.5,tension:.3,
-       pointBackgroundColor:'#f5a42a',pointRadius:5,yAxisID:'y2',order:1,fill:false,
-       datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,color:'#f5a42a',
-         font:{size:9,weight:'600'},anchor:'center',align:'top',offset:8,
-         formatter:v=>'₹'+Number(v).toFixed(2)}},
+      {label:'Overall Cost',data:cms.map(s=>s.totalCost),backgroundColor:'rgba(79,120,255,.75)',borderRadius:3,yAxisID:'y',order:2,datalabels:dlTop(function(v){return'₹'+f.short(v);})},
+      {label:'Volume',data:cms.map(s=>s.totalUnits),backgroundColor:'rgba(34,212,160,.55)',borderRadius:3,yAxisID:'y1',order:3,datalabels:dlTop(function(v){return f.short(v);},'#22d4a0')},
+      {label:'₹/Unit',data:cms.map(s=>s.costPerUnit),type:'line',borderColor:'#f5a42a',borderWidth:2.5,tension:.3,pointBackgroundColor:'#f5a42a',pointRadius:5,yAxisID:'y2',order:1,fill:false,datalabels:{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:'#f5a42a',font:{size:10,weight:'700'},anchor:'center',align:'top',offset:10,formatter:function(v){return'₹'+Number(v).toFixed(2);}}},
     ]},
     options:{
+      onClick:function(evt,els){if(els.length){var m=months[els[0].index];showMonthDetail(m,'cost',cp);}},
       plugins:{
-        legend:{labels:{color:'#6a82a8',font:{size:10},boxWidth:9}},
-        tooltip:{callbacks:{label:ctx=>{
-          if(ctx.dataset.label==='₹/Unit')return' ₹'+Number(ctx.raw).toFixed(2);
-          if(ctx.dataset.label==='Overall Cost')return' ₹'+f.short(ctx.raw);
-          return' '+f.short(ctx.raw)+' units';
-        }}}
+        legend:{labels:{color:'#8aa0c8',font:{size:11},boxWidth:10,padding:14}},
+        tooltip:{mode:'index',intersect:false,callbacks:{
+          label:function(ctx){if(ctx.dataset.label==='₹/Unit')return' ₹/Unit: ₹'+Number(ctx.raw).toFixed(2);if(ctx.dataset.label==='Overall Cost')return' Cost: ₹'+f.short(ctx.raw);return' Volume: '+f.short(ctx.raw)+' units';}
+        }}
       },
       scales:{
-        y:{type:'linear',position:'left',ticks:{color:'#3a4e70',font:{size:10},callback:v=>'₹'+f.short(v)},grid:{color:'rgba(26,37,64,.5)'}},
-        y1:{type:'linear',position:'right',ticks:{color:'#22d4a0',font:{size:10},callback:v=>f.short(v)},grid:{display:false}},
+        x:{ticks:{color:'#6a82a8',font:{size:11}},grid:{color:'rgba(26,37,64,.4)'}},
+        y:{type:'linear',position:'left',ticks:{color:'#6a82a8',font:{size:10},callback:function(v){return'₹'+f.short(v);}},grid:{color:'rgba(26,37,64,.4)'}},
+        y1:{type:'linear',position:'right',ticks:{color:'#22d4a0',font:{size:10},callback:function(v){return f.short(v);}},grid:{display:false}},
         y2:{type:'linear',position:'right',display:false},
       }
     }
   });
+}
 
-  // ── CHART 2: Segment MoM — stacked bars with total label on top ──
+function renderChart2(months){
+  const labels=months.map(m=>m.month.replace('-26',''));
   const sm=CF.seg, sp=CF.segp;
-  const allSegNames=[...new Set(months.flatMap(m=>segProdData(m,sp).map(s=>s.name)))];
-  const segColors=allSegNames.map(n=>sc(n));
+  const allSegNames=[...new Set(months.flatMap(function(m){return segProdData(m,sp).map(function(s){return s.name;});}))];
+  const segColors=allSegNames.map(function(n){return sc(n);});
   function segVal(s,metric){
-    if(metric==='cost')return Math.round((s.costPerVin||0)*(s.vins||0))||Math.round((s.costPerUnit||0)*(s.units||0));
+    if(metric==='cost')return Math.round((s.costPerUnit||0)*(s.units||0));
     if(metric==='units')return s.units||0;
-    if(metric==='costPerVin')return s.costPerVin||0;
+    if(metric==='costPerUnit'||metric==='costPerVin')return s.costPerUnit||0;
     return 0;
   }
-  const smFmt=sm==='cost'?v=>'₹'+f.short(v):sm==='costPerVin'?v=>'₹'+Number(v).toFixed(2):v=>f.short(v);
+  const smFmt=sm==='cost'?function(v){return'₹'+f.short(v);}:(sm==='costPerUnit'||sm==='costPerVin')?function(v){return'₹'+Number(v).toFixed(2);}:function(v){return f.short(v);};
   const segDS=allSegNames.map(function(sn,i){
     const isLast=(i===allSegNames.length-1);
     return{
@@ -854,14 +795,9 @@ function renderCharts(months){
       borderRadius:3,
       stack:'a',
       datalabels:isLast?{
-        display:function(ctx){
-          var t=0;ctx.chart.data.datasets.forEach(function(d){t+=(+d.data[ctx.dataIndex]||0);});return t>0;
-        },
-        color:'#dce8f8',font:{size:9,weight:'500'},anchor:'end',align:'top',offset:2,
-        formatter:function(v,ctx){
-          var t=0;ctx.chart.data.datasets.forEach(function(d){t+=(+d.data[ctx.dataIndex]||0);});
-          return t>0?smFmt(t):'';
-        }
+        display:function(ctx){var t=0;ctx.chart.data.datasets.forEach(function(d){t+=(+d.data[ctx.dataIndex]||0);});return t>0;},
+        color:'#dce8f8',font:{size:10,weight:'600'},anchor:'end',align:'top',offset:3,
+        formatter:function(v,ctx){var t=0;ctx.chart.data.datasets.forEach(function(d){t+=(+d.data[ctx.dataIndex]||0);});return t>0?smFmt(t):'';}
       }:{display:false}
     };
   });
@@ -869,57 +805,73 @@ function renderCharts(months){
     type:'bar',
     data:{labels,datasets:segDS},
     options:{
+      onClick:function(evt,els){if(els.length){var m=months[els[0].index];var seg=allSegNames[els[0].datasetIndex];showMonthDetail(m,'segment',seg);}},
       plugins:{
-        legend:{labels:{color:'#6a82a8',font:{size:10},boxWidth:9}},
-        tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+smFmt(ctx.raw)}}
+        legend:{labels:{color:'#8aa0c8',font:{size:11},boxWidth:10,padding:14}},
+        tooltip:{mode:'index',intersect:false,callbacks:{
+          label:function(ctx){return ctx.dataset.label+': '+smFmt(ctx.raw);},
+          footer:function(items){var t=items.reduce(function(s,i){return s+i.raw;},0);return t>0?'Total: '+smFmt(t):'';}
+        }}
       },
       scales:{
-        x:{stacked:true,ticks:{color:'#3a4e70',font:{size:10}},grid:{color:'rgba(26,37,64,.5)'}},
-        y:{stacked:true,ticks:{color:'#3a4e70',font:{size:10},callback:smFmt},grid:{color:'rgba(26,37,64,.5)'}}
+        x:{stacked:true,ticks:{color:'#6a82a8',font:{size:11}},grid:{color:'rgba(26,37,64,.4)'}},
+        y:{stacked:true,ticks:{color:'#6a82a8',font:{size:10},callback:smFmt},grid:{color:'rgba(26,37,64,.4)'}}
       }
     }
   });
+}
 
-  // ── CHART 3: Top 15 Editors ──
-  const em=CF.ed;
+function renderChart3(months){
+  const em=CF.ed, ep=CF.edp||'all';
   const lastM=months[months.length-1];
-  const edFilt=filterBreakdown(lastM.editorBreakdown,'editor');
+  let edFilt=filterBreakdown(lastM.editorBreakdown,'editor');
+  // Apply product filter to editors
+  if(ep!=='all'){
+    edFilt=edFilt.map(function(e){
+      const prodKey=ep==='image'?/image/i:ep==='360'?/360|spin/i:/video/i;
+      const units=Object.entries(e.byProduct||{}).filter(function(kv){return prodKey.test(kv[0]);}).reduce(function(s,kv){return s+kv[1];},0);
+      return{...e,units};
+    }).filter(function(e){return e.units>0;});
+  }
   function edVal(e,met){if(met==='costPerUnit')return e.costPerUnit||0;if(met==='units')return e.units||0;if(met==='efficiency')return e.efficiency||0;return 0;}
   function edFmt(v,met){if(met==='costPerUnit')return'₹'+Number(v).toFixed(2);if(met==='efficiency')return v.toFixed(2)+'%';return f.short(v);}
-  const top15=[...edFilt].sort((a,b)=>edVal(b,em)-edVal(a,em)).slice(0,15);
-  const edColors=top15.map(e=>/payroll/i.test(e.teamType)?'#22d4a0':'#f5a42a');
-  document.getElementById('ed-chart-sub').textContent=lastM.month+' · 🟢 Inhouse  🟡 OS';
+  const top15=[...edFilt].sort(function(a,b){return edVal(b,em)-edVal(a,em);}).slice(0,15);
+  const edColors=top15.map(function(e){return/payroll/i.test(e.teamType)?'#22d4a0':'#f5a42a';});
+  document.getElementById('ed-chart-sub').textContent=lastM.month+(ep!=='all'?' · '+ep:'')+' · 🟢 Inhouse  🟡 OS';
   mk('ch-ed-cost',{
     type:'bar',
     data:{
-      labels:top15.map(e=>f.email(e.email)),
+      labels:top15.map(function(e){return f.email(e.email);}),
       datasets:[{
         label:em==='costPerUnit'?'₹/Unit':em==='efficiency'?'Efficiency':'Units',
-        data:top15.map(e=>edVal(e,em)),
+        data:top15.map(function(e){return edVal(e,em);}),
         backgroundColor:edColors,
         borderRadius:[0,3,3,0],
         datalabels:{
-          display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,
-          color:'#dce8f8',font:{size:9,weight:'500'},
-          anchor:'end',align:'right',offset:4,
-          formatter:v=>edFmt(v,em)
+          display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},
+          color:'#dce8f8',font:{size:10,weight:'600'},
+          anchor:'end',align:'right',offset:5,
+          formatter:function(v){return edFmt(v,em);}
         }
       }]
     },
     options:{
       indexAxis:'y',
-      layout:{padding:{right:65}},
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>edFmt(ctx.raw,em)}}},
+      layout:{padding:{right:70}},
+      onClick:function(evt,els){if(els.length){var e=top15[els[0].index];showEditorDetail(e);}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return edFmt(ctx.raw,em);}}}},
       scales:{
-        x:{ticks:{color:'#3a4e70',font:{size:10},callback:v=>em==='costPerUnit'?'₹'+v:em==='efficiency'?v+'%':f.short(v)},grid:{color:'rgba(26,37,64,.5)'}},
-        y:{ticks:{color:'#3a4e70',font:{size:10}},grid:{display:false}}
+        x:{ticks:{color:'#6a82a8',font:{size:10},callback:function(v){return em==='costPerUnit'?'₹'+v:em==='efficiency'?v+'%':f.short(v);}},grid:{color:'rgba(26,37,64,.4)'}},
+        y:{ticks:{color:'#8aa0c8',font:{size:10.5}},grid:{display:false}}
       }
     }
   });
+}
 
-  // ── CHART 4: Product MoM ──
+function renderChart4(months){
+  const labels=months.map(m=>m.month.replace('-26',''));
   const pp=CF.prod, pm=CF.prodm;
-  const allProdNames=[...new Set(months.flatMap(m=>m.productBreakdown.map(p=>p.name)))].filter(n=>{
+  const allProdNames=[...new Set(months.flatMap(function(m){return m.productBreakdown.map(function(p){return p.name;});}))].filter(function(n){
     if(pp==='all')return true;
     if(pp==='image')return /image/i.test(n);
     if(pp==='360')return /360|spin/i.test(n);
@@ -932,28 +884,25 @@ function renderCharts(months){
     if(met==='cost')return prod?Math.round((prod.costSharePct||0)/100*(months[months.length-1].summary.totalCost||0)):0;
     return 0;
   }
-  const pmFmt=pm==='cost'?v=>'₹'+f.short(v):pm==='costPerUnit'?v=>'₹'+Number(v).toFixed(2):v=>f.short(v);
+  const pmFmt=pm==='cost'?function(v){return'₹'+f.short(v);}:pm==='costPerUnit'?function(v){return'₹'+Number(v).toFixed(2);}:function(v){return f.short(v);};
   const isStacked=pm!=='costPerUnit';
   const prodDS=allProdNames.map(function(pn,i){
     const isLast=(i===allProdNames.length-1);
     return{
       label:pn,
-      data:months.map(function(m){
-        const prod=getFilteredProducts(m).find(function(x){return x.name===pn;});
-        return prodVal(prod,pm);
-      }),
+      data:months.map(function(m){var prod=getFilteredProducts(m).find(function(x){return x.name===pn;});return prodVal(prod,pm);}),
       backgroundColor:pc(pn,i),
       borderRadius:3,
       stack:isStacked?'a':undefined,
       datalabels:function(){
         if(isStacked&&isLast)return{
           display:function(ctx){var t=0;ctx.chart.data.datasets.forEach(function(d){t+=(+d.data[ctx.dataIndex]||0);});return t>0;},
-          color:'#dce8f8',font:{size:9,weight:'500'},anchor:'end',align:'top',offset:2,
+          color:'#dce8f8',font:{size:10,weight:'600'},anchor:'end',align:'top',offset:3,
           formatter:function(v,ctx){var t=0;ctx.chart.data.datasets.forEach(function(d){t+=(+d.data[ctx.dataIndex]||0);});return t>0?pmFmt(t):'';}
         };
         if(!isStacked)return{
           display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},
-          color:'#dce8f8',font:{size:9,weight:'500'},anchor:'end',align:'top',offset:2,
+          color:'#dce8f8',font:{size:10,weight:'600'},anchor:'end',align:'top',offset:3,
           formatter:function(v){return pmFmt(v);}
         };
         return{display:false};
@@ -964,19 +913,88 @@ function renderCharts(months){
     type:'bar',
     data:{labels,datasets:prodDS},
     options:{
+      onClick:function(evt,els){if(els.length){var m=months[els[0].index];var pn=allProdNames[els[0].datasetIndex];showMonthDetail(m,'product',pn);}},
       plugins:{
-        legend:{labels:{color:'#6a82a8',font:{size:10},boxWidth:9}},
-        tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+pmFmt(ctx.raw)}}
+        legend:{labels:{color:'#8aa0c8',font:{size:11},boxWidth:10,padding:14}},
+        tooltip:{mode:'index',intersect:false,callbacks:{
+          label:function(ctx){return ctx.dataset.label+': '+pmFmt(ctx.raw);},
+          footer:isStacked?function(items){var t=items.reduce(function(s,i){return s+i.raw;},0);return t>0?'Total: '+pmFmt(t):'';}: undefined
+        }}
       },
       scales:{
-        x:{stacked:isStacked,ticks:{color:'#3a4e70',font:{size:10}},grid:{color:'rgba(26,37,64,.5)'}},
-        y:{stacked:isStacked,ticks:{color:'#3a4e70',font:{size:10},callback:pmFmt},grid:{color:'rgba(26,37,64,.5)'}}
+        x:{stacked:isStacked,ticks:{color:'#6a82a8',font:{size:11}},grid:{color:'rgba(26,37,64,.4)'}},
+        y:{stacked:isStacked,ticks:{color:'#6a82a8',font:{size:10},callback:pmFmt},grid:{color:'rgba(26,37,64,.4)'}}
       }
     }
   });
 }
 
-// ── TABLES ───────────────────────────────────────────────────────────────────
+function renderCharts(months){
+  renderChart1(months);
+  renderChart2(months);
+  renderChart3(months);
+  renderChart4(months);
+}
+
+// ── CLICK DETAIL MODAL ────────────────────────────────────────────────────────
+function showMonthDetail(m,type,filter){
+  let title='', rows=[];
+  if(type==='cost'){
+    title='Cost Detail — '+m.month+(filter!=='all'?' · '+filter:'');
+    const prods=getFilteredProducts(m);
+    rows=prods.map(function(p){return'<tr><td>'+prodTag(p.name)+'</td><td class="r">'+f.num(p.units)+'</td><td class="r">'+f.inr(p.costPerUnit)+'</td><td class="r">'+f.pct(p.costSharePct)+'</td></tr>';});
+  }else if(type==='segment'){
+    title='Segment: '+filter+' — '+m.month;
+    const seg=m.segmentBreakdown.find(function(s){return s.name===filter;});
+    if(seg){
+      rows=Object.entries(seg.byProduct||{}).map(function(kv){
+        return'<tr><td>'+prodTag(kv[0])+'</td><td class="r">'+f.num(kv[1].units)+'</td><td class="r">'+f.inr(kv[1].costPerUnit||0)+'</td><td class="r">'+f.pct(kv[1].efficiency||0)+'</td></tr>';
+      });
+    }
+  }else if(type==='product'){
+    title='Product: '+filter+' — '+m.month;
+    const segs=m.segmentBreakdown;
+    rows=segs.map(function(s){
+      const pd=Object.entries(s.byProduct||{}).find(function(kv){return kv[0]===filter;});
+      if(!pd)return null;
+      return'<tr><td><span class="seg" style="background:'+sc(s.name)+'22;color:'+sc(s.name)+'">'+s.name+'</span></td><td class="r">'+f.num(pd[1].units)+'</td><td class="r">'+f.inr(pd[1].costPerUnit||0)+'</td><td class="r">'+f.pct(pd[1].efficiency||0)+'</td></tr>';
+    }).filter(Boolean);
+  }
+  const modal=document.createElement('div');
+  modal.style.cssText='position:fixed;inset:0;background:rgba(8,12,20,.85);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
+  modal.innerHTML='<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;min-width:420px;max-width:600px;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.6)">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">'
+    +'<div style="font-weight:700;font-size:15px;color:var(--text)">'+title+'</div>'
+    +'<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:2px 6px">✕</button>'
+    +'</div>'
+    +'<table style="width:100%"><thead><tr><th>Item</th><th class="r">Units</th><th class="r">₹/Unit</th><th class="r">Efficiency</th></tr></thead>'
+    +'<tbody>'+rows.join('')+'</tbody></table>'
+    +'</div>';
+  modal.addEventListener('click',function(e){if(e.target===modal)modal.remove();});
+  document.body.appendChild(modal);
+}
+function showEditorDetail(e){
+  const rows=Object.entries(e.byProduct||{}).map(function(kv){return'<tr><td>'+prodTag(kv[0])+'</td><td class="r">'+f.num(kv[1])+'</td></tr>';});
+  const modal=document.createElement('div');
+  modal.style.cssText='position:fixed;inset:0;background:rgba(8,12,20,.85);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
+  const team=/payroll/i.test(e.teamType)?'<span style="color:#22d4a0">Inhouse</span>':'<span style="color:#f5a42a">OS</span>';
+  modal.innerHTML='<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;min-width:360px;max-width:500px;box-shadow:0 20px 60px rgba(0,0,0,.6)">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">'
+    +'<div><div style="font-weight:700;font-size:15px;color:var(--text)">'+f.email(e.email)+'</div><div style="font-size:11px;color:var(--sub);margin-top:3px">'+e.email+' · '+team+'</div></div>'
+    +'<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:2px 6px">✕</button>'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">'
+    +'<div style="text-align:center"><div style="font-size:18px;font-weight:700;color:var(--text)">'+f.num(e.units)+'</div><div style="font-size:10px;color:var(--muted);margin-top:2px">Total Units</div></div>'
+    +'<div style="text-align:center"><div style="font-size:18px;font-weight:700;color:var(--amber)">'+f.inr(e.costPerUnit)+'</div><div style="font-size:10px;color:var(--muted);margin-top:2px">₹/Unit</div></div>'
+    +'<div style="text-align:center"><div style="font-size:18px;font-weight:700;color:var(--green)">'+f.pct(e.efficiency)+'</div><div style="font-size:10px;color:var(--muted);margin-top:2px">Efficiency</div></div>'
+    +'</div>'
+    +'<table style="width:100%"><thead><tr><th>Product</th><th class="r">Units</th></tr></thead><tbody>'+rows.join('')+'</tbody></table>'
+    +'</div>';
+  modal.addEventListener('click',function(e){if(e.target===modal)modal.remove();});
+  document.body.appendChild(modal);
+}
+
+
 function renderTables(months){
   const m=months[months.length-1];
   _segData=filterBreakdown(m.segmentBreakdown,'segment');renderSegTable();
@@ -994,7 +1012,7 @@ function renderEditors(months){
   edData=filterBreakdown(m.editorBreakdown,'editor');
   document.getElementById('ed-sub1').textContent=m.month;
   const t10=[...edData].slice(0,10);
-  mk('ch-ed-vol',{type:'bar',_lf:v=>v>0?f.short(v):'',data:{labels:t10.map(e=>f.email(e.email)),datasets:[{label:'Units',data:t10.map(e=>e.units),backgroundColor:'#4f78ff',borderRadius:[0,3,3,0]}]},options:{indexAxis:'y',layout:{padding:{right:50}},plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>f.short(v)}},y:{ticks:{font:{size:10}}}}}});
+  mk('ch-ed-vol',{type:'bar',_lf:v=>v>0?f.short(v):'',data:{labels:t10.map(e=>f.email(e.email)),datasets:[{label:'Units',data:t10.map(e=>e.units),backgroundColor:'#4f78ff',borderRadius:[0,3,3,0]}]},options:{indexAxis:'y',layout:{padding:{right:50}},plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>f.short(v)}},y:{ticks:{font:{size:11}}}}}});
   renderEditorTable();
 }
 function renderEditorTable(){
@@ -1010,8 +1028,14 @@ function renderEditorTable(){
     return'<tr><td class="rank-num">'+(i+1)+'</td><td><div style="color:var(--text);font-weight:500">'+f.email(e.email)+'</div><div style="font-size:10px;color:var(--muted)">'+e.email+'</div></td><td>'+teamBadge+'</td><td class="r">'+f.num(imgU)+'</td><td class="r">'+f.num(s360)+'</td><td class="r">'+f.num(vid)+'</td><td class="r" style="color:var(--text);font-weight:600">'+f.num(e.units)+'</td><td class="r"><span class="'+effCls(e.efficiency)+'">'+f.pct(e.efficiency)+'</span></td><td class="r">'+f.inr(e.costPerUnit)+'</td><td class="r">'+f.inr0(e.salary)+'</td></tr>';
   }).join('');
 }
-document.getElementById('ed-search').addEventListener('input',renderEditorTable);
-document.getElementById('ed-sort').addEventListener('change',renderEditorTable);
+// Defer binding since elements may not exist yet at script parse time
+function bindEditorSearch(){
+  const s=document.getElementById('ed-search');
+  const o=document.getElementById('ed-sort');
+  if(s)s.addEventListener('input',renderEditorTable);
+  if(o)o.addEventListener('change',renderEditorTable);
+}
+document.addEventListener('DOMContentLoaded',bindEditorSearch);
 
 fetchData();
 </script>
