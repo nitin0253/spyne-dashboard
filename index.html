@@ -795,34 +795,54 @@ function renderAll(){
 
 // ── KPIs ─────────────────────────────────────────────────────────────────────
 function renderKPIs(months){
-  const last=months[months.length-1],prev=months[months.length-2];
-  const s=computeFilteredSummary(last),sp=prev?computeFilteredSummary(prev):null;
-  function d(k){if(!sp||!sp[k])return null;return((s[k]-sp[k])/sp[k])*100;}
-  const tb=last.teamBreakdown||{};
-  const segMap={};
-  filterBreakdown(last.segmentBreakdown,'segment').forEach(sg=>{segMap[sg.name]=sg;});
-  // Flexible finder: case-insensitive partial match
-  function findSeg(kw){const k=kw.toLowerCase();return Object.values(segMap).find(sg=>sg.name.toLowerCase().includes(k))||null;}
-  const entSeg=findSeg('ent')||findSeg('enterprise');
-  const midSeg=findSeg('mid');
-  const smbSeg=findSeg('smb');
-  const resSeg=findSeg('resell');
-  const knownNames=new Set([entSeg,midSeg,smbSeg,resSeg].filter(Boolean).map(s=>s.name));
-  const otherSegsArr=Object.values(segMap).filter(sg=>!knownNames.has(sg.name));
-  function segCostPerUnit(segs){let cost=0,units=0;segs.forEach(sg=>{cost+=(sg.costPerUnit||0)*(sg.units||0);units+=sg.units||0;});return units>0?+(cost/units).toFixed(2):0;}
-  // Log for debugging
-  console.log('[KPI segs]',Object.keys(segMap),'ent:',entSeg?.name,'mid:',midSeg?.name,'smb:',smbSeg?.name,'res:',resSeg?.name);
-  document.getElementById('ov-kpis').innerHTML=[
-    kpi('Delivery Cost', f.inr0(s.totalCost),    last.month,                           d('totalCost'), '#4f78ff'),
-    kpi('Inhouse Cost',  f.inr0(s.inhouseCost),  (tb.inhouse?.employees||0)+' people', null,           '#22d4a0'),
-    kpi('OS Cost',       f.inr0(s.osCost),        (tb.os?.employees||0)+' contractors', null,           '#f5a42a'),
-    kpi('₹ / Ent',       f.inr(entSeg?.costPerUnit||0),  'Enterprise · per Unit', null,'#4f78ff'),
-    kpi('₹ / Mid',       f.inr(midSeg?.costPerUnit||0),  'Mid · per Unit',        null,'#a07cff'),
-    kpi('₹ / SMB',       f.inr(smbSeg?.costPerUnit||0),  'SMB · per Unit',        null,'#22d4a0'),
-    kpi('₹ / Resellers', f.inr(resSeg?.costPerUnit||0),  'Resellers · per Unit',  null,'#f5a42a'),
-    kpi('₹ / Other',     f.inr(segCostPerUnit(otherSegs)), 'Other · per Unit',      null,'#38c4f0'),
-  ].join('');
+  try {
+    const last=months[months.length-1];
+    const prev=months.length>1?months[months.length-2]:null;
+    const s=computeFilteredSummary(last);
+    const sp=prev?computeFilteredSummary(prev):null;
+    function d(k){if(!sp||!sp[k])return null;return((s[k]-sp[k])/sp[k])*100;}
+    const tb=(last.teamBreakdown)||{};
+    const ih=tb.inhouse||{};
+    const os=tb.os||{};
+    // Build segment map
+    const segMap={};
+    const segs=filterBreakdown(last.segmentBreakdown,'segment')||[];
+    segs.forEach(function(sg){if(sg&&sg.name)segMap[sg.name]=sg;});
+    function findSeg(kw){
+      const k=kw.toLowerCase();
+      const keys=Object.keys(segMap);
+      const match=keys.find(function(n){return n.toLowerCase().indexOf(k)>=0;});
+      return match?segMap[match]:null;
+    }
+    const entSeg=findSeg('ent')||findSeg('enterprise');
+    const midSeg=findSeg('mid');
+    const smbSeg=findSeg('smb');
+    const resSeg=findSeg('resell');
+    const knownNames=new Set();
+    [entSeg,midSeg,smbSeg,resSeg].forEach(function(sg){if(sg)knownNames.add(sg.name);});
+    const otherSegsArr=Object.values(segMap).filter(function(sg){return !knownNames.has(sg.name);});
+    function segCostPerUnit(arr){
+      var cost=0,units=0;
+      arr.forEach(function(sg){cost+=(sg.costPerUnit||0)*(sg.units||0);units+=sg.units||0;});
+      return units>0?+(cost/units).toFixed(2):0;
+    }
+    const cards=[
+      kpi('Delivery Cost', f.inr0(s.totalCost),    last.month,              d('totalCost'), '#4f78ff'),
+      kpi('Inhouse Cost',  f.inr0(s.inhouseCost),  (ih.employees||0)+' people', null,       '#22d4a0'),
+      kpi('OS Cost',       f.inr0(s.osCost),        (os.employees||0)+' contractors', null,  '#f5a42a'),
+      kpi('₹ / Ent',       f.inr(entSeg?entSeg.costPerUnit:0),  (entSeg?entSeg.name:'Enterprise')+' · ₹/unit', null, '#4f78ff'),
+      kpi('₹ / Mid',       f.inr(midSeg?midSeg.costPerUnit:0),  (midSeg?midSeg.name:'Mid')+' · ₹/unit',        null, '#a07cff'),
+      kpi('₹ / SMB',       f.inr(smbSeg?smbSeg.costPerUnit:0),  (smbSeg?smbSeg.name:'SMB')+' · ₹/unit',        null, '#22d4a0'),
+      kpi('₹ / Resellers', f.inr(resSeg?resSeg.costPerUnit:0),  (resSeg?resSeg.name:'Resellers')+' · ₹/unit',  null, '#f5a42a'),
+      kpi('₹ / Other',     f.inr(segCostPerUnit(otherSegsArr)),  'Other · ₹/unit',  null, '#38c4f0'),
+    ];
+    document.getElementById('ov-kpis').innerHTML=cards.join('');
+  } catch(err) {
+    console.error('[renderKPIs error]', err);
+    document.getElementById('ov-kpis').innerHTML='<div style="color:var(--red);font-size:11px;padding:8px">KPI error: '+err.message+'</div>';
+  }
 }
+
 
 // ── CHART FILTER STATE ───────────────────────────────────────────────────────
 const CF={cost:'all',seg:'cost',segp:'all',ed:'costPerUnit',prod:'all',prodm:'units',edp:'all'};
