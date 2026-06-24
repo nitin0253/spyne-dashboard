@@ -129,6 +129,18 @@ tbody td.bright{color:var(--text);font-weight:500}
 select.sel{background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);padding:5px 8px;color:var(--sub);font-size:11px;font-family:var(--font);outline:none;cursor:pointer}
 select.sel:focus{border-color:var(--blue)}
 .ch{position:relative}
+/* ── CHART INLINE FILTERS ── */
+.cf-row{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:10px}
+.cf-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-right:2px}
+.cf-pill{padding:3px 9px;border-radius:5px;border:1px solid var(--border);font-size:10px;font-weight:600;cursor:pointer;font-family:var(--font);background:transparent;color:var(--sub);transition:all .12s;user-select:none}
+.cf-pill:hover{color:var(--text);border-color:var(--sub)}
+.cf-pill.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.cf-pill.active-green{background:var(--green);border-color:var(--green);color:#0a0f1a}
+.cf-pill.active-amber{background:var(--amber);border-color:var(--amber);color:#0a0f1a}
+.cf-pill.active-purple{background:var(--purple);border-color:var(--purple);color:#fff}
+.chart-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px}
+.chart-legend-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--sub)}
+.chart-legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 
 /* ── OVERLAY ── */
 #overlay{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:999}
@@ -255,23 +267,81 @@ select.sel:focus{border-color:var(--blue)}
     </div>
   </div>
 
-  <!-- ══ 2. TRENDS ══ -->
+  <!-- ══ 2. CHARTS ══ -->
   <div class="dash-section">
     <div class="dash-section-header" onclick="toggleSection('s-trend')">
-      <span class="dash-section-title">📈 Trends</span>
+      <span class="dash-section-title">📈 Charts</span>
       <div class="dash-section-line"></div><span class="dash-section-toggle" id="tog-s-trend">▾</span>
     </div>
     <div class="dash-section-body" id="s-trend">
-      <div class="g2">
-        <div class="section">
-          <div class="sec-head"><div><div class="sec-title">Volume Trend</div><div class="sec-sub">Images · 360 SKUs · Video SKUs per month</div></div></div>
-          <div class="ch"><canvas id="ch-vol" height="160"></canvas></div>
+
+      <!-- Chart 1: Cost Trend MoM — tri-axis (Cost, Volume, Cost/Unit) with product filter -->
+      <div class="section" style="margin-bottom:12px">
+        <div class="sec-head">
+          <div><div class="sec-title">Cost Trend — Month on Month</div><div class="sec-sub">Overall Cost · Volume · ₹/Unit combined</div></div>
+          <div class="cf-row">
+            <span class="cf-label">Product:</span>
+            <button class="cf-pill active" data-chart="cost" data-prod="all" onclick="setChartFilter('cost','all',this)">All</button>
+            <button class="cf-pill" data-chart="cost" data-prod="image" onclick="setChartFilter('cost','image',this)">Images</button>
+            <button class="cf-pill" data-chart="cost" data-prod="360" onclick="setChartFilter('cost','360',this)">360</button>
+            <button class="cf-pill" data-chart="cost" data-prod="video" onclick="setChartFilter('cost','video',this)">Video</button>
+          </div>
         </div>
-        <div class="section">
-          <div class="sec-head"><div><div class="sec-title">Cost Efficiency</div><div class="sec-sub">₹ per unit · ₹ per VIN across months</div></div></div>
-          <div class="ch"><canvas id="ch-cpi" height="160"></canvas></div>
-        </div>
+        <div class="ch"><canvas id="ch-cost-trend" height="100"></canvas></div>
       </div>
+
+      <!-- Chart 2: Segment Breakdown MoM — with product filter -->
+      <div class="section" style="margin-bottom:12px">
+        <div class="sec-head">
+          <div><div class="sec-title">Segment Breakdown — Month on Month</div><div class="sec-sub">Cost · Volume · ₹/Unit per customer segment</div></div>
+          <div class="cf-row">
+            <span class="cf-label">Metric:</span>
+            <button class="cf-pill active" data-chart="seg" data-metric="cost" onclick="setChartFilter('seg','cost',this)">Cost</button>
+            <button class="cf-pill" data-chart="seg" data-metric="units" onclick="setChartFilter('seg','units',this)">Volume</button>
+            <button class="cf-pill" data-chart="seg" data-metric="costPerVin" onclick="setChartFilter('seg','costPerVin',this)">₹/VIN</button>
+            <span class="cf-label" style="margin-left:8px">Product:</span>
+            <button class="cf-pill active" data-chart="segp" data-prod="all" onclick="setChartFilter('segp','all',this)">All</button>
+            <button class="cf-pill" data-chart="segp" data-prod="image" onclick="setChartFilter('segp','image',this)">Images</button>
+            <button class="cf-pill" data-chart="segp" data-prod="360" onclick="setChartFilter('segp','360',this)">360</button>
+            <button class="cf-pill" data-chart="segp" data-prod="video" onclick="setChartFilter('segp','video',this)">Video</button>
+          </div>
+        </div>
+        <div class="ch"><canvas id="ch-seg-trend" height="100"></canvas></div>
+      </div>
+
+      <!-- Chart 3: Top 15 Editors Cost/Unit -->
+      <div class="section" style="margin-bottom:12px">
+        <div class="sec-head">
+          <div><div class="sec-title">Top 15 Editors — ₹/Unit</div><div class="sec-sub" id="ed-chart-sub"></div></div>
+          <div class="cf-row">
+            <span class="cf-label">Sort:</span>
+            <button class="cf-pill active" data-chart="ed" data-metric="costPerUnit" onclick="setChartFilter('ed','costPerUnit',this)">₹/Unit</button>
+            <button class="cf-pill" data-chart="ed" data-metric="units" onclick="setChartFilter('ed','units',this)">Volume</button>
+            <button class="cf-pill" data-chart="ed" data-metric="efficiency" onclick="setChartFilter('ed','efficiency',this)">Efficiency</button>
+          </div>
+        </div>
+        <div class="ch"><canvas id="ch-ed-cost" height="100"></canvas></div>
+      </div>
+
+      <!-- Chart 4: Product MoM with product filter -->
+      <div class="section">
+        <div class="sec-head">
+          <div><div class="sec-title">Product Breakdown — Month on Month</div><div class="sec-sub">Units · Cost · ₹/Unit per product type</div></div>
+          <div class="cf-row">
+            <span class="cf-label">Product:</span>
+            <button class="cf-pill active" data-chart="prod" data-prod="all" onclick="setChartFilter('prod','all',this)">All</button>
+            <button class="cf-pill" data-chart="prod" data-prod="image" onclick="setChartFilter('prod','image',this)">Images</button>
+            <button class="cf-pill" data-chart="prod" data-prod="360" onclick="setChartFilter('prod','360',this)">360</button>
+            <button class="cf-pill" data-chart="prod" data-prod="video" onclick="setChartFilter('prod','video',this)">Video</button>
+            <span class="cf-label" style="margin-left:8px">Metric:</span>
+            <button class="cf-pill active" data-chart="prodm" data-metric="units" onclick="setChartFilter('prodm','units',this)">Volume</button>
+            <button class="cf-pill" data-chart="prodm" data-metric="costPerUnit" onclick="setChartFilter('prodm','costPerUnit',this)">₹/Unit</button>
+            <button class="cf-pill" data-chart="prodm" data-metric="cost" onclick="setChartFilter('prodm','cost',this)">Cost</button>
+          </div>
+        </div>
+        <div class="ch"><canvas id="ch-prod-trend" height="100"></canvas></div>
+      </div>
+
     </div>
   </div>
 
@@ -282,24 +352,6 @@ select.sel:focus{border-color:var(--blue)}
       <div class="dash-section-line"></div><span class="dash-section-toggle" id="tog-s-segment">▾</span>
     </div>
     <div class="dash-section-body" id="s-segment">
-      <div class="g4" style="margin-bottom:12px">
-        <div class="section">
-          <div class="sec-head"><div><div class="sec-title">Units by Segment</div><div class="sec-sub" id="sg-vol-sub"></div></div></div>
-          <div class="ch"><canvas id="ch-sg-vol" height="150"></canvas></div>
-        </div>
-        <div class="section">
-          <div class="sec-head"><div><div class="sec-title">Cost Share</div></div></div>
-          <div class="ch"><canvas id="ch-sg-pie" height="150"></canvas></div>
-        </div>
-        <div class="section">
-          <div class="sec-head"><div><div class="sec-title">₹/VIN by Segment</div></div></div>
-          <div class="ch"><canvas id="ch-sg-vinc" height="150"></canvas></div>
-        </div>
-        <div class="section">
-          <div class="sec-head"><div><div class="sec-title">Efficiency by Segment</div></div></div>
-          <div class="ch"><canvas id="ch-sg-eff" height="150"></canvas></div>
-        </div>
-      </div>
       <div class="g3">
         <div class="section">
           <div class="sec-head"><div class="sec-title">Segment Summary</div></div>
@@ -354,14 +406,8 @@ select.sel:focus{border-color:var(--blue)}
       </div>
       <!-- Charts row below -->
       <div class="g2" style="margin-bottom:12px">
-        <div class="section">
-          <div class="sec-head"><div><div class="sec-title">₹/Unit by Product</div><div class="sec-sub" id="pr-vol-sub"></div></div></div>
-          <div class="ch"><canvas id="ch-pr-cpu" height="110"></canvas></div>
-        </div>
-        <div class="section">
-          <div class="sec-head"><div><div class="sec-title">Top 10 Editors — Units</div><div class="sec-sub" id="ed-sub1"></div></div></div>
-          <div class="ch"><canvas id="ch-ed-vol" height="110"></canvas></div>
-        </div>
+
+
       </div>
       <!-- All Editors table -->
       <div class="section">
@@ -710,7 +756,7 @@ function renderAll(){
   if(!months.length){document.getElementById('ov-kpis').innerHTML='<div style="color:var(--muted);padding:16px">No data matches filter.</div>';return;}
   console.log('[renderAll] months:', months.length, 'DATA keys:', DATA ? Object.keys(DATA) : 'null');
   safeRender('overview', renderOverview, months);
-  safeRender('trend',    renderTrends,   months);
+  safeRender('trend',    renderCharts,   months);
   safeRender('segment',  renderSegments, months);
   safeRender('product',  renderProducts, months);
   safeRender('editor',   renderEditors,  months);
@@ -753,23 +799,120 @@ function renderOverview(months){
   _snapData=months.map((m,i)=>({month:m.month,...ms[i]}));renderSnapTable();
 }
 
-// ── 2. TRENDS ────────────────────────────────────────────────────────────────
-function renderTrends(months){
-  const labels=months.map(m=>m.month.replace('-26','')),ms=months.map(m=>computeFilteredSummary(m));
-  mk('ch-vol',{type:'bar',_lf:v=>v>0?f.short(v):'',data:{labels,datasets:[{label:'Images',data:ms.map(s=>s.totalImages),backgroundColor:'#4f78ff',borderRadius:3},{label:'360 SKUs',data:ms.map(s=>s.total360Skus||0),backgroundColor:'#22d4a0',borderRadius:3},{label:'Video SKUs',data:ms.map(s=>s.totalVideoSkus||0),backgroundColor:'#f5a42a',borderRadius:3}]},options:{scales:{y:{ticks:{callback:v=>f.short(v)}}}}});
-  mk('ch-cpi',{type:'line',_lf:v=>v?'₹'+Number(v).toFixed(2):'',data:{labels,datasets:[{label:'₹/Unit',data:ms.map(s=>s.costPerUnit),borderColor:'#22d4a0',borderWidth:2,tension:.3,pointBackgroundColor:'#22d4a0',pointRadius:4},{label:'₹/VIN',data:ms.map(s=>s.costPerVin||0),borderColor:'#f5a42a',borderWidth:2,tension:.3,pointBackgroundColor:'#f5a42a',pointRadius:4}]},options:{scales:{y:{ticks:{callback:v=>'₹'+v}}}}});
+// ── CHART FILTER STATE ───────────────────────────────────────────────────────
+// chart filter state: maps chartKey → active value
+const CF={cost:'all',seg:'cost',segp:'all',ed:'costPerUnit',prod:'all',prodm:'units'};
+function setChartFilter(chartKey,value,btn){
+  // If parent filter (global) is active for this dimension, child filter still sets state
+  // but render will re-evaluate after setting
+  CF[chartKey]=value;
+  // Update pill active state for this chart group
+  document.querySelectorAll('.cf-pill[data-chart="'+chartKey+'"]').forEach(b=>b.classList.remove('active','active-green','active-amber','active-purple'));
+  if(btn){
+    const colorMap={all:'active',image:'active',cost:'active',units:'active-green',costPerVin:'active-amber',efficiency:'active-amber',costPerUnit:'active-amber',video:'active-amber','360':'active-green'};
+    btn.classList.add(colorMap[value]||'active');
+  }
+  // Re-render all charts (child filter changed → re-render charts section)
+  if(!DATA)return;
+  const months=filteredMonths();
+  if(!months.length)return;
+  renderCharts(months);
 }
 
-// ── 3. SEGMENTS & COSTING ────────────────────────────────────────────────────
+// Helper: get product-filtered data for a month given a prod key ('all'|'image'|'360'|'video')
+function prodFilteredSummary(m, prodKey){
+  if(prodKey==='all')return computeFilteredSummary(m);
+  // Temporarily override product filter for this computation
+  const prev=[...FILTERS.product.selected];
+  const prevAll=FILTERS.product.all;
+  // Find matching product names
+  const matchNames=m.productBreakdown.map(p=>p.name).filter(n=>{
+    if(prodKey==='image')return /image/i.test(n);
+    if(prodKey==='360')return /360|spin/i.test(n);
+    if(prodKey==='video')return /video/i.test(n);
+    return true;
+  });
+  FILTERS.product.selected=new Set(matchNames);
+  FILTERS.product.all=matchNames.length?matchNames:prevAll;
+  const result=computeFilteredSummary(m);
+  FILTERS.product.selected=new Set(prev);
+  FILTERS.product.all=prevAll;
+  return result;
+}
+
+function segProdData(m, prodKey){
+  // Returns segment breakdown filtered to a specific product type
+  const segs=filterBreakdown(m.segmentBreakdown,'segment');
+  if(prodKey==='all')return segs;
+  return segs.map(sg=>{
+    const pd=Object.entries(sg.byProduct||{}).find(([k])=>{
+      if(prodKey==='image')return /image/i.test(k);
+      if(prodKey==='360')return /360|spin/i.test(k);
+      if(prodKey==='video')return /video/i.test(k);
+      return false;
+    });
+    if(!pd)return null;
+    return{...sg,units:pd[1].units||0,vins:pd[1].vins||0,actualMins:pd[1].actualMins||0,
+      costPerVin:pd[1].costPerUnit||0};
+  }).filter(Boolean).filter(s=>s.units>0||s.vins>0);
+}
+
+// ── 2+3. ALL CHARTS ──────────────────────────────────────────────────────────
+function renderCharts(months){
+  const labels=months.map(m=>m.month.replace('-26',''));
+
+  // ── CHART 1: Cost Trend MoM (tri-metric: Overall Cost + Volume + ₹/Unit) ──
+  const cp=CF.cost; // product filter for cost chart
+  const cms=months.map(m=>prodFilteredSummary(m,cp));
+  mk('ch-cost-trend',{type:'bar',data:{labels,datasets:[
+    {label:'Overall Cost',data:cms.map(s=>s.totalCost),backgroundColor:'rgba(79,120,255,.7)',borderRadius:3,yAxisID:'y',order:2},
+    {label:'Volume (units)',data:cms.map(s=>s.totalUnits),backgroundColor:'rgba(34,212,160,.5)',borderRadius:3,yAxisID:'y1',order:3},
+    {label:'₹/Unit',data:cms.map(s=>s.costPerUnit),type:'line',borderColor:'#f5a42a',borderWidth:2.5,tension:.3,pointBackgroundColor:'#f5a42a',pointRadius:5,yAxisID:'y2',order:1,fill:false},
+  ]},options:{plugins:{legend:{labels:{color:'#6a82a8',font:{size:10},boxWidth:9}},tooltip:{callbacks:{label:ctx=>{if(ctx.dataset.label==='₹/Unit')return' ₹'+Number(ctx.raw).toFixed(2);if(ctx.dataset.label==='Overall Cost')return' ₹'+f.short(ctx.raw);return' '+f.short(ctx.raw)+' units';}}}},scales:{y:{type:'linear',position:'left',ticks:{color:'#3a4e70',font:{size:10},callback:v=>'₹'+f.short(v)},grid:{color:'rgba(26,37,64,.5)'}},y1:{type:'linear',position:'right',ticks:{color:'#3a4e70',font:{size:10},callback:v=>f.short(v)},grid:{display:false}},y2:{type:'linear',position:'right',ticks:{color:'#f5a42a',font:{size:10},callback:v=>'₹'+v},grid:{display:false},display:false}}}});
+
+  // ── CHART 2: Segment MoM ──
+  const sm=CF.seg,sp=CF.segp;
+  const allSegNames=[...new Set(months.flatMap(m=>segProdData(m,sp).map(s=>s.name)))];
+  const segColors=allSegNames.map(n=>sc(n));
+  const segMetricFn=(s,metric)=>{
+    if(metric==='cost'){const totalMins=s.actualMins||1,totalCost=s.costPerVin*(s.vins||0);return Math.round(totalCost)||Math.round(s.costPerUnit*(s.units||0));}
+    if(metric==='units')return s.units||0;
+    if(metric==='costPerVin')return s.costPerVin||0;
+    return 0;
+  };
+  const metricLabel={cost:'Cost (₹)',units:'Volume',costPerVin:'₹/VIN'};
+  const metricFmt={cost:v=>'₹'+f.short(v),units:v=>f.short(v)+' units',costPerVin:v=>'₹'+Number(v).toFixed(2)};
+  mk('ch-seg-trend',{type:'bar',data:{labels,datasets:allSegNames.map((sn,i)=>({label:sn,data:months.map(m=>{const sd=segProdData(m,sp).find(x=>x.name===sn);return sd?segMetricFn(sd,sm):0;}),backgroundColor:segColors[i],borderRadius:3,stack:'a'}))},options:{plugins:{legend:{labels:{color:'#6a82a8',font:{size:10},boxWidth:9}},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+metricFmt[sm](ctx.raw)}}},scales:{x:{stacked:true},y:{stacked:true,ticks:{color:'#3a4e70',font:{size:10},callback:sm==='cost'?v=>'₹'+f.short(v):sm==='costPerVin'?v=>'₹'+v:v=>f.short(v)},grid:{color:'rgba(26,37,64,.5)'}}}}});
+
+  // ── CHART 3: Top 15 Editors ₹/Unit (horizontal bar) ──
+  const em=CF.ed;
+  const m=months[months.length-1];
+  const edFilt=filterBreakdown(m.editorBreakdown,'editor');
+  const edMetricFn=(e,met)=>{if(met==='costPerUnit')return e.costPerUnit||0;if(met==='units')return e.units||0;if(met==='efficiency')return e.efficiency||0;return 0;};
+  const edFmtFn=(v,met)=>{if(met==='costPerUnit')return'₹'+Number(v).toFixed(2);if(met==='efficiency')return v.toFixed(2)+'%';return f.short(v)+' units';};
+  const top15=[...edFilt].sort((a,b)=>edMetricFn(b,em)-edMetricFn(a,em)).slice(0,15);
+  const edColors=top15.map(e=>/payroll/i.test(e.teamType)?'#22d4a0':'#f5a42a');
+  document.getElementById('ed-chart-sub').textContent=m.month+' · Green=Inhouse · Amber=OS';
+  mk('ch-ed-cost',{type:'bar',_lf:em==='costPerUnit'?v=>v?'₹'+Number(v).toFixed(2):'':em==='efficiency'?v=>v?v.toFixed(2)+'%':'':v=>v>0?f.short(v):'',data:{labels:top15.map(e=>f.email(e.email)),datasets:[{label:em==='costPerUnit'?'₹/Unit':em==='efficiency'?'Efficiency %':'Units',data:top15.map(e=>edMetricFn(e,em)),backgroundColor:edColors,borderRadius:[0,3,3,0]}]},options:{indexAxis:'y',layout:{padding:{right:60}},plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>edFmtFn(ctx.raw,em)}}},scales:{x:{ticks:{color:'#3a4e70',font:{size:10},callback:v=>em==='costPerUnit'?'₹'+v:em==='efficiency'?v+'%':f.short(v)},grid:{color:'rgba(26,37,64,.5)'}},y:{ticks:{color:'#3a4e70',font:{size:10}},grid:{display:false}}}}});
+
+  // ── CHART 4: Product MoM ──
+  const pp=CF.prod,pm=CF.prodm;
+  const allProdNames=[...new Set(months.flatMap(m=>m.productBreakdown.map(p=>p.name)))].filter(n=>{
+    if(pp==='all')return true;
+    if(pp==='image')return /image/i.test(n);
+    if(pp==='360')return /360|spin/i.test(n);
+    if(pp==='video')return /video/i.test(n);
+    return true;
+  });
+  const prodMetricFn=(prod,met)=>{if(met==='units')return prod?.units||0;if(met==='costPerUnit')return prod?.costPerUnit||0;if(met==='cost'){const totalMins=prod?.actualMins||1;return Math.round((prod?.costSharePct||0)/100*(months[months.length-1].summary.totalCost||0));}return 0;};
+  const prodFmtLabel={units:'Volume',costPerUnit:'₹/Unit',cost:'Cost'};
+  mk('ch-prod-trend',{type:'bar',data:{labels,datasets:allProdNames.map((pn,i)=>({label:pn,data:months.map(m=>{const prod=getFilteredProducts(m).find(x=>x.name===pn);return prod?prodMetricFn(prod,pm):0;}),backgroundColor:pc(pn,i),borderRadius:3,stack:pm!=='costPerUnit'?'a':undefined}))},options:{plugins:{legend:{labels:{color:'#6a82a8',font:{size:10},boxWidth:9}},tooltip:{callbacks:{label:ctx=>{const v=ctx.raw;return ctx.dataset.label+': '+(pm==='costPerUnit'?'₹'+Number(v).toFixed(2):pm==='cost'?'₹'+f.short(v):f.short(v)+' units');}}}},scales:{x:{stacked:pm!=='costPerUnit'},y:{stacked:pm!=='costPerUnit',ticks:{color:'#3a4e70',font:{size:10},callback:pm==='costPerUnit'?v=>'₹'+v:pm==='cost'?v=>'₹'+f.short(v):v=>f.short(v)},grid:{color:'rgba(26,37,64,.5)'}}}}});
+}
+
+// ── 3. SEGMENTS TABLES ────────────────────────────────────────────────────────
 function renderSegments(months){
   const m=months[months.length-1];
   const segs=filterBreakdown(m.segmentBreakdown,'segment');
-  document.getElementById('sg-vol-sub').textContent=m.month;
-  const labels=segs.map(s=>s.name),colors=segs.map(s=>sc(s.name));
-  mk('ch-sg-vol',{type:'bar',_lf:v=>v>0?f.short(v):'',data:{labels,datasets:[{label:'Units',data:segs.map(s=>s.units),backgroundColor:colors,borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>f.short(v)}}}}});
-  mk('ch-sg-pie',{type:'doughnut',data:{labels,datasets:[{data:segs.map(s=>s.costShare),backgroundColor:colors,borderWidth:0,hoverOffset:4,datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>4,color:'#fff',font:{size:10,weight:'600'},formatter:v=>v.toFixed(0)+'%',anchor:'center',align:'center'}}]},options:{cutout:'62%',scales:{x:{display:false},y:{display:false}},plugins:{legend:{position:'right',labels:{color:'#6a82a8',font:{size:10},boxWidth:9}},tooltip:{callbacks:{label:ctx=>ctx.label+': '+ctx.parsed.toFixed(2)+'%'}}}}});
-  mk('ch-sg-vinc',{type:'bar',_lf:v=>v?'₹'+Number(v).toFixed(2):'',data:{labels,datasets:[{label:'₹/VIN',data:segs.map(s=>s.costPerVin),backgroundColor:colors,borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'₹'+v}}}}});
-  mk('ch-sg-eff',{type:'bar',_lf:v=>v?v.toFixed(2)+'%':'',data:{labels,datasets:[{label:'Efficiency %',data:segs.map(s=>s.efficiency),backgroundColor:segs.map(s=>s.efficiency>=100?'#22d4a0':s.efficiency>=80?'#f5a42a':'#f0566a'),borderRadius:4}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.raw.toFixed(2)+'%'}}},scales:{y:{ticks:{callback:v=>v+'%'}}}}});
   _segData=segs;renderSegTable();
   _dealerData=m.dealerBreakdown;renderDealerTable();
   _entData=m.enterpriseBreakdown;renderEntTable();
