@@ -1,6 +1,81 @@
 // api/data.js — Vercel Serverless Function (CommonJS)
 
 const { google } = require('googleapis');
+const https = require('https');
+
+const METABASE_CSV_URL = 'https://metabase.spyne.ai/public/question/84265073-fe7b-4ee1-81d7-5eb37a7e9b2f.csv';
+
+// ── Fetch & parse Metabase enterprise CSV ─────────────────────────────────────
+// Returns map: enterpriseName → { segment, csPoc, obPoc, liveArr }
+function fetchMetabaseCSV() {
+  return new Promise((resolve) => {
+    const req = https.get(METABASE_CSV_URL, { timeout: 10000 }, (res) => {
+      let data = '';
+      res.on('data', chunk => { data += chunk; });
+      res.on('end', () => {
+        try {
+          resolve(parseEnterpriseMeta(data));
+        } catch (e) {
+          console.error('[metabase] parse error:', e.message);
+          resolve({});
+        }
+      });
+    });
+    req.on('error', (e) => {
+      console.error('[metabase] fetch error:', e.message);
+      resolve({});
+    });
+    req.on('timeout', () => {
+      console.error('[metabase] fetch timeout');
+      req.destroy();
+      resolve({});
+    });
+  });
+}
+
+function parseEnterpriseMeta(csvText) {
+  const map = {};
+  const lines = csvText.trim().split('\n');
+  if (lines.length < 2) return map;
+
+  // Parse a CSV line respecting quoted fields
+  function parseLine(line) {
+    const cols = []; let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"' && !inQ)               { inQ = true; }
+      else if (c === '"' && inQ && line[i+1] === '"') { cur += '"'; i++; }
+      else if (c === '"' && inQ)           { inQ = false; }
+      else if (c === ',' && !inQ)          { cols.push(cur); cur = ''; }
+      else                                  { cur += c; }
+    }
+    cols.push(cur);
+    return cols;
+  }
+
+  const headers = parseLine(lines[0]);
+  const idx = {
+    name:    headers.findIndex(h => /enterprise name/i.test(h)),
+    seg:     headers.findIndex(h => /customer segment/i.test(h)),
+    csPoc:   headers.findIndex(h => /cs poc/i.test(h)),
+    obPoc:   headers.findIndex(h => /ob poc/i.test(h)),
+    liveArr: headers.findIndex(h => /live arr/i.test(h)),
+  };
+
+  lines.slice(1).forEach(line => {
+    if (!line.trim()) return;
+    const cols = parseLine(line);
+    const name = (cols[idx.name] || '').trim();
+    if (!name) return;
+    map[name] = {
+      segment: (cols[idx.seg]    || '').trim(),
+      csPoc:   (cols[idx.csPoc]  || '').trim(),
+      obPoc:   (cols[idx.obPoc]  || '').trim(),
+      liveArr: (cols[idx.liveArr]|| '').trim(),
+    };
+  });
+  return map;
+}
 
 // ╔══════════════════════════════════════════════════════════════════╗
 // ║  ADD A NEW MONTH — edit ONLY this array, nothing else needed    ║
@@ -403,26 +478,39 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'GET')     return res.status(405).json({ error: 'Method not allowed' });
   try {
     const client = getSheetsClient();
-    const results = await Promise.allSettled(
-      SHEETS.map(async cfg => {
-        const [outputRows, factorRows, entRows, removedRows] = await Promise.all([
-          fetchRange(client, cfg.id, 'output!A:M'),
-          fetchRange(client, cfg.id, 'factor_calculation!A:G'),  // ← changed from Salary
-          fetchRange(client, cfg.id, 'enterprise_details!A:D'),
-          fetchRange(client, cfg.id, 'remove_users!A:E'),
-        ]);
-        return computeMonth(cfg, outputRows, factorRows, entRows, removedRows);
-      })
-    );
-    const months = results.filter(r => r.status === 'fulfilled').map(r => r.value);
-    const errors = results
+
+    // Fetch Sheets data + Metabase enterprise meta in parallel
+    const [sheetsResults, enterpriseMeta] = await Promise.all([
+      Promise.allSettled(
+        SHEETS.map(async cfg => {
+          const [outputRows, factorRows, entRows, removedRows] = await Promise.all([
+            fetchRange(client, cfg.id, 'output!A:M'),
+            fetchRange(client, cfg.id, 'factor_calculation!A:G'),
+            fetchRange(client, cfg.id, 'enterprise_details!A:D'),
+            fetchRange(client, cfg.id, 'remove_users!A:E'),
+          ]);
+          return computeMonth(cfg, outputRows, factorRows, entRows, removedRows);
+        })
+      ),
+      fetchMetabaseCSV(), // runs concurrently — never blocks if it fails
+    ]);
+
+    const months = sheetsResults.filter(r => r.status === 'fulfilled').map(r => r.value);
+    const errors = sheetsResults
       .map((r, i) => r.status === 'rejected'
         ? { month: SHEETS[i].month, error: r.reason?.message || String(r.reason) }
         : null)
       .filter(Boolean);
+
     if (months.length === 0)
       return res.status(500).json({ error: 'All sheet fetches failed', details: errors });
-    res.status(200).json({ months, errors, fetchedAt: new Date().toISOString() });
+
+    res.status(200).json({
+      months,
+      errors,
+      enterpriseMeta,   // ← included in every response
+      fetchedAt: new Date().toISOString(),
+    });
   } catch (err) {
     console.error('[data.js error]', err);
     res.status(500).json({ error: err.message });
