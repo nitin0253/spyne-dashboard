@@ -98,7 +98,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 
 /* ── CARDS & GRIDS ── */
 .section{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px}
-.sec-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;gap:8px}
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;flex-wrap:nowrap}
 .sec-title{font-weight:700;font-size:14px}.sec-sub{font-size:11px;color:var(--sub);margin-top:3px}
 .sec-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;flex-shrink:0}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -130,7 +130,7 @@ select.sel{background:var(--card2);border:1px solid var(--border);border-radius:
 select.sel:focus{border-color:var(--blue)}
 .ch{position:relative}
 /* ── CHART INLINE FILTERS ── */
-.cf-row{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:10px}
+.cf-row{display:flex;align-items:center;gap:4px;flex-wrap:nowrap;margin-bottom:0}
 .cf-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-right:2px}
 .cf-pill{padding:4px 11px;border-radius:5px;border:1px solid var(--border);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);background:transparent;color:var(--sub);transition:all .12s;user-select:none}
 .cf-pill:hover{color:var(--text);border-color:var(--sub)}
@@ -250,7 +250,7 @@ select.sel:focus{border-color:var(--blue)}
     <!-- CHART 1: Cost Trend MoM -->
   <div class="section">
     <div class="sec-head">
-      <div><div class="sec-title">Cost Trend — Month on Month</div><div class="sec-sub">Overall Cost (bars) · Volume (bars) · ₹/Unit (line)</div></div>
+      <div><div class="sec-title">Cost Trend</div><div class="sec-sub">MoM · Overall Cost · Volume · ₹/Unit</div></div>
       <div class="cf-row">
         <span class="cf-label">Product:</span>
         <button class="cf-pill active" data-chart="cost" onclick="setChartFilter('cost','all',this)">All</button>
@@ -264,7 +264,7 @@ select.sel:focus{border-color:var(--blue)}
     <!-- CHART 2: Segment Breakdown MoM -->
   <div class="section">
     <div class="sec-head">
-      <div><div class="sec-title">Segment Breakdown — Month on Month</div><div class="sec-sub">Cost · Volume · ₹/Unit per customer segment across months</div></div>
+      <div><div class="sec-title">Segment Breakdown</div><div class="sec-sub">MoM · Cost · Volume · ₹/Unit per segment</div></div>
       <div class="cf-row">
         <span class="cf-label">Metric:</span>
         <button class="cf-pill active" data-chart="seg" onclick="setChartFilter('seg','cost',this)">Cost</button>
@@ -304,7 +304,7 @@ select.sel:focus{border-color:var(--blue)}
     <!-- CHART 4: Product Breakdown MoM -->
   <div class="section">
     <div class="sec-head">
-      <div><div class="sec-title">Product Breakdown — Month on Month</div><div class="sec-sub">Volume · Cost · ₹/Unit per product type across months</div></div>
+      <div><div class="sec-title">Product Breakdown</div><div class="sec-sub">MoM · Volume · Cost · ₹/Unit per product</div></div>
       <div class="cf-row">
         <span class="cf-label">Product:</span>
         <button class="cf-pill active" data-chart="prod" onclick="setChartFilter('prod','all',this)">All</button>
@@ -322,7 +322,97 @@ select.sel:focus{border-color:var(--blue)}
   </div>
 
   <!-- TABLES: Segment + Enterprise + Editors -->
-  
+  <div class="g2" style="margin-bottom:12px">
+    <div class="section">
+      <div class="sec-head"><div class="sec-title">Segment Summary</div></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr>
+          <th>Segment</th>
+          <th class="r" onclick="cycleSortSeg('vins')" style="cursor:pointer">VINs<span id="ss-vins" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+          <th class="r" onclick="cycleSortSeg('units')" style="cursor:pointer">Units<span id="ss-units" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+          <th class="r" onclick="cycleSortSeg('efficiency')" style="cursor:pointer">Eff.<span id="ss-efficiency" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+          <th class="r" onclick="cycleSortSeg('costPerUnit')" style="cursor:pointer">₹/Unit<span id="ss-costPerUnit" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+          <th class="r" onclick="cycleSortSeg('costShare')" style="cursor:pointer">Cost%<span id="ss-costShare" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        </tr></thead>
+        <tbody id="sg-summary-tbl"></tbody>
+      </table></div>
+    </div>
+    <div class="section">
+      <div class="sec-head"><div class="sec-title">Top Enterprises</div></div>
+      <div class="tbl-wrap" style="max-height:300px;overflow-y:auto"><table>
+        <thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr>
+          <th>#</th><th>Enterprise</th><th>Seg.</th>
+          <th class="r" onclick="cycleSortEnt('vins')" style="cursor:pointer">VINs<span id="se-vins" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+          <th class="r" onclick="cycleSortEnt('efficiency')" style="cursor:pointer">Eff.<span id="se-efficiency" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+          <th class="r" onclick="cycleSortEnt('costPerUnit')" style="cursor:pointer">₹/Unit<span id="se-costPerUnit" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        </tr></thead>
+        <tbody id="co-ent-tbl"></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- All Editors -->
+  <div class="section" style="margin-bottom:12px">
+    <div class="sec-head">
+      <div class="sec-title">All Editors</div>
+      <div class="sec-actions">
+        <input type="text" class="search" id="ed-search" placeholder="Search editor…">
+        <select class="sel" id="ed-sort">
+          <option value="units">Sort: Units</option>
+          <option value="efficiency">Sort: Efficiency</option>
+          <option value="costPerUnit">Sort: ₹/Unit</option>
+        </select>
+      </div>
+    </div>
+    <div class="tbl-wrap" style="max-height:300px;overflow-y:auto"><table>
+      <thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr>
+        <th>#</th><th>Editor</th><th>Team</th>
+        <th class="r">Images</th><th class="r">360</th><th class="r">Video</th>
+        <th class="r">Total Units</th><th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r">Cost</th>
+      </tr></thead>
+      <tbody id="ed-tbl"></tbody>
+    </table></div>
+  </div>
+
+  <!-- USER SUMMARY -->
+  <div style="margin-top:16px;margin-bottom:8px;display:flex;align-items:center;gap:10px">
+    <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)">👤 User Summary</span>
+    <div style="flex:1;height:1px;background:var(--border)"></div>
+  </div>
+  <div class="section">
+    <div class="sec-head">
+      <div><div class="sec-title">User-wise Volume &amp; Cost — All Products</div><div class="sec-sub">Per editor: Images · 360 · Video volume and cost</div></div>
+      <div class="sec-actions">
+        <input type="text" class="search" id="us-search" placeholder="Search user…">
+        <select class="sel" id="us-sort">
+          <option value="totalUnits">Sort: Total Units</option>
+          <option value="totalCost">Sort: Cost</option>
+          <option value="imgUnits">Sort: Images</option>
+          <option value="s360Units">Sort: 360</option>
+          <option value="vidUnits">Sort: Video</option>
+          <option value="costPerUnit">Sort: ₹/Unit</option>
+        </select>
+      </div>
+    </div>
+    <div class="tbl-wrap" style="max-height:420px;overflow-y:auto"><table>
+      <thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr>
+        <th>#</th>
+        <th onclick="cycleSortUS('email')" style="cursor:pointer">Editor<span id="su-email" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th>Team</th>
+        <th class="r" onclick="cycleSortUS('imgUnits')" style="cursor:pointer">Img Units<span id="su-imgUnits" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortUS('imgCost')" style="cursor:pointer">Img Cost<span id="su-imgCost" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortUS('s360Units')" style="cursor:pointer">360 Units<span id="su-s360Units" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortUS('s360Cost')" style="cursor:pointer">360 Cost<span id="su-s360Cost" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortUS('vidUnits')" style="cursor:pointer">Vid Units<span id="su-vidUnits" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortUS('vidCost')" style="cursor:pointer">Vid Cost<span id="su-vidCost" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortUS('totalUnits')" style="cursor:pointer">Total Units<span id="su-totalUnits" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortUS('efficiency')" style="cursor:pointer">Efficiency<span id="su-efficiency" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortUS('costPerUnit')" style="cursor:pointer">₹/Unit<span id="su-costPerUnit" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortUS('totalCost')" style="cursor:pointer">Total Cost<span id="su-totalCost" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+      </tr></thead>
+      <tbody id="us-tbl"></tbody>
+    </table></div>
+  </div>
 
 </div>
 <script>
@@ -578,6 +668,78 @@ function renderProdTable(){
   document.getElementById('pr-tbl').innerHTML=rows.map(p=>{const bar=Math.round((p.costSharePct||0)*1.4);return'<tr><td class="bright">'+prodTag(p.name)+'</td><td class="r">'+f.num(p.units)+'</td><td class="r"><span class="'+effCls(p.efficiency)+'">'+f.pct(p.efficiency)+'</span></td><td class="r" style="color:var(--text);font-weight:600">'+f.inr(p.costPerUnit)+'</td><td class="r">'+f.pct(p.costSharePct)+'<span class="mini-bar" style="width:'+bar+'px"></span></td></tr>';}).join('');
 }
 
+// ── USER SUMMARY ─────────────────────────────────────────────────────────────
+let _usData=[];
+const _usSort={col:'totalUnits',dir:-1};
+window.cycleSortUS=mkSorter('su',['email','imgUnits','imgCost','s360Units','s360Cost','vidUnits','vidCost','totalUnits','efficiency','costPerUnit','totalCost'],function(col,dir){_usSort.col=col;_usSort.dir=dir;renderUSTable();});
+function renderUSTable(){
+  const q=(document.getElementById('us-search')?.value||'').toLowerCase();
+  const sk=document.getElementById('us-sort')?.value||_usSort.col;
+  const dir=_usSort.dir||1;
+  let rows=_usData.filter(function(e){return !q||e.email.toLowerCase().includes(q);});
+  rows=applySortArr(rows,sk,dir);
+  document.getElementById('us-tbl').innerHTML=rows.map(function(e,i){
+    const team=/payroll/i.test(e.teamType)?
+      '<span style="background:rgba(34,212,160,.15);color:#22d4a0;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">Inhouse</span>':
+      '<span style="background:rgba(245,164,42,.15);color:#f5a42a;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">OS</span>';
+    return'<tr>'
+      +'<td class="rank-num">'+(i+1)+'</td>'
+      +'<td><div style="color:var(--text);font-weight:500">'+f.email(e.email)+'</div>'
+      +'<div style="font-size:10px;color:var(--muted)">'+e.email+'</div></td>'
+      +'<td>'+team+'</td>'
+      +'<td class="r">'+f.num(e.imgUnits)+'</td>'
+      +'<td class="r">'+f.inr0(e.imgCost)+'</td>'
+      +'<td class="r">'+f.num(e.s360Units)+'</td>'
+      +'<td class="r">'+f.inr0(e.s360Cost)+'</td>'
+      +'<td class="r">'+f.num(e.vidUnits)+'</td>'
+      +'<td class="r">'+f.inr0(e.vidCost)+'</td>'
+      +'<td class="r" style="color:var(--text);font-weight:600">'+f.num(e.totalUnits)+'</td>'
+      +'<td class="r"><span class="'+effCls(e.efficiency)+'">'+f.pct(e.efficiency)+'</span></td>'
+      +'<td class="r" style="color:var(--amber)">'+f.inr(e.costPerUnit)+'</td>'
+      +'<td class="r" style="color:var(--blue)">'+f.inr0(e.totalCost)+'</td>'
+      +'</tr>';
+  }).join('');
+}
+function renderUserSummary(months){
+  const m=months[months.length-1];
+  const editors=filterBreakdown(m.editorBreakdown,'editor');
+  // Cost prorated by actMins share within each product
+  const totalActMins=m.summary.totalActMins||1;
+  const totalCost=m.summary.totalCost||0;
+  _usData=editors.map(function(e){
+    // Get per-product units from byProduct map
+    const bp=e.byProduct||{};
+    function prodUnits(regex){return Object.entries(bp).filter(function(kv){return regex.test(kv[0]);}).reduce(function(s,kv){return s+kv[1];},0);}
+    const imgUnits =prodUnits(/image/i);
+    const s360Units=prodUnits(/360|spin/i);
+    const vidUnits =prodUnits(/video/i);
+    // Cost per product = prorated by editor cost × product mins share
+    const editorCostFraction=totalCost>0?(e.salary||0)/totalCost:0;
+    // Simpler: distribute editor cost proportionally to product units
+    const tot=imgUnits+s360Units+vidUnits||1;
+    const imgCost =Math.round((e.salary||0)*(imgUnits/tot));
+    const s360Cost=Math.round((e.salary||0)*(s360Units/tot));
+    const vidCost =Math.round((e.salary||0)*(vidUnits/tot));
+    return{
+      email:      e.email,
+      teamType:   e.teamType||'',
+      imgUnits,   imgCost,
+      s360Units,  s360Cost,
+      vidUnits,   vidCost,
+      totalUnits: e.units||0,
+      efficiency: e.efficiency||0,
+      costPerUnit:e.costPerUnit||0,
+      totalCost:  e.salary||0,
+    };
+  });
+  renderUSTable();
+  // Wire search and sort
+  const s=document.getElementById('us-search');
+  const o=document.getElementById('us-sort');
+  if(s&&!s._wired){s.addEventListener('input',renderUSTable);s._wired=true;}
+  if(o&&!o._wired){o.addEventListener('change',function(){_usSort.col=o.value;_usSort.dir=-1;renderUSTable();});o._wired=true;}
+}
+
 function setMsg(msg){const el=document.getElementById('overlay-msg');if(el)el.textContent=msg;console.log('[dash]',msg);}
 async function fetchData(){
   overlayShow('Connecting to Google Sheets…');
@@ -649,6 +811,7 @@ function renderAll(){
   safeRender('charts',  renderCharts,   months);
   safeRender('tables',  renderTables,   months);
   safeRender('editors', renderEditors,  months);
+  safeRender('usersummary', renderUserSummary, months);
 }
 
 // ── KPIs ─────────────────────────────────────────────────────────────────────
