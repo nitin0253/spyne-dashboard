@@ -537,7 +537,10 @@ function computeFilteredSummary(m){
   const costPerUnit=totalUnits>0?+(totalCost/totalUnits).toFixed(2):0;
   const costPerSku=totalSkus>0?+(totalCost/totalSkus).toFixed(2):0;
   const costPerVin=totalVins>0?+(totalCost/totalVins).toFixed(2):0;
-  return{totalCost,totalImages,total360Skus,totalVideoSkus,totalVins,totalUnits,totalSkus,totalActMins,totalTarget,efficiency,costPerUnit,costPerSku,costPerVin,employees:m.summary.employees};
+  // Inhouse/OS costs: prorate by same costShare ratio as totalCost
+  const inhouseCost=Math.round((m.summary.inhouseCost||0)*costShare);
+  const osCost=Math.round((m.summary.osCost||0)*costShare);
+  return{totalCost,inhouseCost,osCost,totalImages,total360Skus,totalVideoSkus,totalVins,totalUnits,totalSkus,totalActMins,totalTarget,efficiency,costPerUnit,costPerSku,costPerVin,employees:m.summary.employees};
 }
 
 let openDropdown=null;
@@ -644,9 +647,9 @@ function renderOverview(months){
   function d(k){if(!sp||!sp[k])return null;return((s[k]-sp[k])/sp[k])*100;}
   const tb=last.teamBreakdown||{};
   document.getElementById('ov-kpis').innerHTML=[
-    kpi('Total Cost',     f.inr0(s.totalCost),    last.month,                d('totalCost'),    '#4f78ff'),
-    kpi('Inhouse Cost',   f.inr0(s.inhouseCost),  (tb.inhouse?.employees||0)+' employees',     null,              '#22d4a0'),
-    kpi('OS Cost',        f.inr0(s.osCost),        (tb.os?.employees||0)+' contractors',        null,              '#f5a42a'),
+    kpi('Total Cost',     f.inr0(s.totalCost),     last.month,                           d('totalCost'),    '#4f78ff'),
+    kpi('Inhouse Cost',   f.inr0(s.inhouseCost),   (tb.inhouse?.employees||0)+' people', null,              '#22d4a0'),
+    kpi('OS Cost',        f.inr0(s.osCost),         (tb.os?.employees||0)+' contractors', null,              '#f5a42a'),
     kpi('VINs',           f.num(s.totalVins),      'Unique vehicles',         d('totalVins'),    '#a07cff'),
     kpi('Total Units',    f.num(s.totalUnits),     'Billing units',           d('totalUnits'),   '#38c4f0'),
     kpi('Efficiency',     f.pct(s.efficiency),     'Target / Actual',         d('efficiency'),   '#22d4a0'),
