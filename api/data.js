@@ -67,12 +67,24 @@ function parseEnterpriseMeta(csvText) {
     const cols = parseLine(line);
     const name = (cols[idx.name] || '').trim();
     if (!name) return;
-    map[name] = {
-      segment: (cols[idx.seg]    || '').trim(),
-      csPoc:   (cols[idx.csPoc]  || '').trim(),
-      obPoc:   (cols[idx.obPoc]  || '').trim(),
-      liveArr: (cols[idx.liveArr]|| '').trim(),
-    };
+
+    const segment = (cols[idx.seg]    || '').trim();
+    const csPoc   = (cols[idx.csPoc]  || '').trim();
+    const obPoc   = (cols[idx.obPoc]  || '').trim();
+    const liveArr = (cols[idx.liveArr]|| '').trim();
+
+    if (!map[name]) {
+      // First row for this enterprise — create entry
+      map[name] = { segment, csPoc, obPoc, liveArr };
+    } else {
+      // Subsequent team row — merge: keep first non-empty value for each field
+      // (all teams share the same enterprise-level details, but some rows may
+      //  have blanks; take the first populated value seen)
+      if (!map[name].segment && segment) map[name].segment = segment;
+      if (!map[name].csPoc   && csPoc)   map[name].csPoc   = csPoc;
+      if (!map[name].obPoc   && obPoc)   map[name].obPoc   = obPoc;
+      if (!map[name].liveArr && liveArr) map[name].liveArr = liveArr;
+    }
   });
   return map;
 }
