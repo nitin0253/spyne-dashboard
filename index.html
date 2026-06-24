@@ -443,7 +443,7 @@ window._entList=window._entList||[];
 function _showEnt(i){var item=window._entList[i];if(item)showEnterpriseDetail(item.name,item);}
 function showEnterpriseDetail(name,e){
   const meta=ENT_META[name]||{};
-  const seg=meta.segment||e.segment||'';
+  const seg=e.segment||meta.segment||'';
   const months=filteredMonths();
   const monthRows=months.map(function(m){
     const eb=m.enterpriseBreakdown.find(function(x){return x.name===name;});
@@ -455,7 +455,8 @@ function showEnterpriseDetail(name,e){
       '<td class="r"><span class="'+effCls(r.efficiency)+'">'+f.pct(r.efficiency)+'</span></td>'+
       '<td class="r" style="color:var(--amber)">'+f.inr(r.costPerUnit)+'</td></tr>';
   }).join('');
-  const arrVal=meta.liveArr?Number(meta.liveArr.replace(/[^0-9.]/g,'')):0;
+  const rawArr=e.liveArr||meta.liveArr||'';
+  const arrVal=rawArr?Number(rawArr.replace(/[^0-9.]/g,'')):0;
   const modal=document.createElement('div');
   modal.style.cssText='position:fixed;inset:0;background:rgba(8,12,20,.88);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
   const inner=document.createElement('div');
@@ -473,10 +474,10 @@ function showEnterpriseDetail(name,e){
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">'
     +'<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px">'
     +'<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">CS POC</div>'
-    +'<div style="font-size:13px;color:var(--text)">'+(meta.csPoc||'—')+'</div></div>'
+    +'<div style="font-size:13px;color:var(--text)">'+(e.csPoc||meta.csPoc||'—')+'</div></div>'
     +'<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px">'
     +'<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">OB POC</div>'
-    +'<div style="font-size:13px;color:var(--text)">'+(meta.obPoc||'—')+'</div></div>'
+    +'<div style="font-size:13px;color:var(--text)">'+(e.obPoc||meta.obPoc||'—')+'</div></div>'
     +'</div>'
     +'<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px">Month-on-Month Performance</div>'
     +'<div class="tbl-wrap"><table><thead><tr><th>Month</th><th class="r">Units</th><th class="r">VINs</th><th class="r">Efficiency</th><th class="r">₹/Unit</th></tr></thead>'
@@ -545,6 +546,48 @@ function showEditorDetail(e){
   document.body.appendChild(modal);
 }
 
+
+let _entData=[], _entSort={col:'units',dir:-1};
+window.cycleSortEnt=mkSorter('se',['vins','units','efficiency','costPerUnit'],function(col,dir){_entSort.col=col;_entSort.dir=dir;renderEntTable();});
+function renderEntTable(){
+  // Apply CS/OB POC filter
+  var rows=_entData.filter(function(e){
+    var meta=ENT_META[e.name]||{};
+    var cs=e.csPoc||meta.csPoc||'';
+    var ob=e.obPoc||meta.obPoc||'';
+    var csOk=FILTERS.cspoc.selected.size===0||FILTERS.cspoc.selected.size===FILTERS.cspoc.all.length||
+              (cs&&FILTERS.cspoc.selected.has(cs));
+    var obOk=FILTERS.obpoc.selected.size===0||FILTERS.obpoc.selected.size===FILTERS.obpoc.all.length||
+              (ob&&FILTERS.obpoc.selected.has(ob));
+    return csOk&&obOk;
+  });
+  rows=applySortArr(rows,_entSort.col,_entSort.dir);
+  window._entList=rows;
+  var tbl=document.getElementById('co-ent-tbl');
+  if(!tbl)return;
+  tbl.innerHTML=rows.map(function(e,i){
+    // Use embedded Metabase data (from backend mapping) with ENT_META as fallback
+    var meta=ENT_META[e.name]||{};
+    var seg=e.segment||meta.segment||'';
+    var cs=e.csPoc||meta.csPoc||'—';
+    var ob=e.obPoc||meta.obPoc||'—';
+    var rawArr=e.liveArr||meta.liveArr||'';
+    var arr=rawArr?'₹'+Number(rawArr.replace(/[^0-9.]/g,'')).toLocaleString('en-IN'):'—';
+    var segBadge=seg?'<span class="seg" style="background:'+sc(seg)+'22;color:'+sc(seg)+';font-size:9px">'+seg+'</span>':'—';
+    return'<tr style="cursor:pointer" onclick="_showEnt('+i+')">'+
+      '<td class="rank-num">'+(i+1)+'</td>'+
+      '<td class="bright" style="max-width:140px;overflow:hidden;text-overflow:ellipsis" title="'+e.name+'">'+e.name+'</td>'+
+      '<td>'+segBadge+'</td>'+
+      '<td style="font-size:11px;color:var(--sub);max-width:120px;overflow:hidden;text-overflow:ellipsis" title="'+cs+'">'+cs+'</td>'+
+      '<td style="font-size:11px;color:var(--sub);max-width:120px;overflow:hidden;text-overflow:ellipsis" title="'+ob+'">'+ob+'</td>'+
+      '<td class="r" style="font-size:11px;color:var(--green)">'+arr+'</td>'+
+      '<td class="r">'+f.num(e.vins)+'</td>'+
+      '<td class="r">'+f.num(e.units)+'</td>'+
+      '<td class="r"><span class="'+effCls(e.efficiency)+'">'+f.pct(e.efficiency)+'</span></td>'+
+      '<td class="r" style="color:var(--amber)">'+f.inr(e.costPerUnit)+'</td>'+
+      '</tr>';
+  }).join('');
+}
 
 function renderTables(months){
   const m=months[months.length-1];
