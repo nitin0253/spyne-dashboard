@@ -243,197 +243,143 @@ select.sel:focus{border-color:var(--blue)}
 <!-- SINGLE PAGE CONTENT -->
 <div id="content">
 
-  <!-- ══ 1. OVERVIEW ══ -->
-  <div class="dash-section">
-    <div class="dash-section-header" onclick="toggleSection('s-kpi')">
-      <span class="dash-section-title">📊 Overview</span>
-      <div class="dash-section-line"></div><span class="dash-section-toggle" id="tog-s-kpi">▾</span>
-    </div>
-    <div class="dash-section-body" id="s-kpi">
-      <div class="kpi-grid" id="ov-kpis"></div>
-      <div class="g2">
-        <div class="section">
-          <div class="sec-head"><div><div class="sec-title">Salary Cost Trend</div><div class="sec-sub">Total factored salary · active employees</div></div></div>
-          <div class="ch"><canvas id="ch-cost" height="120"></canvas></div>
-        </div>
-        <div class="section">
-          <div class="sec-head"><div class="sec-title">Month Snapshot</div></div>
-          <div class="tbl-wrap"><table>
-            <thead id="snap-head"><tr><th>Month</th><th class="r" onclick="cycleSortSnap('totalCost')" style="cursor:pointer">Cost<span id="sa-totalCost" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortSnap('totalImages')" style="cursor:pointer">Images<span id="sa-totalImages" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortSnap('total360Skus')" style="cursor:pointer">360 SKUs<span id="sa-total360Skus" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortSnap('totalVideoSkus')" style="cursor:pointer">Video SKUs<span id="sa-totalVideoSkus" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortSnap('totalVins')" style="cursor:pointer">VINs<span id="sa-totalVins" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortSnap('efficiency')" style="cursor:pointer">Efficiency<span id="sa-efficiency" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortSnap('costPerVin')" style="cursor:pointer">₹/VIN<span id="sa-costPerVin" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortSnap('costPerUnit')" style="cursor:pointer">₹/Unit<span id="sa-costPerUnit" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th></tr></thead>
-            <tbody id="ov-tbody"></tbody>
-          </table></div>
-        </div>
+  <!-- KPI CARDS -->
+  <div class="kpi-grid" id="ov-kpis" style="margin-bottom:14px"></div>
+
+  <!-- CHART 1: Cost Trend MoM -->
+  <div class="section" style="margin-bottom:12px">
+    <div class="sec-head">
+      <div><div class="sec-title">Cost Trend — Month on Month</div><div class="sec-sub">Overall Cost (bars) · Volume (bars) · ₹/Unit (line)</div></div>
+      <div class="cf-row">
+        <span class="cf-label">Product:</span>
+        <button class="cf-pill active" data-chart="cost" onclick="setChartFilter('cost','all',this)">All</button>
+        <button class="cf-pill" data-chart="cost" onclick="setChartFilter('cost','image',this)">Images</button>
+        <button class="cf-pill" data-chart="cost" onclick="setChartFilter('cost','360',this)">360</button>
+        <button class="cf-pill" data-chart="cost" onclick="setChartFilter('cost','video',this)">Video</button>
       </div>
+    </div>
+    <div class="ch"><canvas id="ch-cost-trend" height="95"></canvas></div>
+  </div>
+
+  <!-- CHART 2: Segment Breakdown MoM -->
+  <div class="section" style="margin-bottom:12px">
+    <div class="sec-head">
+      <div><div class="sec-title">Segment Breakdown — Month on Month</div><div class="sec-sub">Cost · Volume · ₹/VIN per customer segment across months</div></div>
+      <div class="cf-row">
+        <span class="cf-label">Metric:</span>
+        <button class="cf-pill active" data-chart="seg" onclick="setChartFilter('seg','cost',this)">Cost</button>
+        <button class="cf-pill" data-chart="seg" onclick="setChartFilter('seg','units',this)">Volume</button>
+        <button class="cf-pill" data-chart="seg" onclick="setChartFilter('seg','costPerVin',this)">₹/VIN</button>
+        <span class="cf-label" style="margin-left:8px">Product:</span>
+        <button class="cf-pill active" data-chart="segp" onclick="setChartFilter('segp','all',this)">All</button>
+        <button class="cf-pill" data-chart="segp" onclick="setChartFilter('segp','image',this)">Images</button>
+        <button class="cf-pill" data-chart="segp" onclick="setChartFilter('segp','360',this)">360</button>
+        <button class="cf-pill" data-chart="segp" onclick="setChartFilter('segp','video',this)">Video</button>
+      </div>
+    </div>
+    <div class="ch"><canvas id="ch-seg-trend" height="95"></canvas></div>
+  </div>
+
+  <!-- CHART 3: Top 15 Editors -->
+  <div class="section" style="margin-bottom:12px">
+    <div class="sec-head">
+      <div><div class="sec-title">Top 15 Editors</div><div class="sec-sub" id="ed-chart-sub"></div></div>
+      <div class="cf-row">
+        <span class="cf-label">Sort by:</span>
+        <button class="cf-pill active" data-chart="ed" onclick="setChartFilter('ed','costPerUnit',this)">₹/Unit</button>
+        <button class="cf-pill" data-chart="ed" onclick="setChartFilter('ed','units',this)">Volume</button>
+        <button class="cf-pill" data-chart="ed" onclick="setChartFilter('ed','efficiency',this)">Efficiency</button>
+      </div>
+    </div>
+    <div class="ch"><canvas id="ch-ed-cost" height="120"></canvas></div>
+  </div>
+
+  <!-- CHART 4: Product Breakdown MoM -->
+  <div class="section" style="margin-bottom:20px">
+    <div class="sec-head">
+      <div><div class="sec-title">Product Breakdown — Month on Month</div><div class="sec-sub">Volume · Cost · ₹/Unit per product type across months</div></div>
+      <div class="cf-row">
+        <span class="cf-label">Product:</span>
+        <button class="cf-pill active" data-chart="prod" onclick="setChartFilter('prod','all',this)">All</button>
+        <button class="cf-pill" data-chart="prod" onclick="setChartFilter('prod','image',this)">Images</button>
+        <button class="cf-pill" data-chart="prod" onclick="setChartFilter('prod','360',this)">360</button>
+        <button class="cf-pill" data-chart="prod" onclick="setChartFilter('prod','video',this)">Video</button>
+        <span class="cf-label" style="margin-left:8px">Metric:</span>
+        <button class="cf-pill active" data-chart="prodm" onclick="setChartFilter('prodm','units',this)">Volume</button>
+        <button class="cf-pill" data-chart="prodm" onclick="setChartFilter('prodm','costPerUnit',this)">₹/Unit</button>
+        <button class="cf-pill" data-chart="prodm" onclick="setChartFilter('prodm','cost',this)">Cost</button>
+      </div>
+    </div>
+    <div class="ch"><canvas id="ch-prod-trend" height="95"></canvas></div>
+  </div>
+
+  <!-- TABLES: Segment + Dealer + Enterprise + Editors -->
+  <div class="g3" style="margin-bottom:12px">
+    <div class="section">
+      <div class="sec-head"><div class="sec-title">Segment Summary</div></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr>
+          <th>Segment</th>
+          <th class="r" onclick="cycleSortSeg('vins')" style="cursor:pointer">VINs<span id="ss-vins" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+          <th class="r" onclick="cycleSortSeg('units')" style="cursor:pointer">Units<span id="ss-units" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+          <th class="r" onclick="cycleSortSeg('efficiency')" style="cursor:pointer">Eff.<span id="ss-efficiency" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+          <th class="r" onclick="cycleSortSeg('costPerVin')" style="cursor:pointer">₹/VIN<span id="ss-costPerVin" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+          <th class="r" onclick="cycleSortSeg('costShare')" style="cursor:pointer">Cost%<span id="ss-costShare" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        </tr></thead>
+        <tbody id="sg-summary-tbl"></tbody>
+      </table></div>
+    </div>
+    <div class="section">
+      <div class="sec-head"><div class="sec-title">Dealer Type</div></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr>
+          <th>Type</th>
+          <th class="r" onclick="cycleSortDealer('vins')" style="cursor:pointer">VINs<span id="sd-vins" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+          <th class="r" onclick="cycleSortDealer('units')" style="cursor:pointer">Units<span id="sd-units" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+          <th class="r" onclick="cycleSortDealer('efficiency')" style="cursor:pointer">Eff.<span id="sd-efficiency" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+          <th class="r" onclick="cycleSortDealer('costPerVin')" style="cursor:pointer">₹/VIN<span id="sd-costPerVin" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        </tr></thead>
+        <tbody id="co-dealer-tbl"></tbody>
+      </table></div>
+    </div>
+    <div class="section">
+      <div class="sec-head"><div class="sec-title">Top Enterprises</div></div>
+      <div class="tbl-wrap" style="max-height:300px;overflow-y:auto"><table>
+        <thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr>
+          <th>#</th><th>Enterprise</th><th>Seg.</th>
+          <th class="r" onclick="cycleSortEnt('vins')" style="cursor:pointer">VINs<span id="se-vins" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+          <th class="r" onclick="cycleSortEnt('efficiency')" style="cursor:pointer">Eff.<span id="se-efficiency" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+          <th class="r" onclick="cycleSortEnt('costPerVin')" style="cursor:pointer">₹/VIN<span id="se-costPerVin" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        </tr></thead>
+        <tbody id="co-ent-tbl"></tbody>
+      </table></div>
     </div>
   </div>
 
-  <!-- ══ 2. CHARTS ══ -->
-  <div class="dash-section">
-    <div class="dash-section-header" onclick="toggleSection('s-trend')">
-      <span class="dash-section-title">📈 Charts</span>
-      <div class="dash-section-line"></div><span class="dash-section-toggle" id="tog-s-trend">▾</span>
-    </div>
-    <div class="dash-section-body" id="s-trend">
-
-      <!-- Chart 1: Cost Trend MoM — tri-axis (Cost, Volume, Cost/Unit) with product filter -->
-      <div class="section" style="margin-bottom:12px">
-        <div class="sec-head">
-          <div><div class="sec-title">Cost Trend — Month on Month</div><div class="sec-sub">Overall Cost · Volume · ₹/Unit combined</div></div>
-          <div class="cf-row">
-            <span class="cf-label">Product:</span>
-            <button class="cf-pill active" data-chart="cost" data-prod="all" onclick="setChartFilter('cost','all',this)">All</button>
-            <button class="cf-pill" data-chart="cost" data-prod="image" onclick="setChartFilter('cost','image',this)">Images</button>
-            <button class="cf-pill" data-chart="cost" data-prod="360" onclick="setChartFilter('cost','360',this)">360</button>
-            <button class="cf-pill" data-chart="cost" data-prod="video" onclick="setChartFilter('cost','video',this)">Video</button>
-          </div>
-        </div>
-        <div class="ch"><canvas id="ch-cost-trend" height="100"></canvas></div>
-      </div>
-
-      <!-- Chart 2: Segment Breakdown MoM — with product filter -->
-      <div class="section" style="margin-bottom:12px">
-        <div class="sec-head">
-          <div><div class="sec-title">Segment Breakdown — Month on Month</div><div class="sec-sub">Cost · Volume · ₹/Unit per customer segment</div></div>
-          <div class="cf-row">
-            <span class="cf-label">Metric:</span>
-            <button class="cf-pill active" data-chart="seg" data-metric="cost" onclick="setChartFilter('seg','cost',this)">Cost</button>
-            <button class="cf-pill" data-chart="seg" data-metric="units" onclick="setChartFilter('seg','units',this)">Volume</button>
-            <button class="cf-pill" data-chart="seg" data-metric="costPerVin" onclick="setChartFilter('seg','costPerVin',this)">₹/VIN</button>
-            <span class="cf-label" style="margin-left:8px">Product:</span>
-            <button class="cf-pill active" data-chart="segp" data-prod="all" onclick="setChartFilter('segp','all',this)">All</button>
-            <button class="cf-pill" data-chart="segp" data-prod="image" onclick="setChartFilter('segp','image',this)">Images</button>
-            <button class="cf-pill" data-chart="segp" data-prod="360" onclick="setChartFilter('segp','360',this)">360</button>
-            <button class="cf-pill" data-chart="segp" data-prod="video" onclick="setChartFilter('segp','video',this)">Video</button>
-          </div>
-        </div>
-        <div class="ch"><canvas id="ch-seg-trend" height="100"></canvas></div>
-      </div>
-
-      <!-- Chart 3: Top 15 Editors Cost/Unit -->
-      <div class="section" style="margin-bottom:12px">
-        <div class="sec-head">
-          <div><div class="sec-title">Top 15 Editors — ₹/Unit</div><div class="sec-sub" id="ed-chart-sub"></div></div>
-          <div class="cf-row">
-            <span class="cf-label">Sort:</span>
-            <button class="cf-pill active" data-chart="ed" data-metric="costPerUnit" onclick="setChartFilter('ed','costPerUnit',this)">₹/Unit</button>
-            <button class="cf-pill" data-chart="ed" data-metric="units" onclick="setChartFilter('ed','units',this)">Volume</button>
-            <button class="cf-pill" data-chart="ed" data-metric="efficiency" onclick="setChartFilter('ed','efficiency',this)">Efficiency</button>
-          </div>
-        </div>
-        <div class="ch"><canvas id="ch-ed-cost" height="100"></canvas></div>
-      </div>
-
-      <!-- Chart 4: Product MoM with product filter -->
-      <div class="section">
-        <div class="sec-head">
-          <div><div class="sec-title">Product Breakdown — Month on Month</div><div class="sec-sub">Units · Cost · ₹/Unit per product type</div></div>
-          <div class="cf-row">
-            <span class="cf-label">Product:</span>
-            <button class="cf-pill active" data-chart="prod" data-prod="all" onclick="setChartFilter('prod','all',this)">All</button>
-            <button class="cf-pill" data-chart="prod" data-prod="image" onclick="setChartFilter('prod','image',this)">Images</button>
-            <button class="cf-pill" data-chart="prod" data-prod="360" onclick="setChartFilter('prod','360',this)">360</button>
-            <button class="cf-pill" data-chart="prod" data-prod="video" onclick="setChartFilter('prod','video',this)">Video</button>
-            <span class="cf-label" style="margin-left:8px">Metric:</span>
-            <button class="cf-pill active" data-chart="prodm" data-metric="units" onclick="setChartFilter('prodm','units',this)">Volume</button>
-            <button class="cf-pill" data-chart="prodm" data-metric="costPerUnit" onclick="setChartFilter('prodm','costPerUnit',this)">₹/Unit</button>
-            <button class="cf-pill" data-chart="prodm" data-metric="cost" onclick="setChartFilter('prodm','cost',this)">Cost</button>
-          </div>
-        </div>
-        <div class="ch"><canvas id="ch-prod-trend" height="100"></canvas></div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- ══ 3. SEGMENTS & COSTING ══ -->
-  <div class="dash-section">
-    <div class="dash-section-header" onclick="toggleSection('s-segment')">
-      <span class="dash-section-title">🏷️ Segments &amp; Costing</span>
-      <div class="dash-section-line"></div><span class="dash-section-toggle" id="tog-s-segment">▾</span>
-    </div>
-    <div class="dash-section-body" id="s-segment">
-      <div class="g3">
-        <div class="section">
-          <div class="sec-head"><div class="sec-title">Segment Summary</div></div>
-          <div class="tbl-wrap"><table>
-            <thead><tr><th>Segment</th><th class="r" onclick="cycleSortSeg('vins')" style="cursor:pointer">VINs<span id="ss-vins" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortSeg('units')" style="cursor:pointer">Units<span id="ss-units" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortSeg('efficiency')" style="cursor:pointer">Efficiency<span id="ss-efficiency" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortSeg('costPerVin')" style="cursor:pointer">₹/VIN<span id="ss-costPerVin" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortSeg('costShare')" style="cursor:pointer">Cost %<span id="ss-costShare" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th></tr></thead>
-            <tbody id="sg-summary-tbl"></tbody>
-          </table></div>
-        </div>
-        <div class="section">
-          <div class="sec-head"><div class="sec-title">Dealer Type</div></div>
-          <div class="tbl-wrap"><table>
-            <thead><tr><th>Dealer Type</th><th class="r" onclick="cycleSortDealer('vins')" style="cursor:pointer">VINs<span id="sd-vins" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortDealer('units')" style="cursor:pointer">Units<span id="sd-units" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortDealer('efficiency')" style="cursor:pointer">Efficiency<span id="sd-efficiency" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortDealer('costPerUnit')" style="cursor:pointer">₹/Unit<span id="sd-costPerUnit" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortDealer('costPerVin')" style="cursor:pointer">₹/VIN<span id="sd-costPerVin" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th></tr></thead>
-            <tbody id="co-dealer-tbl"></tbody>
-          </table></div>
-        </div>
-        <div class="section">
-          <div class="sec-head"><div class="sec-title">Top Enterprises</div></div>
-          <div class="tbl-wrap" style="max-height:280px;overflow-y:auto"><table>
-            <thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr><th>#</th><th>Enterprise</th><th>Seg.</th><th class="r" onclick="cycleSortEnt('vins')" style="cursor:pointer">VINs<span id="se-vins" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortEnt('efficiency')" style="cursor:pointer">Eff.<span id="se-efficiency" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortEnt('costPerVin')" style="cursor:pointer">₹/VIN<span id="se-costPerVin" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th></tr></thead>
-            <tbody id="co-ent-tbl"></tbody>
-          </table></div>
-        </div>
+  <!-- All Editors -->
+  <div class="section">
+    <div class="sec-head">
+      <div class="sec-title">All Editors</div>
+      <div class="sec-actions">
+        <input type="text" class="search" id="ed-search" placeholder="Search editor…">
+        <select class="sel" id="ed-sort">
+          <option value="units">Sort: Units</option>
+          <option value="efficiency">Sort: Efficiency</option>
+          <option value="costPerUnit">Sort: ₹/Unit</option>
+        </select>
       </div>
     </div>
-  </div>
-
-  <!-- ══ 4. PRODUCTS & EDITORS ══ -->
-  <div class="dash-section">
-    <div class="dash-section-header" onclick="toggleSection('s-product')">
-      <span class="dash-section-title">📦 Products &amp; Editors</span>
-      <div class="dash-section-line"></div><span class="dash-section-toggle" id="tog-s-product">▾</span>
-    </div>
-    <div class="dash-section-body" id="s-product">
-      <!-- Product Breakdown table on top, compact -->
-      <div class="section" style="margin-bottom:12px">
-        <div class="sec-head"><div class="sec-title">Product Breakdown</div></div>
-        <div class="tbl-wrap"><table>
-          <thead><tr><th>Product</th><th class="r" onclick="cycleSortProd('units')" style="cursor:pointer">Units<span id="sp-units" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortProd('efficiency')" style="cursor:pointer">Efficiency<span id="sp-efficiency" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortProd('costPerUnit')" style="cursor:pointer">₹/Unit<span id="sp-costPerUnit" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortProd('costSharePct')" style="cursor:pointer">Cost Share<span id="sp-costSharePct" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th></tr></thead>
-          <tbody id="pr-tbl"></tbody>
-        </table></div>
-      </div>
-      <!-- Inhouse vs OS mini summary -->
-      <div class="g2" style="margin-bottom:12px" id="team-breakdown-row">
-        <div class="section" style="border-left:3px solid #22d4a0">
-          <div class="sec-head"><div><div class="sec-title" style="color:#22d4a0">🏢 Inhouse Team</div></div></div>
-          <div id="team-inhouse" style="display:flex;gap:20px;flex-wrap:wrap"></div>
-        </div>
-        <div class="section" style="border-left:3px solid #f5a42a">
-          <div class="sec-head"><div><div class="sec-title" style="color:#f5a42a">🤝 Outsource Team</div></div></div>
-          <div id="team-os" style="display:flex;gap:20px;flex-wrap:wrap"></div>
-        </div>
-      </div>
-      <!-- Charts row below -->
-      <div class="g2" style="margin-bottom:12px">
-
-
-      </div>
-      <!-- All Editors table -->
-      <div class="section">
-        <div class="sec-head">
-          <div class="sec-title">All Editors</div>
-          <div class="sec-actions">
-            <input type="text" class="search" id="ed-search" placeholder="Search editor…">
-            <select class="sel" id="ed-sort">
-              <option value="units">Sort: Units</option>
-              <option value="efficiency">Sort: Efficiency</option>
-              <option value="costPerUnit">Sort: ₹/Unit</option>
-            </select>
-          </div>
-        </div>
-        <div class="tbl-wrap" style="max-height:280px;overflow-y:auto"><table>
-          <thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr>
-            <th>#</th><th>Editor</th><th>Team</th><th class="r">Images</th><th class="r">360</th><th class="r">Video</th><th class="r">Total</th><th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r">Cost</th>
-          </tr></thead>
-          <tbody id="ed-tbl"></tbody>
-        </table></div>
-      </div>
-    </div>
+    <div class="tbl-wrap" style="max-height:300px;overflow-y:auto"><table>
+      <thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr>
+        <th>#</th><th>Editor</th><th>Team</th>
+        <th class="r">Images</th><th class="r">360</th><th class="r">Video</th>
+        <th class="r">Total Units</th><th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r">Cost</th>
+      </tr></thead>
+      <tbody id="ed-tbl"></tbody>
+    </table></div>
   </div>
 
 </div>
-
 <script>
 window.onerror=function(msg,src,line,col,err){console.error('[ERR]',msg,line);const el=document.getElementById('overlay-msg');if(el)el.textContent='JS Error: '+msg+' (line '+line+')';return false;};
 window.addEventListener('unhandledrejection',function(e){console.error('[PROMISE]',e.reason);const el=document.getElementById('overlay-msg');if(el)el.textContent='Promise error: '+(e.reason?.message||e.reason);});
@@ -754,84 +700,69 @@ function renderAll(){
   if(!DATA)return;
   const months=filteredMonths();
   if(!months.length){document.getElementById('ov-kpis').innerHTML='<div style="color:var(--muted);padding:16px">No data matches filter.</div>';return;}
-  console.log('[renderAll] months:', months.length, 'DATA keys:', DATA ? Object.keys(DATA) : 'null');
-  safeRender('overview', renderOverview, months);
-  safeRender('trend',    renderCharts,   months);
-  safeRender('segment',  renderSegments, months);
-  safeRender('product',  renderProducts, months);
-  safeRender('editor',   renderEditors,  months);
+  safeRender('kpi',     renderKPIs,     months);
+  safeRender('charts',  renderCharts,   months);
+  safeRender('tables',  renderTables,   months);
+  safeRender('editors', renderEditors,  months);
 }
 
-// ── 1. OVERVIEW ──────────────────────────────────────────────────────────────
-function renderOverview(months){
+// ── KPIs ─────────────────────────────────────────────────────────────────────
+function renderKPIs(months){
   const last=months[months.length-1],prev=months[months.length-2];
   const s=computeFilteredSummary(last),sp=prev?computeFilteredSummary(prev):null;
   function d(k){if(!sp||!sp[k])return null;return((s[k]-sp[k])/sp[k])*100;}
   const tb=last.teamBreakdown||{};
-  // Compute ₹/segment from the last month's segment breakdown
   const segMap={};
   filterBreakdown(last.segmentBreakdown,'segment').forEach(sg=>{segMap[sg.name]=sg;});
-  function segCostPerVin(names){
-    // Sum cost and vins across matching segment names, return ₹/VIN
-    let cost=0,vins=0;
-    names.forEach(n=>{const sg=Object.values(segMap).find(s=>s.name===n);if(sg){cost+=sg.costPerVin*sg.vins;vins+=sg.vins;}});
-    return vins>0?+(cost/vins).toFixed(2):0;
-  }
-  // "Other" = anything not Ent/Mid/SMB/Resellers
   const knownSegs=new Set(['Ent','Enterprise','Mid','SMB','Resellers']);
   const otherSegs=Object.keys(segMap).filter(n=>!knownSegs.has(n));
+  function segCostPerVin(names){let cost=0,vins=0;names.forEach(n=>{const sg=Object.values(segMap).find(s=>s.name===n);if(sg){cost+=sg.costPerVin*sg.vins;vins+=sg.vins;}});return vins>0?+(cost/vins).toFixed(2):0;}
   const entSeg=segMap['Ent']||segMap['Enterprise']||null;
   const midSeg=segMap['Mid']||null;
   const smbSeg=segMap['SMB']||null;
   const resSeg=segMap['Resellers']||null;
   document.getElementById('ov-kpis').innerHTML=[
-    kpi('Delivery Cost',  f.inr0(s.totalCost),     last.month,                           d('totalCost'),    '#4f78ff'),
-    kpi('Inhouse Cost',   f.inr0(s.inhouseCost),   (tb.inhouse?.employees||0)+' people', null,              '#22d4a0'),
-    kpi('OS Cost',        f.inr0(s.osCost),         (tb.os?.employees||0)+' contractors', null,              '#f5a42a'),
-    kpi('₹ / Ent',        f.inr(entSeg?.costPerVin||0),   'Enterprise · per VIN', null, '#4f78ff'),
-    kpi('₹ / Mid',        f.inr(midSeg?.costPerVin||0),   'Mid · per VIN',        null, '#a07cff'),
-    kpi('₹ / SMB',        f.inr(smbSeg?.costPerVin||0),   'SMB · per VIN',        null, '#22d4a0'),
-    kpi('₹ / Resellers',  f.inr(resSeg?.costPerVin||0),   'Resellers · per VIN',  null, '#f5a42a'),
-    kpi('₹ / Other',      f.inr(segCostPerVin(otherSegs)), 'Other segments',       null, '#38c4f0'),
+    kpi('Delivery Cost', f.inr0(s.totalCost),    last.month,                           d('totalCost'), '#4f78ff'),
+    kpi('Inhouse Cost',  f.inr0(s.inhouseCost),  (tb.inhouse?.employees||0)+' people', null,           '#22d4a0'),
+    kpi('OS Cost',       f.inr0(s.osCost),        (tb.os?.employees||0)+' contractors', null,           '#f5a42a'),
+    kpi('₹ / Ent',       f.inr(entSeg?.costPerVin||0),    'Enterprise · per VIN', null,'#4f78ff'),
+    kpi('₹ / Mid',       f.inr(midSeg?.costPerVin||0),    'Mid · per VIN',        null,'#a07cff'),
+    kpi('₹ / SMB',       f.inr(smbSeg?.costPerVin||0),    'SMB · per VIN',        null,'#22d4a0'),
+    kpi('₹ / Resellers', f.inr(resSeg?.costPerVin||0),    'Resellers · per VIN',  null,'#f5a42a'),
+    kpi('₹ / Other',     f.inr(segCostPerVin(otherSegs)), 'Other · per VIN',      null,'#38c4f0'),
   ].join('');
-  const ms=months.map(m=>computeFilteredSummary(m)),labels=months.map(m=>m.month.replace('-26',''));
-  mk('ch-cost',{type:'line',_lf:v=>v?'₹'+f.short(v):'',data:{labels,datasets:[{label:'Salary Cost',data:ms.map(s=>s.totalCost),borderColor:'#4f78ff',borderWidth:2,backgroundColor:'rgba(79,120,255,.1)',fill:true,tension:.35,pointBackgroundColor:'#4f78ff',pointRadius:4,pointHoverRadius:6}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' ₹'+f.num(ctx.raw)}}},scales:{y:{ticks:{callback:v=>'₹'+f.short(v)}}}}});
-  _snapData=months.map((m,i)=>({month:m.month,...ms[i]}));renderSnapTable();
 }
 
 // ── CHART FILTER STATE ───────────────────────────────────────────────────────
-// chart filter state: maps chartKey → active value
 const CF={cost:'all',seg:'cost',segp:'all',ed:'costPerUnit',prod:'all',prodm:'units'};
+
 function setChartFilter(chartKey,value,btn){
-  // If parent filter (global) is active for this dimension, child filter still sets state
-  // but render will re-evaluate after setting
   CF[chartKey]=value;
-  // Update pill active state for this chart group
-  document.querySelectorAll('.cf-pill[data-chart="'+chartKey+'"]').forEach(b=>b.classList.remove('active','active-green','active-amber','active-purple'));
+  document.querySelectorAll('.cf-pill[data-chart="'+chartKey+'"]').forEach(b=>{
+    b.classList.remove('active','active-green','active-amber','active-purple');
+  });
   if(btn){
-    const colorMap={all:'active',image:'active',cost:'active',units:'active-green',costPerVin:'active-amber',efficiency:'active-amber',costPerUnit:'active-amber',video:'active-amber','360':'active-green'};
-    btn.classList.add(colorMap[value]||'active');
+    const cm={all:'active',image:'active',cost:'active',units:'active-green',
+      costPerVin:'active-amber',efficiency:'active-amber',costPerUnit:'active-amber',
+      video:'active-amber','360':'active-green'};
+    btn.classList.add(cm[value]||'active');
   }
-  // Re-render all charts (child filter changed → re-render charts section)
   if(!DATA)return;
   const months=filteredMonths();
-  if(!months.length)return;
-  renderCharts(months);
+  if(months.length)renderCharts(months);
 }
 
-// Helper: get product-filtered data for a month given a prod key ('all'|'image'|'360'|'video')
-function prodFilteredSummary(m, prodKey){
+// Get filtered summary for a specific product key
+function prodFilteredSummary(m,prodKey){
   if(prodKey==='all')return computeFilteredSummary(m);
-  // Temporarily override product filter for this computation
-  const prev=[...FILTERS.product.selected];
-  const prevAll=FILTERS.product.all;
-  // Find matching product names
   const matchNames=m.productBreakdown.map(p=>p.name).filter(n=>{
     if(prodKey==='image')return /image/i.test(n);
     if(prodKey==='360')return /360|spin/i.test(n);
     if(prodKey==='video')return /video/i.test(n);
     return true;
   });
+  const prev=[...FILTERS.product.selected];
+  const prevAll=FILTERS.product.all;
   FILTERS.product.selected=new Set(matchNames);
   FILTERS.product.all=matchNames.length?matchNames:prevAll;
   const result=computeFilteredSummary(m);
@@ -840,63 +771,154 @@ function prodFilteredSummary(m, prodKey){
   return result;
 }
 
-function segProdData(m, prodKey){
-  // Returns segment breakdown filtered to a specific product type
+function segProdData(m,prodKey){
   const segs=filterBreakdown(m.segmentBreakdown,'segment');
   if(prodKey==='all')return segs;
   return segs.map(sg=>{
-    const pd=Object.entries(sg.byProduct||{}).find(([k])=>{
+    const entry=Object.entries(sg.byProduct||{}).find(([k])=>{
       if(prodKey==='image')return /image/i.test(k);
       if(prodKey==='360')return /360|spin/i.test(k);
       if(prodKey==='video')return /video/i.test(k);
       return false;
     });
-    if(!pd)return null;
-    return{...sg,units:pd[1].units||0,vins:pd[1].vins||0,actualMins:pd[1].actualMins||0,
-      costPerVin:pd[1].costPerUnit||0};
-  }).filter(Boolean).filter(s=>s.units>0||s.vins>0);
+    if(!entry)return null;
+    const pd=entry[1];
+    return{...sg,units:pd.units||0,vins:pd.vins||0,actualMins:pd.actualMins||0,
+      costPerVin:pd.costPerUnit||0};
+  }).filter(Boolean).filter(s=>(s.units||0)+(s.vins||0)>0);
 }
 
-// ── 2+3. ALL CHARTS ──────────────────────────────────────────────────────────
 function renderCharts(months){
   const labels=months.map(m=>m.month.replace('-26',''));
 
-  // ── CHART 1: Cost Trend MoM (tri-metric: Overall Cost + Volume + ₹/Unit) ──
-  const cp=CF.cost; // product filter for cost chart
+  // ── CHART 1: Cost Trend MoM — bars for Cost + Volume, line for ₹/Unit ──
+  const cp=CF.cost;
   const cms=months.map(m=>prodFilteredSummary(m,cp));
-  mk('ch-cost-trend',{type:'bar',data:{labels,datasets:[
-    {label:'Overall Cost',data:cms.map(s=>s.totalCost),backgroundColor:'rgba(79,120,255,.7)',borderRadius:3,yAxisID:'y',order:2},
-    {label:'Volume (units)',data:cms.map(s=>s.totalUnits),backgroundColor:'rgba(34,212,160,.5)',borderRadius:3,yAxisID:'y1',order:3},
-    {label:'₹/Unit',data:cms.map(s=>s.costPerUnit),type:'line',borderColor:'#f5a42a',borderWidth:2.5,tension:.3,pointBackgroundColor:'#f5a42a',pointRadius:5,yAxisID:'y2',order:1,fill:false},
-  ]},options:{plugins:{legend:{labels:{color:'#6a82a8',font:{size:10},boxWidth:9}},tooltip:{callbacks:{label:ctx=>{if(ctx.dataset.label==='₹/Unit')return' ₹'+Number(ctx.raw).toFixed(2);if(ctx.dataset.label==='Overall Cost')return' ₹'+f.short(ctx.raw);return' '+f.short(ctx.raw)+' units';}}}},scales:{y:{type:'linear',position:'left',ticks:{color:'#3a4e70',font:{size:10},callback:v=>'₹'+f.short(v)},grid:{color:'rgba(26,37,64,.5)'}},y1:{type:'linear',position:'right',ticks:{color:'#3a4e70',font:{size:10},callback:v=>f.short(v)},grid:{display:false}},y2:{type:'linear',position:'right',ticks:{color:'#f5a42a',font:{size:10},callback:v=>'₹'+v},grid:{display:false},display:false}}}});
+  mk('ch-cost-trend',{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Overall Cost',data:cms.map(s=>s.totalCost),
+       backgroundColor:'rgba(79,120,255,.75)',borderRadius:3,yAxisID:'y',order:2,
+       datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,color:'#dce8f8',
+         font:{size:9,weight:'500'},anchor:'end',align:'top',offset:2,
+         formatter:v=>'₹'+f.short(v)}},
+      {label:'Volume',data:cms.map(s=>s.totalUnits),
+       backgroundColor:'rgba(34,212,160,.55)',borderRadius:3,yAxisID:'y1',order:3,
+       datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,color:'#22d4a0',
+         font:{size:9,weight:'500'},anchor:'end',align:'top',offset:2,
+         formatter:v=>f.short(v)}},
+      {label:'₹/Unit',data:cms.map(s=>s.costPerUnit),
+       type:'line',borderColor:'#f5a42a',borderWidth:2.5,tension:.3,
+       pointBackgroundColor:'#f5a42a',pointRadius:5,yAxisID:'y2',order:1,fill:false,
+       datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,color:'#f5a42a',
+         font:{size:9,weight:'600'},anchor:'center',align:'top',offset:8,
+         formatter:v=>'₹'+Number(v).toFixed(2)}},
+    ]},
+    options:{
+      plugins:{
+        legend:{labels:{color:'#6a82a8',font:{size:10},boxWidth:9}},
+        tooltip:{callbacks:{label:ctx=>{
+          if(ctx.dataset.label==='₹/Unit')return' ₹'+Number(ctx.raw).toFixed(2);
+          if(ctx.dataset.label==='Overall Cost')return' ₹'+f.short(ctx.raw);
+          return' '+f.short(ctx.raw)+' units';
+        }}}
+      },
+      scales:{
+        y:{type:'linear',position:'left',ticks:{color:'#3a4e70',font:{size:10},callback:v=>'₹'+f.short(v)},grid:{color:'rgba(26,37,64,.5)'}},
+        y1:{type:'linear',position:'right',ticks:{color:'#22d4a0',font:{size:10},callback:v=>f.short(v)},grid:{display:false}},
+        y2:{type:'linear',position:'right',display:false},
+      }
+    }
+  });
 
-  // ── CHART 2: Segment MoM ──
-  const sm=CF.seg,sp=CF.segp;
+  // ── CHART 2: Segment MoM — stacked bars with total label on top ──
+  const sm=CF.seg, sp=CF.segp;
   const allSegNames=[...new Set(months.flatMap(m=>segProdData(m,sp).map(s=>s.name)))];
   const segColors=allSegNames.map(n=>sc(n));
-  const segMetricFn=(s,metric)=>{
-    if(metric==='cost'){const totalMins=s.actualMins||1,totalCost=s.costPerVin*(s.vins||0);return Math.round(totalCost)||Math.round(s.costPerUnit*(s.units||0));}
+  function segVal(s,metric){
+    if(metric==='cost')return Math.round((s.costPerVin||0)*(s.vins||0))||Math.round((s.costPerUnit||0)*(s.units||0));
     if(metric==='units')return s.units||0;
     if(metric==='costPerVin')return s.costPerVin||0;
     return 0;
-  };
-  const metricLabel={cost:'Cost (₹)',units:'Volume',costPerVin:'₹/VIN'};
-  const metricFmt={cost:v=>'₹'+f.short(v),units:v=>f.short(v)+' units',costPerVin:v=>'₹'+Number(v).toFixed(2)};
-  mk('ch-seg-trend',{type:'bar',data:{labels,datasets:allSegNames.map((sn,i)=>({label:sn,data:months.map(m=>{const sd=segProdData(m,sp).find(x=>x.name===sn);return sd?segMetricFn(sd,sm):0;}),backgroundColor:segColors[i],borderRadius:3,stack:'a'}))},options:{plugins:{legend:{labels:{color:'#6a82a8',font:{size:10},boxWidth:9}},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+metricFmt[sm](ctx.raw)}}},scales:{x:{stacked:true},y:{stacked:true,ticks:{color:'#3a4e70',font:{size:10},callback:sm==='cost'?v=>'₹'+f.short(v):sm==='costPerVin'?v=>'₹'+v:v=>f.short(v)},grid:{color:'rgba(26,37,64,.5)'}}}}});
+  }
+  const smFmt=sm==='cost'?v=>'₹'+f.short(v):sm==='costPerVin'?v=>'₹'+Number(v).toFixed(2):v=>f.short(v);
+  const segDS=allSegNames.map(function(sn,i){
+    const isLast=(i===allSegNames.length-1);
+    return{
+      label:sn,
+      data:months.map(function(m){
+        const sd=segProdData(m,sp).find(function(x){return x.name===sn;});
+        return sd?segVal(sd,sm):0;
+      }),
+      backgroundColor:segColors[i],
+      borderRadius:3,
+      stack:'a',
+      datalabels:isLast?{
+        display:function(ctx){
+          var t=0;ctx.chart.data.datasets.forEach(function(d){t+=(+d.data[ctx.dataIndex]||0);});return t>0;
+        },
+        color:'#dce8f8',font:{size:9,weight:'500'},anchor:'end',align:'top',offset:2,
+        formatter:function(v,ctx){
+          var t=0;ctx.chart.data.datasets.forEach(function(d){t+=(+d.data[ctx.dataIndex]||0);});
+          return t>0?smFmt(t):'';
+        }
+      }:{display:false}
+    };
+  });
+  mk('ch-seg-trend',{
+    type:'bar',
+    data:{labels,datasets:segDS},
+    options:{
+      plugins:{
+        legend:{labels:{color:'#6a82a8',font:{size:10},boxWidth:9}},
+        tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+smFmt(ctx.raw)}}
+      },
+      scales:{
+        x:{stacked:true,ticks:{color:'#3a4e70',font:{size:10}},grid:{color:'rgba(26,37,64,.5)'}},
+        y:{stacked:true,ticks:{color:'#3a4e70',font:{size:10},callback:smFmt},grid:{color:'rgba(26,37,64,.5)'}}
+      }
+    }
+  });
 
-  // ── CHART 3: Top 15 Editors ₹/Unit (horizontal bar) ──
+  // ── CHART 3: Top 15 Editors ──
   const em=CF.ed;
-  const m=months[months.length-1];
-  const edFilt=filterBreakdown(m.editorBreakdown,'editor');
-  const edMetricFn=(e,met)=>{if(met==='costPerUnit')return e.costPerUnit||0;if(met==='units')return e.units||0;if(met==='efficiency')return e.efficiency||0;return 0;};
-  const edFmtFn=(v,met)=>{if(met==='costPerUnit')return'₹'+Number(v).toFixed(2);if(met==='efficiency')return v.toFixed(2)+'%';return f.short(v)+' units';};
-  const top15=[...edFilt].sort((a,b)=>edMetricFn(b,em)-edMetricFn(a,em)).slice(0,15);
+  const lastM=months[months.length-1];
+  const edFilt=filterBreakdown(lastM.editorBreakdown,'editor');
+  function edVal(e,met){if(met==='costPerUnit')return e.costPerUnit||0;if(met==='units')return e.units||0;if(met==='efficiency')return e.efficiency||0;return 0;}
+  function edFmt(v,met){if(met==='costPerUnit')return'₹'+Number(v).toFixed(2);if(met==='efficiency')return v.toFixed(2)+'%';return f.short(v);}
+  const top15=[...edFilt].sort((a,b)=>edVal(b,em)-edVal(a,em)).slice(0,15);
   const edColors=top15.map(e=>/payroll/i.test(e.teamType)?'#22d4a0':'#f5a42a');
-  document.getElementById('ed-chart-sub').textContent=m.month+' · Green=Inhouse · Amber=OS';
-  mk('ch-ed-cost',{type:'bar',_lf:em==='costPerUnit'?v=>v?'₹'+Number(v).toFixed(2):'':em==='efficiency'?v=>v?v.toFixed(2)+'%':'':v=>v>0?f.short(v):'',data:{labels:top15.map(e=>f.email(e.email)),datasets:[{label:em==='costPerUnit'?'₹/Unit':em==='efficiency'?'Efficiency %':'Units',data:top15.map(e=>edMetricFn(e,em)),backgroundColor:edColors,borderRadius:[0,3,3,0]}]},options:{indexAxis:'y',layout:{padding:{right:60}},plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>edFmtFn(ctx.raw,em)}}},scales:{x:{ticks:{color:'#3a4e70',font:{size:10},callback:v=>em==='costPerUnit'?'₹'+v:em==='efficiency'?v+'%':f.short(v)},grid:{color:'rgba(26,37,64,.5)'}},y:{ticks:{color:'#3a4e70',font:{size:10}},grid:{display:false}}}}});
+  document.getElementById('ed-chart-sub').textContent=lastM.month+' · 🟢 Inhouse  🟡 OS';
+  mk('ch-ed-cost',{
+    type:'bar',
+    data:{
+      labels:top15.map(e=>f.email(e.email)),
+      datasets:[{
+        label:em==='costPerUnit'?'₹/Unit':em==='efficiency'?'Efficiency':'Units',
+        data:top15.map(e=>edVal(e,em)),
+        backgroundColor:edColors,
+        borderRadius:[0,3,3,0],
+        datalabels:{
+          display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,
+          color:'#dce8f8',font:{size:9,weight:'500'},
+          anchor:'end',align:'right',offset:4,
+          formatter:v=>edFmt(v,em)
+        }
+      }]
+    },
+    options:{
+      indexAxis:'y',
+      layout:{padding:{right:65}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>edFmt(ctx.raw,em)}}},
+      scales:{
+        x:{ticks:{color:'#3a4e70',font:{size:10},callback:v=>em==='costPerUnit'?'₹'+v:em==='efficiency'?v+'%':f.short(v)},grid:{color:'rgba(26,37,64,.5)'}},
+        y:{ticks:{color:'#3a4e70',font:{size:10}},grid:{display:false}}
+      }
+    }
+  });
 
   // ── CHART 4: Product MoM ──
-  const pp=CF.prod,pm=CF.prodm;
+  const pp=CF.prod, pm=CF.prodm;
   const allProdNames=[...new Set(months.flatMap(m=>m.productBreakdown.map(p=>p.name)))].filter(n=>{
     if(pp==='all')return true;
     if(pp==='image')return /image/i.test(n);
@@ -904,45 +926,66 @@ function renderCharts(months){
     if(pp==='video')return /video/i.test(n);
     return true;
   });
-  const prodMetricFn=(prod,met)=>{if(met==='units')return prod?.units||0;if(met==='costPerUnit')return prod?.costPerUnit||0;if(met==='cost'){const totalMins=prod?.actualMins||1;return Math.round((prod?.costSharePct||0)/100*(months[months.length-1].summary.totalCost||0));}return 0;};
-  const prodFmtLabel={units:'Volume',costPerUnit:'₹/Unit',cost:'Cost'};
-  mk('ch-prod-trend',{type:'bar',data:{labels,datasets:allProdNames.map((pn,i)=>({label:pn,data:months.map(m=>{const prod=getFilteredProducts(m).find(x=>x.name===pn);return prod?prodMetricFn(prod,pm):0;}),backgroundColor:pc(pn,i),borderRadius:3,stack:pm!=='costPerUnit'?'a':undefined}))},options:{plugins:{legend:{labels:{color:'#6a82a8',font:{size:10},boxWidth:9}},tooltip:{callbacks:{label:ctx=>{const v=ctx.raw;return ctx.dataset.label+': '+(pm==='costPerUnit'?'₹'+Number(v).toFixed(2):pm==='cost'?'₹'+f.short(v):f.short(v)+' units');}}}},scales:{x:{stacked:pm!=='costPerUnit'},y:{stacked:pm!=='costPerUnit',ticks:{color:'#3a4e70',font:{size:10},callback:pm==='costPerUnit'?v=>'₹'+v:pm==='cost'?v=>'₹'+f.short(v):v=>f.short(v)},grid:{color:'rgba(26,37,64,.5)'}}}}});
+  function prodVal(prod,met){
+    if(met==='units')return prod?prod.units||0:0;
+    if(met==='costPerUnit')return prod?prod.costPerUnit||0:0;
+    if(met==='cost')return prod?Math.round((prod.costSharePct||0)/100*(months[months.length-1].summary.totalCost||0)):0;
+    return 0;
+  }
+  const pmFmt=pm==='cost'?v=>'₹'+f.short(v):pm==='costPerUnit'?v=>'₹'+Number(v).toFixed(2):v=>f.short(v);
+  const isStacked=pm!=='costPerUnit';
+  const prodDS=allProdNames.map(function(pn,i){
+    const isLast=(i===allProdNames.length-1);
+    return{
+      label:pn,
+      data:months.map(function(m){
+        const prod=getFilteredProducts(m).find(function(x){return x.name===pn;});
+        return prodVal(prod,pm);
+      }),
+      backgroundColor:pc(pn,i),
+      borderRadius:3,
+      stack:isStacked?'a':undefined,
+      datalabels:function(){
+        if(isStacked&&isLast)return{
+          display:function(ctx){var t=0;ctx.chart.data.datasets.forEach(function(d){t+=(+d.data[ctx.dataIndex]||0);});return t>0;},
+          color:'#dce8f8',font:{size:9,weight:'500'},anchor:'end',align:'top',offset:2,
+          formatter:function(v,ctx){var t=0;ctx.chart.data.datasets.forEach(function(d){t+=(+d.data[ctx.dataIndex]||0);});return t>0?pmFmt(t):'';}
+        };
+        if(!isStacked)return{
+          display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},
+          color:'#dce8f8',font:{size:9,weight:'500'},anchor:'end',align:'top',offset:2,
+          formatter:function(v){return pmFmt(v);}
+        };
+        return{display:false};
+      }()
+    };
+  });
+  mk('ch-prod-trend',{
+    type:'bar',
+    data:{labels,datasets:prodDS},
+    options:{
+      plugins:{
+        legend:{labels:{color:'#6a82a8',font:{size:10},boxWidth:9}},
+        tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+pmFmt(ctx.raw)}}
+      },
+      scales:{
+        x:{stacked:isStacked,ticks:{color:'#3a4e70',font:{size:10}},grid:{color:'rgba(26,37,64,.5)'}},
+        y:{stacked:isStacked,ticks:{color:'#3a4e70',font:{size:10},callback:pmFmt},grid:{color:'rgba(26,37,64,.5)'}}
+      }
+    }
+  });
 }
 
-// ── 3. SEGMENTS TABLES ────────────────────────────────────────────────────────
-function renderSegments(months){
+// ── TABLES ───────────────────────────────────────────────────────────────────
+function renderTables(months){
   const m=months[months.length-1];
-  const segs=filterBreakdown(m.segmentBreakdown,'segment');
-  _segData=segs;renderSegTable();
+  _segData=filterBreakdown(m.segmentBreakdown,'segment');renderSegTable();
   _dealerData=m.dealerBreakdown;renderDealerTable();
   _entData=m.enterpriseBreakdown;renderEntTable();
 }
 
 // ── 4. PRODUCTS ──────────────────────────────────────────────────────────────
-function renderProducts(months){
-  const m=months[months.length-1];
-  // Inhouse vs OS team breakdown
-  const tb=m.teamBreakdown||{};
-  function teamStat(label,value){return'<div style="text-align:center"><div style="font-size:18px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums">'+value+'</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:3px">'+label+'</div></div>';}
-  const ih=tb.inhouse||{},os=tb.os||{};
-  document.getElementById('team-inhouse').innerHTML=
-    teamStat('Cost',f.inr0(ih.cost||0))+
-    teamStat('Employees',ih.employees||0)+
-    teamStat('Units',f.short(ih.units||0))+
-    teamStat('₹/Unit',f.inr(ih.costPerUnit||0))+
-    teamStat('Minutes',f.mins(ih.actualMins||0));
-  document.getElementById('team-os').innerHTML=
-    teamStat('Cost',f.inr0(os.cost||0))+
-    teamStat('Contractors',os.employees||0)+
-    teamStat('Units',f.short(os.units||0))+
-    teamStat('₹/Unit',f.inr(os.costPerUnit||0))+
-    teamStat('Minutes',f.mins(os.actualMins||0));
-  const prods=getFilteredProducts(m);
-  const colors=prods.map((p,i)=>pc(p.name,i));
-  document.getElementById('pr-vol-sub').textContent=m.month;
-  mk('ch-pr-cpu',{type:'bar',_lf:v=>v?f.inr(v):'',data:{labels:prods.map(p=>p.name),datasets:[{label:'₹/Unit',data:prods.map(p=>p.costPerUnit),backgroundColor:colors,borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'₹'+v}}}}});
-  _prodData=prods;renderProdTable();
-}
+
 
 // ── 5. EDITORS ───────────────────────────────────────────────────────────────
 let edData=[];
