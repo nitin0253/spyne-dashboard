@@ -247,7 +247,7 @@ select.sel:focus{border-color:var(--blue)}
         <div class="section">
           <div class="sec-head"><div class="sec-title">Month Snapshot</div></div>
           <div class="tbl-wrap"><table>
-            <thead><tr><th>Month</th><th class="r">Cost</th><th class="r">Images</th><th class="r">360 SKUs</th><th class="r">Video SKUs</th><th class="r">VINs</th><th class="r">Efficiency</th><th class="r">₹/VIN</th><th class="r">₹/Unit</th></tr></thead>
+            <thead id="snap-head"><tr><th>Month</th><th class="r" onclick="cycleSortSnap('totalCost')" style="cursor:pointer">Cost<span id="sa-totalCost" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortSnap('totalImages')" style="cursor:pointer">Images<span id="sa-totalImages" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortSnap('total360Skus')" style="cursor:pointer">360 SKUs<span id="sa-total360Skus" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortSnap('totalVideoSkus')" style="cursor:pointer">Video SKUs<span id="sa-totalVideoSkus" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortSnap('totalVins')" style="cursor:pointer">VINs<span id="sa-totalVins" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortSnap('efficiency')" style="cursor:pointer">Efficiency<span id="sa-efficiency" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortSnap('costPerVin')" style="cursor:pointer">₹/VIN<span id="sa-costPerVin" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortSnap('costPerUnit')" style="cursor:pointer">₹/Unit<span id="sa-costPerUnit" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th></tr></thead>
             <tbody id="ov-tbody"></tbody>
           </table></div>
         </div>
@@ -304,21 +304,21 @@ select.sel:focus{border-color:var(--blue)}
         <div class="section">
           <div class="sec-head"><div class="sec-title">Segment Summary</div></div>
           <div class="tbl-wrap"><table>
-            <thead><tr><th>Segment</th><th class="r">VINs</th><th class="r">Units</th><th class="r">Efficiency</th><th class="r">₹/VIN</th><th class="r">Cost %</th></tr></thead>
+            <thead><tr><th>Segment</th><th class="r" onclick="cycleSortSeg('vins')" style="cursor:pointer">VINs<span id="ss-vins" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortSeg('units')" style="cursor:pointer">Units<span id="ss-units" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortSeg('efficiency')" style="cursor:pointer">Efficiency<span id="ss-efficiency" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortSeg('costPerVin')" style="cursor:pointer">₹/VIN<span id="ss-costPerVin" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortSeg('costShare')" style="cursor:pointer">Cost %<span id="ss-costShare" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th></tr></thead>
             <tbody id="sg-summary-tbl"></tbody>
           </table></div>
         </div>
         <div class="section">
           <div class="sec-head"><div class="sec-title">Dealer Type</div></div>
           <div class="tbl-wrap"><table>
-            <thead><tr><th>Dealer Type</th><th class="r">VINs</th><th class="r">Units</th><th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r">₹/VIN</th></tr></thead>
+            <thead><tr><th>Dealer Type</th><th class="r" onclick="cycleSortDealer('vins')" style="cursor:pointer">VINs<span id="sd-vins" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortDealer('units')" style="cursor:pointer">Units<span id="sd-units" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortDealer('efficiency')" style="cursor:pointer">Efficiency<span id="sd-efficiency" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortDealer('costPerUnit')" style="cursor:pointer">₹/Unit<span id="sd-costPerUnit" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortDealer('costPerVin')" style="cursor:pointer">₹/VIN<span id="sd-costPerVin" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th></tr></thead>
             <tbody id="co-dealer-tbl"></tbody>
           </table></div>
         </div>
         <div class="section">
           <div class="sec-head"><div class="sec-title">Top Enterprises</div></div>
           <div class="tbl-wrap" style="max-height:280px;overflow-y:auto"><table>
-            <thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr><th>#</th><th>Enterprise</th><th>Seg.</th><th class="r">VINs</th><th class="r">Eff.</th><th class="r">₹/VIN</th></tr></thead>
+            <thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr><th>#</th><th>Enterprise</th><th>Seg.</th><th class="r" onclick="cycleSortEnt('vins')" style="cursor:pointer">VINs<span id="se-vins" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortEnt('efficiency')" style="cursor:pointer">Eff.<span id="se-efficiency" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortEnt('costPerVin')" style="cursor:pointer">₹/VIN<span id="se-costPerVin" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th></tr></thead>
             <tbody id="co-ent-tbl"></tbody>
           </table></div>
         </div>
@@ -337,7 +337,7 @@ select.sel:focus{border-color:var(--blue)}
       <div class="section" style="margin-bottom:12px">
         <div class="sec-head"><div class="sec-title">Product Breakdown</div></div>
         <div class="tbl-wrap"><table>
-          <thead><tr><th>Product</th><th class="r">Units</th><th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r">Cost Share</th></tr></thead>
+          <thead><tr><th>Product</th><th class="r" onclick="cycleSortProd('units')" style="cursor:pointer">Units<span id="sp-units" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortProd('efficiency')" style="cursor:pointer">Efficiency<span id="sp-efficiency" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortProd('costPerUnit')" style="cursor:pointer">₹/Unit<span id="sp-costPerUnit" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th><th class="r" onclick="cycleSortProd('costSharePct')" style="cursor:pointer">Cost Share<span id="sp-costSharePct" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th></tr></thead>
           <tbody id="pr-tbl"></tbody>
         </table></div>
       </div>
@@ -583,6 +583,64 @@ function initFilters(){
 }
 
 // ── FETCH ────────────────────────────────────────────────────────────────────
+// ── TABLE SORT FUNCTIONS ──────────────────────────────────────────────────────
+// Generic sort: tracks col+dir, updates arrow spans, re-calls provided renderFn
+const _sortStates={};
+function mkSorter(prefix,keys,renderFn){
+  return function cycleSort(col){
+    const st=_sortStates[prefix]||{col:null,dir:1};
+    const dir=st.col===col?-st.dir:1;
+    _sortStates[prefix]={col,dir};
+    keys.forEach(k=>{const el=document.getElementById(prefix+'-'+k);if(el)el.textContent='';});
+    const el=document.getElementById(prefix+'-'+col);if(el)el.textContent=dir===1?' ▲':' ▼';
+    renderFn(col,dir);
+  };
+}
+function applySortArr(arr,col,dir){
+  if(!col||!arr)return arr;
+  return[...arr].sort((a,b)=>{const av=a[col]??0,bv=b[col]??0;return typeof av==='number'?((av-bv)*dir):String(av).localeCompare(String(bv))*dir;});
+}
+
+// Snapshot sort
+let _snapData=[];let _snapSort={col:null,dir:1};
+window.cycleSortSnap=mkSorter('sa',['totalCost','totalImages','total360Skus','totalVideoSkus','totalVins','efficiency','costPerVin','costPerUnit'],function(col,dir){_snapSort={col,dir};renderSnapTable();});
+function renderSnapTable(){
+  const rows=applySortArr(_snapData,_snapSort.col,_snapSort.dir);
+  document.getElementById('ov-tbody').innerHTML=rows.map(r=>'<tr><td class="bright">'+r.month+'</td><td class="r">'+f.inr0(r.totalCost)+'</td><td class="r">'+f.num(r.totalImages)+'</td><td class="r">'+f.num(r.total360Skus)+'</td><td class="r">'+f.num(r.totalVideoSkus)+'</td><td class="r" style="color:var(--purple)">'+f.num(r.totalVins)+'</td><td class="r"><span class="'+effCls(r.efficiency)+'">'+f.pct(r.efficiency)+'</span></td><td class="r" style="color:var(--amber)">'+f.inr(r.costPerVin)+'</td><td class="r">'+f.inr(r.costPerUnit)+'</td></tr>').join('');
+}
+
+// Segment sort
+let _segData=[];let _segSort={col:null,dir:-1};
+window.cycleSortSeg=mkSorter('ss',['vins','units','efficiency','costPerVin','costShare'],function(col,dir){_segSort={col,dir};renderSegTable();});
+function renderSegTable(){
+  const rows=applySortArr(_segData,_segSort.col,_segSort.dir);
+  document.getElementById('sg-summary-tbl').innerHTML=rows.map(s=>'<tr><td class="bright"><span class="seg" style="background:'+sc(s.name)+'22;color:'+sc(s.name)+'">'+s.name+'</span></td><td class="r" style="color:var(--purple)">'+f.num(s.vins)+'</td><td class="r">'+f.num(s.units)+'</td><td class="r"><span class="'+effCls(s.efficiency)+'">'+f.pct(s.efficiency)+'</span></td><td class="r" style="color:var(--amber)">'+f.inr(s.costPerVin)+'</td><td class="r">'+f.pct(s.costShare)+'</td></tr>').join('');
+}
+
+// Dealer sort
+let _dealerData=[];let _dealerSort={col:null,dir:-1};
+window.cycleSortDealer=mkSorter('sd',['vins','units','efficiency','costPerUnit','costPerVin'],function(col,dir){_dealerSort={col,dir};renderDealerTable();});
+function renderDealerTable(){
+  const rows=applySortArr(_dealerData,_dealerSort.col,_dealerSort.dir);
+  document.getElementById('co-dealer-tbl').innerHTML=rows.map(d=>'<tr><td class="bright">'+d.name+'</td><td class="r">'+f.num(d.vins)+'</td><td class="r">'+f.num(d.units)+'</td><td class="r"><span class="'+effCls(d.efficiency)+'">'+f.pct(d.efficiency)+'</span></td><td class="r">'+f.inr(d.costPerUnit)+'</td><td class="r">'+f.inr(d.costPerVin)+'</td></tr>').join('');
+}
+
+// Enterprise sort
+let _entData=[];let _entSort={col:'units',dir:-1};
+window.cycleSortEnt=mkSorter('se',['vins','efficiency','costPerVin'],function(col,dir){_entSort={col,dir};renderEntTable();});
+function renderEntTable(){
+  const rows=applySortArr(_entData,_entSort.col,_entSort.dir);
+  document.getElementById('co-ent-tbl').innerHTML=rows.map((e,i)=>'<tr><td class="rank-num">'+(i+1)+'</td><td class="bright" style="max-width:160px;overflow:hidden;text-overflow:ellipsis">'+e.name+'</td><td><span class="seg" style="background:'+sc(e.segment)+'22;color:'+sc(e.segment)+';font-size:9px">'+e.segment+'</span></td><td class="r">'+f.num(e.vins)+'</td><td class="r"><span class="'+effCls(e.efficiency)+'">'+f.pct(e.efficiency)+'</span></td><td class="r">'+f.inr(e.costPerVin)+'</td></tr>').join('');
+}
+
+// Product sort
+let _prodData=[];let _prodSort={col:null,dir:-1};
+window.cycleSortProd=mkSorter('sp',['units','efficiency','costPerUnit','costSharePct'],function(col,dir){_prodSort={col,dir};renderProdTable();});
+function renderProdTable(){
+  const rows=applySortArr(_prodData,_prodSort.col,_prodSort.dir);
+  document.getElementById('pr-tbl').innerHTML=rows.map(p=>{const bar=Math.round((p.costSharePct||0)*1.4);return'<tr><td class="bright">'+prodTag(p.name)+'</td><td class="r">'+f.num(p.units)+'</td><td class="r"><span class="'+effCls(p.efficiency)+'">'+f.pct(p.efficiency)+'</span></td><td class="r" style="color:var(--text);font-weight:600">'+f.inr(p.costPerUnit)+'</td><td class="r">'+f.pct(p.costSharePct)+'<span class="mini-bar" style="width:'+bar+'px"></span></td></tr>';}).join('');
+}
+
 function setMsg(msg){const el=document.getElementById('overlay-msg');if(el)el.textContent=msg;console.log('[dash]',msg);}
 async function fetchData(){
   overlayShow('Connecting to Google Sheets…');
@@ -618,6 +676,24 @@ function kpi(label,value,sub,delta,color){
   return'<div class="kpi"><div class="kpi-accent" style="background:'+(color||'var(--blue)')+'"></div><div class="kpi-label">'+label+'</div><div class="kpi-value">'+value+'</div>'+(sub?'<div class="kpi-sub">'+sub+'</div>':'')+dHtml+'</div>';
 }
 
+// ── SORTABLE TABLES ─────────────────────────────────────────────────────────
+// sortState: { tableId: { col: 'key', dir: 1|-1 } }
+const sortState={};
+function sortTable(tableId,col,accessor){
+  const st=sortState[tableId]||{col:null,dir:1};
+  const dir=(st.col===col)?-st.dir:1;
+  sortState[tableId]={col,dir};
+  // Re-render by triggering the stored render function
+  if(TABLE_RENDERS[tableId])TABLE_RENDERS[tableId](col,dir,accessor);
+  // Update header arrows
+  document.querySelectorAll('#'+tableId+' thead th').forEach(th=>{
+    th.style.cursor='pointer';
+    const arrow=th.querySelector('.sort-arrow');
+    if(arrow)arrow.textContent=th.dataset.col===col?(dir===1?' ▲':' ▼'):'';
+  });
+}
+const TABLE_RENDERS={};
+
 // ── RENDER ALL ───────────────────────────────────────────────────────────────
 function safeRender(name, fn, months){
   try { fn(months); }
@@ -646,19 +722,35 @@ function renderOverview(months){
   const s=computeFilteredSummary(last),sp=prev?computeFilteredSummary(prev):null;
   function d(k){if(!sp||!sp[k])return null;return((s[k]-sp[k])/sp[k])*100;}
   const tb=last.teamBreakdown||{};
+  // Compute ₹/segment from the last month's segment breakdown
+  const segMap={};
+  filterBreakdown(last.segmentBreakdown,'segment').forEach(sg=>{segMap[sg.name]=sg;});
+  function segCostPerVin(names){
+    // Sum cost and vins across matching segment names, return ₹/VIN
+    let cost=0,vins=0;
+    names.forEach(n=>{const sg=Object.values(segMap).find(s=>s.name===n);if(sg){cost+=sg.costPerVin*sg.vins;vins+=sg.vins;}});
+    return vins>0?+(cost/vins).toFixed(2):0;
+  }
+  // "Other" = anything not Ent/Mid/SMB/Resellers
+  const knownSegs=new Set(['Ent','Enterprise','Mid','SMB','Resellers']);
+  const otherSegs=Object.keys(segMap).filter(n=>!knownSegs.has(n));
+  const entSeg=segMap['Ent']||segMap['Enterprise']||null;
+  const midSeg=segMap['Mid']||null;
+  const smbSeg=segMap['SMB']||null;
+  const resSeg=segMap['Resellers']||null;
   document.getElementById('ov-kpis').innerHTML=[
-    kpi('Total Cost',     f.inr0(s.totalCost),     last.month,                           d('totalCost'),    '#4f78ff'),
+    kpi('Delivery Cost',  f.inr0(s.totalCost),     last.month,                           d('totalCost'),    '#4f78ff'),
     kpi('Inhouse Cost',   f.inr0(s.inhouseCost),   (tb.inhouse?.employees||0)+' people', null,              '#22d4a0'),
     kpi('OS Cost',        f.inr0(s.osCost),         (tb.os?.employees||0)+' contractors', null,              '#f5a42a'),
-    kpi('VINs',           f.num(s.totalVins),      'Unique vehicles',         d('totalVins'),    '#a07cff'),
-    kpi('Total Units',    f.num(s.totalUnits),     'Billing units',           d('totalUnits'),   '#38c4f0'),
-    kpi('Efficiency',     f.pct(s.efficiency),     'Target / Actual',         d('efficiency'),   '#22d4a0'),
-    kpi('₹ / VIN',        f.inr(s.costPerVin),     'Per vehicle',             d('costPerVin'),   '#f5a42a'),
-    kpi('₹ / Unit',       f.inr(s.costPerUnit),    'Blended',                 d('costPerUnit'),  '#a07cff'),
+    kpi('₹ / Ent',        f.inr(entSeg?.costPerVin||0),   'Enterprise · per VIN', null, '#4f78ff'),
+    kpi('₹ / Mid',        f.inr(midSeg?.costPerVin||0),   'Mid · per VIN',        null, '#a07cff'),
+    kpi('₹ / SMB',        f.inr(smbSeg?.costPerVin||0),   'SMB · per VIN',        null, '#22d4a0'),
+    kpi('₹ / Resellers',  f.inr(resSeg?.costPerVin||0),   'Resellers · per VIN',  null, '#f5a42a'),
+    kpi('₹ / Other',      f.inr(segCostPerVin(otherSegs)), 'Other segments',       null, '#38c4f0'),
   ].join('');
   const ms=months.map(m=>computeFilteredSummary(m)),labels=months.map(m=>m.month.replace('-26',''));
   mk('ch-cost',{type:'line',_lf:v=>v?'₹'+f.short(v):'',data:{labels,datasets:[{label:'Salary Cost',data:ms.map(s=>s.totalCost),borderColor:'#4f78ff',borderWidth:2,backgroundColor:'rgba(79,120,255,.1)',fill:true,tension:.35,pointBackgroundColor:'#4f78ff',pointRadius:4,pointHoverRadius:6}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' ₹'+f.num(ctx.raw)}}},scales:{y:{ticks:{callback:v=>'₹'+f.short(v)}}}}});
-  document.getElementById('ov-tbody').innerHTML=months.map((m,i)=>{const s=ms[i];return'<tr><td class="bright">'+m.month+'</td><td class="r">'+f.inr0(s.totalCost)+'</td><td class="r">'+f.num(s.totalImages)+'</td><td class="r">'+f.num(s.total360Skus)+'</td><td class="r">'+f.num(s.totalVideoSkus)+'</td><td class="r" style="color:var(--purple)">'+f.num(s.totalVins)+'</td><td class="r"><span class="'+effCls(s.efficiency)+'">'+f.pct(s.efficiency)+'</span></td><td class="r" style="color:var(--amber)">'+f.inr(s.costPerVin)+'</td><td class="r">'+f.inr(s.costPerUnit)+'</td></tr>';}).join('');
+  _snapData=months.map((m,i)=>({month:m.month,...ms[i]}));renderSnapTable();
 }
 
 // ── 2. TRENDS ────────────────────────────────────────────────────────────────
@@ -678,9 +770,9 @@ function renderSegments(months){
   mk('ch-sg-pie',{type:'doughnut',data:{labels,datasets:[{data:segs.map(s=>s.costShare),backgroundColor:colors,borderWidth:0,hoverOffset:4,datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>4,color:'#fff',font:{size:10,weight:'600'},formatter:v=>v.toFixed(0)+'%',anchor:'center',align:'center'}}]},options:{cutout:'62%',scales:{x:{display:false},y:{display:false}},plugins:{legend:{position:'right',labels:{color:'#6a82a8',font:{size:10},boxWidth:9}},tooltip:{callbacks:{label:ctx=>ctx.label+': '+ctx.parsed.toFixed(2)+'%'}}}}});
   mk('ch-sg-vinc',{type:'bar',_lf:v=>v?'₹'+Number(v).toFixed(2):'',data:{labels,datasets:[{label:'₹/VIN',data:segs.map(s=>s.costPerVin),backgroundColor:colors,borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'₹'+v}}}}});
   mk('ch-sg-eff',{type:'bar',_lf:v=>v?v.toFixed(2)+'%':'',data:{labels,datasets:[{label:'Efficiency %',data:segs.map(s=>s.efficiency),backgroundColor:segs.map(s=>s.efficiency>=100?'#22d4a0':s.efficiency>=80?'#f5a42a':'#f0566a'),borderRadius:4}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.raw.toFixed(2)+'%'}}},scales:{y:{ticks:{callback:v=>v+'%'}}}}});
-  document.getElementById('sg-summary-tbl').innerHTML=segs.map(s=>'<tr><td class="bright"><span class="seg" style="background:'+sc(s.name)+'22;color:'+sc(s.name)+'">'+s.name+'</span></td><td class="r" style="color:var(--purple)">'+f.num(s.vins)+'</td><td class="r">'+f.num(s.units)+'</td><td class="r"><span class="'+effCls(s.efficiency)+'">'+f.pct(s.efficiency)+'</span></td><td class="r" style="color:var(--amber)">'+f.inr(s.costPerVin)+'</td><td class="r">'+f.pct(s.costShare)+'</td></tr>').join('');
-  document.getElementById('co-dealer-tbl').innerHTML=m.dealerBreakdown.map(d=>'<tr><td class="bright">'+d.name+'</td><td class="r">'+f.num(d.vins)+'</td><td class="r">'+f.num(d.units)+'</td><td class="r"><span class="'+effCls(d.efficiency)+'">'+f.pct(d.efficiency)+'</span></td><td class="r">'+f.inr(d.costPerUnit)+'</td><td class="r">'+f.inr(d.costPerVin)+'</td></tr>').join('');
-  document.getElementById('co-ent-tbl').innerHTML=m.enterpriseBreakdown.map((e,i)=>'<tr><td class="rank-num">'+(i+1)+'</td><td class="bright" style="max-width:160px;overflow:hidden;text-overflow:ellipsis">'+e.name+'</td><td><span class="seg" style="background:'+sc(e.segment)+'22;color:'+sc(e.segment)+';font-size:9px">'+e.segment+'</span></td><td class="r">'+f.num(e.vins)+'</td><td class="r"><span class="'+effCls(e.efficiency)+'">'+f.pct(e.efficiency)+'</span></td><td class="r">'+f.inr(e.costPerVin)+'</td></tr>').join('');
+  _segData=segs;renderSegTable();
+  _dealerData=m.dealerBreakdown;renderDealerTable();
+  _entData=m.enterpriseBreakdown;renderEntTable();
 }
 
 // ── 4. PRODUCTS ──────────────────────────────────────────────────────────────
@@ -706,7 +798,7 @@ function renderProducts(months){
   const colors=prods.map((p,i)=>pc(p.name,i));
   document.getElementById('pr-vol-sub').textContent=m.month;
   mk('ch-pr-cpu',{type:'bar',_lf:v=>v?f.inr(v):'',data:{labels:prods.map(p=>p.name),datasets:[{label:'₹/Unit',data:prods.map(p=>p.costPerUnit),backgroundColor:colors,borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'₹'+v}}}}});
-  document.getElementById('pr-tbl').innerHTML=prods.map(p=>{const bar=Math.round((p.costSharePct||0)*1.4);return'<tr><td class="bright">'+prodTag(p.name)+'</td><td class="r">'+f.num(p.units)+'</td><td class="r"><span class="'+effCls(p.efficiency)+'">'+f.pct(p.efficiency)+'</span></td><td class="r" style="color:var(--text);font-weight:600">'+f.inr(p.costPerUnit)+'</td><td class="r">'+f.pct(p.costSharePct)+'<span class="mini-bar" style="width:'+bar+'px"></span></td></tr>';}).join('');
+  _prodData=prods;renderProdTable();
 }
 
 // ── 5. EDITORS ───────────────────────────────────────────────────────────────
