@@ -89,6 +89,23 @@ function parseEnterpriseMeta(csvText) {
   return map;
 }
 
+// Build a normalized (lowercase+trim) lookup index from the meta map
+// so output's "Enterprise" column can match Metabase's "Enterprise Name"
+// even if casing or spacing differs slightly
+function buildMetaIndex(metaMap) {
+  const index = {};
+  Object.entries(metaMap).forEach(([name, val]) => {
+    index[name.toLowerCase().trim()] = { originalKey: name, ...val };
+  });
+  return index;
+}
+
+// Lookup enterprise meta by output enterprise name (normalized match)
+function lookupMeta(metaIndex, outputName) {
+  if (!outputName) return null;
+  return metaIndex[outputName.toLowerCase().trim()] || null;
+}
+
 // ╔══════════════════════════════════════════════════════════════════╗
 // ║  ADD A NEW MONTH — edit ONLY this array, nothing else needed    ║
 // ║                                                                  ║
@@ -283,7 +300,7 @@ function enrichGroup(name, g, allocatedCost) {
 }
 
 // ── Per-month compute ─────────────────────────────────────────────────────────
-function computeMonth(config, outputRows, factorRows, enterpriseRows, removedRows) {
+function computeMonth(config, outputRows, factorRows, enterpriseRows, removedRows, metaIndex) {
   const sheetExcluded = parseRemovedUsers(removedRows);
   const excludeSet    = buildExcludeSet(sheetExcluded);
 
@@ -426,10 +443,16 @@ function computeMonth(config, outputRows, factorRows, enterpriseRows, removedRow
   const entGroups = groupSum(enriched, r => r.enterprise);
   const enterpriseBreakdown = Object.entries(entGroups).map(([name, g]) => {
     const cost = totalActMins > 0 ? (g.actualMins / totalActMins) * totalCost : 0;
+    // Look up Metabase meta by normalized name match
+    const meta = metaIndex ? lookupMeta(metaIndex, name) : null;
     return {
       ...enrichGroup(name, g, cost),
-      segment:          entMap[name]?.segment          || 'Unknown',
+      segment:          entMap[name]?.segment          || meta?.segment || 'Unknown',
       inventoryVersion: entMap[name]?.inventoryVersion || '',
+      // Metabase enrichment fields
+      csPoc:   meta?.csPoc   || '',
+      obPoc:   meta?.obPoc   || '',
+      liveArr: meta?.liveArr || '',
     };
   }).sort((a, b) => b.units - a.units).slice(0, 25);
 
@@ -492,8 +515,11 @@ module.exports = async function handler(req, res) {
     const client = getSheetsClient();
 
     // Fetch Sheets data + Metabase enterprise meta in parallel
-    const [sheetsResults, enterpriseMeta] = await Promise.all([
-      Promise.allSettled(
+    // Fetch Metabase meta and Sheets data concurrently
+    // metaIndex is built after both resolve so computeMonth gets enriched data
+    const [rawSheetsData, enterpriseMeta] = await Promise.all([
+      // Fetch all sheet ranges in parallel (without computing yet)
+      Promise.all(
         SHEETS.map(async cfg => {
           const [outputRows, factorRows, entRows, removedRows] = await Promise.all([
             fetchRange(client, cfg.id, 'output!A:M'),
@@ -501,12 +527,19 @@ module.exports = async function handler(req, res) {
             fetchRange(client, cfg.id, 'enterprise_details!A:D'),
             fetchRange(client, cfg.id, 'remove_users!A:E'),
           ]);
-          return computeMonth(cfg, outputRows, factorRows, entRows, removedRows);
+          return { cfg, outputRows, factorRows, entRows, removedRows };
         })
       ),
-      fetchMetabaseCSV(), // runs concurrently — never blocks if it fails
+      fetchMetabaseCSV(), // concurrent — never blocks if it fails
     ]);
 
+    // Now build metaIndex and compute months with enriched enterprise data
+    const metaIndex = buildMetaIndex(enterpriseMeta);
+    const sheetsResults = await Promise.allSettled(
+      rawSheetsData.map(({ cfg, outputRows, factorRows, entRows, removedRows }) =>
+        Promise.resolve(computeMonth(cfg, outputRows, factorRows, entRows, removedRows, metaIndex))
+      )
+    );
     const months = sheetsResults.filter(r => r.status === 'fulfilled').map(r => r.value);
     const errors = sheetsResults
       .map((r, i) => r.status === 'rejected'
