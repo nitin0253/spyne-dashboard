@@ -577,15 +577,17 @@ const DR={start:null,end:null,preset:'thismonth'};
 
 function filteredMonths(){
   if(!DATA)return[];
+  console.log('[filteredMonths] DR start:', DR.start, 'end:', DR.end, 'preset:', DR.preset);
+  console.log('[filteredMonths] available months:', DATA.months.map(function(m){return m.key;}));
   // If no date range active, return all
-  if(!DR.start&&!DR.end)return DATA.months;
+  if(!DR.start&&!DR.end){console.log('[filteredMonths] no filter → all');return DATA.months;}
   return DATA.months.filter(function(m){
-    // m.key is like 'jan26', m.month is 'Jan-26'
-    // Parse month start/end dates from the key
     const mDate=parseMonthKey(m.key);
-    if(!mDate)return true;
+    if(!mDate){console.log('[filteredMonths]',m.key,'→ parseMonthKey failed');return true;}
     const mStart=new Date(mDate.year,mDate.month,1);
-    const mEnd=new Date(mDate.year,mDate.month+1,0); // last day of month
+    const mEnd=new Date(mDate.year,mDate.month+1,0);
+    const ok=DR.start&&DR.end?(mStart<=DR.end&&mEnd>=DR.start):(DR.start?mEnd>=DR.start:DR.end?mStart<=DR.end:true);
+    console.log('[filteredMonths]',m.key,'→ mStart:',mStart.toDateString(),'mEnd:',mEnd.toDateString(),'DR.start:',DR.start?.toDateString(),'DR.end:',DR.end?.toDateString(),'match:',ok);
     if(DR.start&&DR.end)return mStart<=DR.end&&mEnd>=DR.start;
     if(DR.start)return mEnd>=DR.start;
     if(DR.end)return mStart<=DR.end;
@@ -1065,11 +1067,12 @@ let _entData=[], _entSort={col:'units',dir:-1};
 // ── RENDER KPIs ──────────────────────────────────────────────────────────────
 function renderKPIs(months){
   try{
+    console.log('[renderKPIs] months count:', months.length, months.map(function(m){return m.month;}));
     const last=months[months.length-1],prev=months.length>1?months[months.length-2]:null;
     // Single month: show that month's data with MoM delta
     // Multiple months: aggregate totals, no delta
-    const monthFilterActive=FILTERS.month.selected.size>0&&FILTERS.month.selected.size<FILTERS.month.all.length;
-    const isMulti=months.length>1&&monthFilterActive;
+    // isMulti: more than 1 month visible (date range spans multiple months)
+    const isMulti=months.length>1;
     let s,sp=null;
     if(isMulti){
       // Sum/avg across all selected months
@@ -1131,17 +1134,29 @@ function setChartFilter(chartKey,value,btn){
   document.querySelectorAll('.cf-pill[data-chart="'+chartKey+'"]').forEach(function(b){b.classList.remove('active','active-green','active-amber','active-purple');});
   if(btn){const cm={all:'active',image:'active',cost:'active',units:'active-green',costPerUnit:'active-amber',efficiency:'active-amber',video:'active-amber','360':'active-green'};btn.classList.add(cm[value]||'active');}
   if(!DATA)return;const months=filteredMonths();if(!months.length)return;
-  const map={cost:renderChart1,seg:renderChart2,segp:renderChart2,ed:renderChart3,edp:renderChart3,prod:renderChart4,prodm:renderChart4};
-  const fn=map[chartKey];if(fn)fn(months);else renderCharts(months);
+  const allMonths=DATA?DATA.months:months;
+  const chartMap={
+    cost:function(){renderChart1(allMonths);},
+    seg:function(){renderChart2(months);},
+    segp:function(){renderChart2(months);},
+    ed:function(){renderChart3(months);},
+    edp:function(){renderChart3(months);},
+    prod:function(){renderChart4(allMonths);},
+    prodm:function(){renderChart4(allMonths);},
+  };
+  const fn=chartMap[chartKey];if(fn)fn();else renderCharts(months);
 }
 function renderCharts(months){
+  // Charts 1 and 4 always show ALL months (not filtered by date range)
+  const allMonths=DATA?DATA.months:months;
   if(CURRENT_VIEW==='enterprise'){
     renderChart2(months);
     return;
   }
-  renderChart1(months);
+  renderChart1(allMonths);
+  renderChart2(months);
   renderChart3(months);
-  renderChart4(months);
+  renderChart4(allMonths);
 }
 
 function renderChart1(months){
@@ -1188,12 +1203,29 @@ function renderChart4(months){
 // ── RENDER USER SUMMARY ───────────────────────────────────────────────────────
 // User Summary sort state
 let _usData=[], _usSort={col:'totalUnits',dir:-1};
-window.cycleSortUS=mkSorter('su',['email','imgUnits','imgCost','s360Units','s360Cost','vidUnits','vidCost','totalUnits','efficiency','costPerUnit','totalCost'],function(col,dir){_usSort.col=col;_usSort.dir=dir;renderUSTable();});
+window.cycleSortUS=function(col){
+  // Toggle direction if same column, else default desc for numbers, asc for email
+  if(_usSort.col===col){
+    _usSort.dir=_usSort.dir*-1;
+  }else{
+    _usSort.col=col;
+    _usSort.dir=col==='email'?1:-1;
+  }
+  // Update all arrow indicators
+  ['email','imgUnits','imgCost','s360Units','s360Cost','vidUnits','vidCost','totalUnits','efficiency','costPerUnit','totalCost'].forEach(function(k){
+    const el=document.getElementById('su-'+k);if(el)el.textContent='';
+  });
+  const el=document.getElementById('su-'+col);
+  if(el)el.textContent=_usSort.dir===1?' ▲':' ▼';
+  renderUSTable();
+};
 function renderUSTable(){
   const q=(document.getElementById('us-search')?.value||'').toLowerCase();
-  const sk=(document.getElementById('us-sort')?.value)||_usSort.col;
+  // Use header-click sort state; dropdown only updates the col (resets to desc)
+  const sortCol=_usSort.col;
+  const sortDir=_usSort.dir;
   let rows=_usData.filter(function(e){return !q||e.email.toLowerCase().includes(q);});
-  rows=applySortArr(rows,sk,_usSort.dir);
+  rows=applySortArr(rows,sortCol,sortDir);
   const el=document.getElementById('us-tbl');if(!el)return;
   el.innerHTML=rows.map(function(e,i){
     const team=/payroll/i.test(e.teamType)?
@@ -1229,7 +1261,14 @@ function renderUserSummary(months){
   renderUSTable();
   const s=document.getElementById('us-search'),o=document.getElementById('us-sort');
   if(s&&!s._wired){s.addEventListener('input',renderUSTable);s._wired=true;}
-  if(o&&!o._wired){o.addEventListener('change',function(){_usSort.col=o.value;_usSort.dir=-1;renderUSTable();});o._wired=true;}
+  if(o&&!o._wired){o.addEventListener('change',function(){
+    _usSort.col=o.value;_usSort.dir=-1;
+    // Clear header arrows, then set arrow on this col
+    ['email','imgUnits','imgCost','s360Units','s360Cost','vidUnits','vidCost','totalUnits','efficiency','costPerUnit','totalCost'].forEach(function(k){
+      const el=document.getElementById('su-'+k);if(el)el.textContent='';
+    });
+    renderUSTable();
+  });o._wired=true;}
 }
 
 window.cycleSortEnt=mkSorter('se',['vins','units','efficiency','costPerUnit'],function(col,dir){_entSort.col=col;_entSort.dir=dir;renderEntTable();});
@@ -1272,10 +1311,62 @@ function renderEntTable(){
   }).join('');
 }
 
+// Aggregate segment/enterprise data across multiple months
+function aggregateSegments(months){
+  const acc={};
+  months.forEach(function(m){
+    filterBreakdown(m.segmentBreakdown,'segment').forEach(function(sg){
+      const n=sg.name;
+      if(!acc[n])acc[n]={name:n,vins:0,units:0,actualMins:0,sumTarget:0,costPerUnit_sum:0,count:0};
+      acc[n].vins+=sg.vins||0;
+      acc[n].units+=sg.units||0;
+      acc[n].actualMins+=sg.actualMins||0;
+      acc[n].sumTarget+=sg.sumTarget||0;
+      // weighted costPerUnit
+      acc[n].costPerUnit_sum+=(sg.costPerUnit||0)*(sg.units||0);
+    });
+  });
+  const rows=Object.values(acc).map(function(s){
+    s.efficiency=s.actualMins>0?+((s.sumTarget/s.actualMins)*100).toFixed(2):0;
+    s.costPerUnit=s.units>0?+(s.costPerUnit_sum/s.units).toFixed(2):0;
+    return s;
+  });
+  const totalWeightedCost=rows.reduce(function(t,s){return t+(s.costPerUnit||0)*(s.units||0);},0)||1;
+  rows.forEach(function(s){s.costShare=+(((s.costPerUnit||0)*(s.units||0)/totalWeightedCost)*100).toFixed(2);});
+  return rows.filter(function(s){return s.units>0;});
+}
+
+function aggregateEnterprises(months){
+  const acc={};
+  months.forEach(function(m){
+    const totalActMins=m.summary.totalActMins||1;
+    const totalCost=m.summary.totalCost||0;
+    (m.enterpriseBreakdown||[]).forEach(function(e){
+      const n=e.name;
+      if(!acc[n])acc[n]={name:n,segment:e.segment||'',csPoc:e.csPoc||'',obPoc:e.obPoc||'',liveArr:e.liveArr||'',vins:0,units:0,actualMins:0,sumTarget:0,costPerUnit_sum:0};
+      acc[n].vins+=e.vins||0;
+      acc[n].units+=e.units||0;
+      acc[n].actualMins+=e.actualMins||0;
+      acc[n].sumTarget+=e.sumTarget||0;
+      acc[n].costPerUnit_sum+=(e.costPerUnit||0)*(e.units||0);
+      // keep first non-empty meta
+      if(!acc[n].segment&&e.segment)acc[n].segment=e.segment;
+      if(!acc[n].csPoc&&e.csPoc)acc[n].csPoc=e.csPoc;
+      if(!acc[n].obPoc&&e.obPoc)acc[n].obPoc=e.obPoc;
+      if(!acc[n].liveArr&&e.liveArr)acc[n].liveArr=e.liveArr;
+    });
+  });
+  return Object.values(acc).map(function(e){
+    e.efficiency=e.actualMins>0?+((e.sumTarget/e.actualMins)*100).toFixed(2):0;
+    e.costPerUnit=e.units>0?+(e.costPerUnit_sum/e.units).toFixed(2):0;
+    return e;
+  }).filter(function(e){return e.units>0;}).sort(function(a,b){return b.units-a.units;}).slice(0,25);
+}
+
 function renderTables(months){
-  const m=months[months.length-1];
-  _segData=segProdData(m,'all');renderSegTable();
-  _entData=enterpriseProdData(m);renderEntTable();
+  // Aggregate across all filtered months for accurate date-range data
+  _segData=aggregateSegments(months);renderSegTable();
+  _entData=aggregateEnterprises(months);renderEntTable();
 }
 
 // ── 4. PRODUCTS ──────────────────────────────────────────────────────────────
