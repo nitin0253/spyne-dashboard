@@ -275,10 +275,8 @@ select.sel:focus{border-color:var(--blue)}
 
   <div class="kpi-grid" id="ov-kpis" style="margin-bottom:14px"></div>
 
-  <!-- ROW 1: Cost Trend + Segment Breakdown side by side -->
-  <div class="g2" style="margin-bottom:12px">
-    <!-- CHART 1: Cost Trend MoM -->
-  <div class="section">
+  <!-- CHART 1: Cost Trend MoM — full width -->
+  <div class="section" style="margin-bottom:12px">
     <div class="sec-head">
       <div><div class="sec-title">Cost Trend</div><div class="sec-sub">MoM · Overall Cost · Volume · ₹/Unit</div></div>
       <div class="cf-row">
@@ -289,10 +287,11 @@ select.sel:focus{border-color:var(--blue)}
         <button class="cf-pill" data-chart="cost" onclick="setChartFilter('cost','video',this)">Video</button>
       </div>
     </div>
-    <div class="ch"><canvas id="ch-cost-trend" height="130"></canvas></div>
+    <div class="ch"><canvas id="ch-cost-trend" height="100"></canvas></div>
   </div>
-    <!-- CHART 2: Segment Breakdown MoM -->
-  <div class="section">
+
+  <!-- CHART 2: Segment Breakdown — full width -->
+  <div class="section" style="margin-bottom:12px">
     <div class="sec-head">
       <div><div class="sec-title">Segment Breakdown</div><div class="sec-sub">MoM · Cost · Volume · ₹/Unit per segment</div></div>
       <div class="cf-row">
@@ -307,14 +306,11 @@ select.sel:focus{border-color:var(--blue)}
         <button class="cf-pill" data-chart="segp" onclick="setChartFilter('segp','video',this)">Video</button>
       </div>
     </div>
-    <div class="ch"><canvas id="ch-seg-trend" height="130"></canvas></div>
-  </div>
+    <div class="ch"><canvas id="ch-seg-trend" height="100"></canvas></div>
   </div>
 
-  <!-- ROW 2: Top 15 Editors + Product Breakdown side by side -->
-  <div class="g2" style="margin-bottom:12px">
-    <!-- CHART 3: Top 15 Editors -->
-  <div class="section">
+  <!-- CHART 3: Top 15 Editors — full width -->
+  <div class="section" style="margin-bottom:12px">
     <div class="sec-head">
       <div><div class="sec-title">Top 15 Editors</div><div class="sec-sub" id="ed-chart-sub"></div></div>
       <div class="cf-row">
@@ -329,10 +325,11 @@ select.sel:focus{border-color:var(--blue)}
         <button class="cf-pill" data-chart="edp" onclick="setChartFilter('edp','video',this)">Video</button>
       </div>
     </div>
-    <div class="ch"><canvas id="ch-ed-cost" height="180"></canvas></div>
+    <div class="ch"><canvas id="ch-ed-cost" height="130"></canvas></div>
   </div>
-    <!-- CHART 4: Product Breakdown MoM -->
-  <div class="section">
+
+  <!-- CHART 4: Product Breakdown — full width -->
+  <div class="section" style="margin-bottom:12px">
     <div class="sec-head">
       <div><div class="sec-title">Product Breakdown</div><div class="sec-sub">MoM · Volume · Cost · ₹/Unit per product</div></div>
       <div class="cf-row">
@@ -347,43 +344,26 @@ select.sel:focus{border-color:var(--blue)}
         <button class="cf-pill" data-chart="prodm" onclick="setChartFilter('prodm','cost',this)">Cost</button>
       </div>
     </div>
-    <div class="ch"><canvas id="ch-prod-trend" height="130"></canvas></div>
-  </div>
+    <div class="ch"><canvas id="ch-prod-trend" height="100"></canvas></div>
   </div>
 
-  <!-- TABLES: Segment + Enterprise + Editors -->
-  <div class="g2" style="margin-bottom:12px">
-    <div class="section">
-      <div class="sec-head"><div class="sec-title">Segment Summary</div></div>
-      <div class="tbl-wrap"><table>
-        <thead><tr>
-          <th>Segment</th>
-          <th class="r" onclick="cycleSortSeg('vins')" style="cursor:pointer">VINs<span id="ss-vins" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-          <th class="r" onclick="cycleSortSeg('units')" style="cursor:pointer">Units<span id="ss-units" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-          <th class="r" onclick="cycleSortSeg('efficiency')" style="cursor:pointer">Eff.<span id="ss-efficiency" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-          <th class="r" onclick="cycleSortSeg('costPerUnit')" style="cursor:pointer">₹/Unit<span id="ss-costPerUnit" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-          <th class="r" onclick="cycleSortSeg('costShare')" style="cursor:pointer">Cost%<span id="ss-costShare" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-        </tr></thead>
-        <tbody id="sg-summary-tbl"></tbody>
-      </table></div>
+  <!-- Top Enterprises — full width, Segment Summary removed -->
+  <div class="section" style="margin-bottom:12px">
+    <div class="sec-head">
+      <div class="sec-title">Top Enterprises</div>
+      <div style="font-size:10px;color:var(--muted)">Click any row for details</div>
     </div>
-    <div class="section">
-      <div class="sec-head">
-        <div class="sec-title">Top Enterprises</div>
-        <div style="font-size:10px;color:var(--muted)">Click any row for details</div>
-      </div>
-      <div class="tbl-wrap" style="max-height:340px;overflow-y:auto"><table>
-        <thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr>
-          <th>#</th><th>Enterprise</th><th>Segment</th><th>CS POC</th><th>OB POC</th>
-          <th class="r">Live ARR</th>
-          <th class="r" onclick="cycleSortEnt('vins')" style="cursor:pointer">VINs<span id="se-vins" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-          <th class="r" onclick="cycleSortEnt('units')" style="cursor:pointer">Units<span id="se-units" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-          <th class="r" onclick="cycleSortEnt('efficiency')" style="cursor:pointer">Eff.<span id="se-efficiency" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-          <th class="r" onclick="cycleSortEnt('costPerUnit')" style="cursor:pointer">₹/Unit<span id="se-costPerUnit" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-        </tr></thead>
-        <tbody id="co-ent-tbl"></tbody>
-      </table></div>
-    </div>
+    <div class="tbl-wrap" style="max-height:380px;overflow-y:auto"><table>
+      <thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr>
+        <th>#</th><th>Enterprise</th><th>Segment</th><th>CS POC</th><th>OB POC</th>
+        <th class="r">Live ARR</th>
+        <th class="r" onclick="cycleSortEnt('vins')" style="cursor:pointer">VINs<span id="se-vins" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortEnt('units')" style="cursor:pointer">Units<span id="se-units" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortEnt('efficiency')" style="cursor:pointer">Eff.<span id="se-efficiency" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortEnt('costPerUnit')" style="cursor:pointer">₹/Unit<span id="se-costPerUnit" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+      </tr></thead>
+      <tbody id="co-ent-tbl"></tbody>
+    </table></div>
   </div>
 
 
@@ -768,7 +748,36 @@ let _entData=[], _entSort={col:'units',dir:-1};
 function renderKPIs(months){
   try{
     const last=months[months.length-1],prev=months.length>1?months[months.length-2]:null;
-    const s=computeFilteredSummary(last),sp=prev?computeFilteredSummary(prev):null;
+    // Single month: show that month's data with MoM delta
+    // Multiple months: aggregate totals, no delta
+    const isMulti=months.length>1&&(FILTERS.month.selected.size<FILTERS.month.all.length||FILTERS.month.selected.size>1);
+    let s,sp=null;
+    if(isMulti){
+      // Sum/avg across all selected months
+      const allS=months.map(m=>computeFilteredSummary(m));
+      s={
+        totalCost:allS.reduce((t,x)=>t+(x.totalCost||0),0),
+        inhouseCost:allS.reduce((t,x)=>t+(x.inhouseCost||0),0),
+        osCost:allS.reduce((t,x)=>t+(x.osCost||0),0),
+        totalImages:allS.reduce((t,x)=>t+(x.totalImages||0),0),
+        total360Skus:allS.reduce((t,x)=>t+(x.total360Skus||0),0),
+        totalVideoSkus:allS.reduce((t,x)=>t+(x.totalVideoSkus||0),0),
+        totalVins:allS.reduce((t,x)=>t+(x.totalVins||0),0),
+        totalUnits:allS.reduce((t,x)=>t+(x.totalUnits||0),0),
+        employees:last.summary.employees,
+      };
+      // Weighted avg for rate metrics
+      const totUnits=s.totalUnits||1;
+      s.costPerUnit=+(s.totalCost/totUnits).toFixed(2);
+      const totVins=s.totalVins||1;
+      s.costPerVin=+(s.totalCost/totVins).toFixed(2);
+      const totalMins=allS.reduce((t,x)=>t+(x.totalActMins||0),0);
+      const totalTarget=allS.reduce((t,x)=>t+(x.totalTarget||0),0);
+      s.efficiency=totalMins>0?+((totalTarget/totalMins)*100).toFixed(2):0;
+    } else {
+      s=computeFilteredSummary(last);
+      sp=prev?computeFilteredSummary(prev):null;
+    }
     function d(k){if(!sp||!sp[k])return null;return((s[k]-sp[k])/sp[k])*100;}
     const tb=last.teamBreakdown||{},ih=tb.inhouse||{},os=tb.os||{};
     const segMap={};
@@ -779,7 +788,7 @@ function renderKPIs(months){
     const otherArr=Object.values(segMap).filter(function(sg){return !knownNames.has(sg.name);});
     function segCPU(arr){var c=0,u=0;arr.forEach(function(sg){c+=(sg.costPerUnit||0)*(sg.units||0);u+=sg.units||0;});return u>0?+(c/u).toFixed(2):0;}
     document.getElementById('ov-kpis').innerHTML=[
-      kpi('Delivery Cost',f.inr0(s.totalCost),last.month,d('totalCost'),'#4f78ff'),
+      kpi('Delivery Cost',f.inr0(s.totalCost),isMulti?(months[0].month+' – '+last.month):last.month,d('totalCost'),'#4f78ff'),
       kpi('Inhouse Cost',f.inr0(s.inhouseCost),(ih.employees||0)+' people',null,'#22d4a0'),
       kpi('OS Cost',f.inr0(s.osCost),(os.employees||0)+' contractors',null,'#f5a42a'),
       kpi('\u20b9 / Ent',f.inr(entSeg?entSeg.costPerUnit:0),(entSeg?entSeg.name:'Enterprise')+' \u00b7 \u20b9/unit',null,'#4f78ff'),
@@ -845,6 +854,38 @@ function renderChart4(months){
 }
 
 // ── RENDER USER SUMMARY ───────────────────────────────────────────────────────
+// User Summary sort state
+let _usData=[], _usSort={col:'totalUnits',dir:-1};
+window.cycleSortUS=mkSorter('su',['email','imgUnits','imgCost','s360Units','s360Cost','vidUnits','vidCost','totalUnits','efficiency','costPerUnit','totalCost'],function(col,dir){_usSort.col=col;_usSort.dir=dir;renderUSTable();});
+function renderUSTable(){
+  const q=(document.getElementById('us-search')?.value||'').toLowerCase();
+  const sk=(document.getElementById('us-sort')?.value)||_usSort.col;
+  let rows=_usData.filter(function(e){return !q||e.email.toLowerCase().includes(q);});
+  rows=applySortArr(rows,sk,_usSort.dir);
+  const el=document.getElementById('us-tbl');if(!el)return;
+  el.innerHTML=rows.map(function(e,i){
+    const team=/payroll/i.test(e.teamType)?
+      '<span style="background:rgba(34,212,160,.15);color:#22d4a0;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">Inhouse</span>':
+      '<span style="background:rgba(245,164,42,.15);color:#f5a42a;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">OS</span>';
+    return'<tr>'
+      +'<td class="rank-num">'+(i+1)+'</td>'
+      +'<td><div style="color:var(--text);font-weight:500">'+f.email(e.email)+'</div>'
+      +'<div style="font-size:10px;color:var(--muted)">'+e.email+'</div></td>'
+      +'<td>'+team+'</td>'
+      +'<td class="r">'+f.num(e.imgUnits)+'</td>'
+      +'<td class="r">'+f.inr0(e.imgCost)+'</td>'
+      +'<td class="r">'+f.num(e.s360Units)+'</td>'
+      +'<td class="r">'+f.inr0(e.s360Cost)+'</td>'
+      +'<td class="r">'+f.num(e.vidUnits)+'</td>'
+      +'<td class="r">'+f.inr0(e.vidCost)+'</td>'
+      +'<td class="r" style="color:var(--text);font-weight:600">'+f.num(e.totalUnits)+'</td>'
+      +'<td class="r"><span class="'+effCls(e.efficiency)+'">'+f.pct(e.efficiency)+'</span></td>'
+      +'<td class="r" style="color:var(--amber)">'+f.inr(e.costPerUnit)+'</td>'
+      +'<td class="r" style="color:var(--blue)">'+f.inr0(e.totalCost)+'</td>'
+      +'</tr>';
+  }).join('');
+}
+
 function renderUserSummary(months){
   const m=months[months.length-1],editors=filterBreakdown(m.editorBreakdown,'editor');
   _usData=editors.map(function(e){
@@ -943,6 +984,36 @@ function bindEditorSearch(){
 document.addEventListener('DOMContentLoaded',bindEditorSearch);
 
 // ── FETCH ─────────────────────────────────────────────────────────────────────
+async function fetchMetabaseFallback(){
+  const URL='https://metabase.spyne.ai/public/question/84265073-fe7b-4ee1-81d7-5eb37a7e9b2f.csv';
+  try{
+    const res=await fetch(URL);
+    if(!res.ok)return;
+    const text=await res.text();
+    const lines=text.trim().split('\n');if(lines.length<2)return;
+    function parseLine(line){const cols=[];let cur='',inQ=false;for(let i=0;i<line.length;i++){const c=line[i];if(c==='"'&&!inQ){inQ=true;}else if(c==='"'&&inQ&&line[i+1]==='"'){cur+='"';i++;}else if(c==='"'&&inQ){inQ=false;}else if(c===','&&!inQ){cols.push(cur);cur='';}else{cur+=c;}}cols.push(cur);return cols;}
+    const headers=parseLine(lines[0]);
+    const idx={name:headers.findIndex(h=>/enterprise name/i.test(h)),seg:headers.findIndex(h=>/customer segment/i.test(h)),csPoc:headers.findIndex(h=>/cs poc/i.test(h)),obPoc:headers.findIndex(h=>/ob poc/i.test(h)),liveArr:headers.findIndex(h=>/live arr/i.test(h))};
+    const newMeta={};const csSet=new Set(),obSet=new Set();
+    lines.slice(1).forEach(function(line){
+      if(!line.trim())return;
+      const cols=parseLine(line);
+      const name=(cols[idx.name]||'').trim();if(!name)return;
+      const cs=(cols[idx.csPoc]||'').trim(),ob=(cols[idx.obPoc]||'').trim();
+      if(!newMeta[name]){newMeta[name]={segment:(cols[idx.seg]||'').trim(),csPoc:cs,obPoc:ob,liveArr:(cols[idx.liveArr]||'').trim()};}
+      else{if(!newMeta[name].segment&&cols[idx.seg])newMeta[name].segment=(cols[idx.seg]||'').trim();if(!newMeta[name].csPoc&&cs)newMeta[name].csPoc=cs;if(!newMeta[name].obPoc&&ob)newMeta[name].obPoc=ob;if(!newMeta[name].liveArr&&cols[idx.liveArr])newMeta[name].liveArr=(cols[idx.liveArr]||'').trim();}
+      if(cs)csSet.add(cs);if(ob)obSet.add(ob);
+    });
+    ENT_META=newMeta;
+    if(DATA)DATA.enterpriseMeta=newMeta;
+    buildDropdown('cspoc',[...csSet].sort());
+    buildDropdown('obpoc',[...obSet].sort());
+    console.log('[Metabase fallback] loaded',Object.keys(newMeta).length,'enterprises');
+    // Re-render enterprise table with enriched data
+    const months=filteredMonths();if(months.length)renderTables(months);
+  }catch(e){console.warn('[Metabase fallback] failed:',e.message);}
+}
+
 async function fetchData(){
   overlayShow('Connecting to Google Sheets…');
   try{
@@ -974,6 +1045,10 @@ async function fetchData(){
       document.getElementById('tb-range').textContent=first+' – '+last+' '+yr;
     }
     initFilters();renderAll();
+    // Also fetch Metabase enrichment client-side (Vercel server may be blocked)
+    if(!DATA.enterpriseMeta||Object.keys(DATA.enterpriseMeta).length===0){
+      fetchMetabaseFallback();
+    }
   }catch(err){
     console.error('[dash]',err);
     overlayError(err.message,'Tried: '+API_URL+'\n\n'+err.message+'\n\nCheck Vercel env vars and function logs.');
