@@ -33,34 +33,38 @@ function fetchMetabaseCSV() {
   });
 }
 
+function parseLine(line) {
+  const cols = []; let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"' && !inQ)               { inQ = true; }
+    else if (c === '"' && inQ && line[i+1] === '"') { cur += '"'; i++; }
+    else if (c === '"' && inQ)           { inQ = false; }
+    else if (c === ',' && !inQ)          { cols.push(cur); cur = ''; }
+    else                                  { cur += c; }
+  }
+  cols.push(cur);
+  return cols;
+}
+
 function parseEnterpriseMeta(csvText) {
   const map = {};
   const lines = csvText.trim().split('\n');
   if (lines.length < 2) return map;
 
-  // Parse a CSV line respecting quoted fields
-  function parseLine(line) {
-    const cols = []; let cur = '', inQ = false;
-    for (let i = 0; i < line.length; i++) {
-      const c = line[i];
-      if (c === '"' && !inQ)               { inQ = true; }
-      else if (c === '"' && inQ && line[i+1] === '"') { cur += '"'; i++; }
-      else if (c === '"' && inQ)           { inQ = false; }
-      else if (c === ',' && !inQ)          { cols.push(cur); cur = ''; }
-      else                                  { cur += c; }
-    }
-    cols.push(cur);
-    return cols;
-  }
-
   const headers = parseLine(lines[0]);
   const idx = {
-    name:    headers.findIndex(h => /enterprise name/i.test(h)),
-    seg:     headers.findIndex(h => /customer segment/i.test(h)),
-    csPoc:   headers.findIndex(h => /cs poc/i.test(h)),
-    obPoc:   headers.findIndex(h => /ob poc/i.test(h)),
-    liveArr: headers.findIndex(h => /live arr/i.test(h)),
+    name:          headers.findIndex(h => /enterprise name/i.test(h)),
+    seg:           headers.findIndex(h => /customer segment/i.test(h)),
+    csPoc:         headers.findIndex(h => /cs poc/i.test(h)),
+    obPoc:         headers.findIndex(h => /ob poc/i.test(h)),
+    liveArr:       headers.findIndex(h => /live arr/i.test(h)),
+    contractedArr: headers.findIndex(h => /contracted arr/i.test(h)),
+    stage:         headers.findIndex(h => /^stage$/i.test(h)),
   };
+
+  console.log('[metabase] headers:', headers.slice(0, 12));
+  console.log('[metabase] idx:', idx);
 
   lines.slice(1).forEach(line => {
     if (!line.trim()) return;
@@ -68,24 +72,43 @@ function parseEnterpriseMeta(csvText) {
     const name = (cols[idx.name] || '').trim();
     if (!name) return;
 
-    const segment = (cols[idx.seg]    || '').trim();
-    const csPoc   = (cols[idx.csPoc]  || '').trim();
-    const obPoc   = (cols[idx.obPoc]  || '').trim();
-    const liveArr = (cols[idx.liveArr]|| '').trim();
+    const segment      = (cols[idx.seg]           || '').trim();
+    const csPoc        = (cols[idx.csPoc]          || '').trim();
+    const obPoc        = (cols[idx.obPoc]          || '').trim();
+    const liveArr      = (cols[idx.liveArr]        || '').trim();
+    const stage        = (cols[idx.stage]          || '').trim();
+    const contractedRaw= (cols[idx.contractedArr]  || '').trim();
+    const contractedVal= parseFloat(contractedRaw.replace(/[^0-9.]/g, '')) || 0;
+
+    // Sum contractedArr only for Live or Onboarding rooftops (per enterprise)
+    const isActive = /live|onboarding/i.test(stage);
 
     if (!map[name]) {
-      // First row for this enterprise — create entry
-      map[name] = { segment, csPoc, obPoc, liveArr };
+      map[name] = {
+        segment, csPoc, obPoc, liveArr,
+        contractedArr: isActive ? contractedVal : 0,
+        rooftopCount:  1,
+        activeRooftops: isActive ? 1 : 0,
+      };
     } else {
-      // Subsequent team row — merge: keep first non-empty value for each field
-      // (all teams share the same enterprise-level details, but some rows may
-      //  have blanks; take the first populated value seen)
+      // Subsequent rooftop rows — sum contractedArr, keep first non-empty meta
       if (!map[name].segment && segment) map[name].segment = segment;
       if (!map[name].csPoc   && csPoc)   map[name].csPoc   = csPoc;
       if (!map[name].obPoc   && obPoc)   map[name].obPoc   = obPoc;
       if (!map[name].liveArr && liveArr) map[name].liveArr = liveArr;
+      if (isActive) {
+        map[name].contractedArr  = (map[name].contractedArr  || 0) + contractedVal;
+        map[name].activeRooftops = (map[name].activeRooftops || 0) + 1;
+      }
+      map[name].rooftopCount = (map[name].rooftopCount || 0) + 1;
     }
   });
+
+  // Build unified POC: CS email primarily, OB email as fallback
+  Object.values(map).forEach(e => {
+    e.poc = (e.csPoc && e.csPoc !== '') ? e.csPoc : (e.obPoc || '');
+  });
+
   return map;
 }
 
