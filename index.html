@@ -57,6 +57,24 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .ms-caret{flex-shrink:0;transition:transform .15s}
 .ms-btn.open .ms-caret{transform:rotate(180deg)}
 .ms-dropdown{position:absolute;top:calc(100% + 4px);left:0;min-width:200px;max-width:280px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:0 8px 32px rgba(0,0,0,.6);z-index:300;overflow:hidden}
+.date-dropdown{min-width:560px;max-width:min(720px,calc(100vw - 48px));display:grid;grid-template-columns:190px 1fr;padding:0}
+.date-quick{border-right:1px solid var(--border);padding:14px 0;background:rgba(17,17,17,.35)}
+.date-panel{padding:14px}
+.date-group{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.16em;color:var(--muted);padding:10px 18px 6px}
+.date-option{width:100%;border:0;background:transparent;color:var(--sub);font-family:var(--font);font-size:13px;text-align:left;padding:8px 18px;cursor:pointer}
+.date-option:hover{background:var(--hover);color:var(--text)}
+.date-option.active{background:rgba(79,120,255,.12);color:var(--blue);box-shadow:inset 3px 0 0 var(--blue)}
+.date-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.16em;color:var(--muted);margin-bottom:10px}
+.date-help{font-size:12px;color:var(--muted);margin-bottom:14px}
+.date-inputs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.date-inputs label{display:flex;flex-direction:column;gap:6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.date-inputs input{background:#121212;border:1px solid var(--border);border-radius:var(--r-sm);padding:9px 10px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none}
+.date-inputs input:focus{border-color:var(--blue)}
+.date-actions{display:flex;gap:8px;justify-content:flex-end}
+.date-apply,.date-clear{border:1px solid var(--border);border-radius:var(--r-sm);padding:7px 12px;font-family:var(--font);font-size:11px;font-weight:700;cursor:pointer}
+.date-apply{background:var(--blue);border-color:var(--blue);color:#fff}
+.date-clear{background:transparent;color:var(--sub)}
+.date-clear:hover{color:var(--text)}
 .ms-search{padding:8px;border-bottom:1px solid var(--border)}
 .ms-search input{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);padding:5px 8px;color:var(--text);font-size:11px;font-family:var(--font);outline:none}
 .ms-search input:focus{border-color:var(--blue)}
