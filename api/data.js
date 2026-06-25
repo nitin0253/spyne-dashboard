@@ -9,7 +9,7 @@ const METABASE_CSV_URL = 'https://metabase.spyne.ai/public/question/84265073-fe7
 // Returns map: enterpriseName → { segment, csPoc, obPoc, liveArr }
 function fetchMetabaseCSV() {
   return new Promise((resolve) => {
-    const req = https.get(METABASE_CSV_URL, { timeout: 10000 }, (res) => {
+    const req = https.get(METABASE_CSV_URL, { timeout: 5000 }, (res) => {
       let data = '';
       res.on('data', chunk => { data += chunk; });
       res.on('end', () => {
@@ -26,7 +26,7 @@ function fetchMetabaseCSV() {
       resolve({});
     });
     req.on('timeout', () => {
-      console.error('[metabase] fetch timeout');
+      console.error('[metabase] fetch timeout — skipping');
       req.destroy();
       resolve({});
     });
@@ -560,26 +560,25 @@ module.exports = async function handler(req, res) {
   try {
     const client = getSheetsClient();
 
-    // Fetch Sheets data + Metabase enterprise meta in parallel
-    // Fetch Metabase meta and Sheets data concurrently
-    // metaIndex is built after both resolve so computeMonth gets enriched data
-    const [rawSheetsData, enterpriseMeta] = await Promise.all([
-      // Fetch all sheet ranges in parallel (without computing yet)
-      Promise.all(
-        SHEETS.map(async cfg => {
-          const [outputRows, factorRows, entRows, removedRows] = await Promise.all([
-            fetchRange(client, cfg.id, 'output!A:M'),
-            fetchRange(client, cfg.id, 'factor_calculation!A:G'),
-            fetchRange(client, cfg.id, 'enterprise_details!A:D'),
-            fetchRange(client, cfg.id, 'remove_users!A:E'),
-          ]);
-          return { cfg, outputRows, factorRows, entRows, removedRows };
-        })
-      ),
-      fetchMetabaseCSV(), // concurrent — never blocks if it fails
-    ]);
+    // Step 1: Fetch all Google Sheets data (critical path)
+    const rawSheetsData = await Promise.all(
+      SHEETS.map(async cfg => {
+        const [outputRows, factorRows, entRows, removedRows] = await Promise.all([
+          fetchRange(client, cfg.id, 'output!A:M'),
+          fetchRange(client, cfg.id, 'factor_calculation!A:G'),
+          fetchRange(client, cfg.id, 'enterprise_details!A:D'),
+          fetchRange(client, cfg.id, 'remove_users!A:E'),
+        ]);
+        return { cfg, outputRows, factorRows, entRows, removedRows };
+      })
+    );
 
-    // Now build metaIndex and compute months with enriched enterprise data
+    // Step 2: Attempt Metabase fetch with hard 4s deadline (non-blocking — empty on timeout)
+    const metaDeadline = new Promise(resolve => setTimeout(() => resolve({}), 4000));
+    const enterpriseMeta = await Promise.race([fetchMetabaseCSV(), metaDeadline]);
+    console.log('[data.js] enterpriseMeta entries:', Object.keys(enterpriseMeta).length);
+
+    // Step 3: Build index and compute months
     const metaIndex = buildMetaIndex(enterpriseMeta);
     const sheetsResults = await Promise.allSettled(
       rawSheetsData.map(({ cfg, outputRows, factorRows, entRows, removedRows }) =>
