@@ -53,14 +53,16 @@ function parseCSV(text) {
 
   const headers = parseLine(lines[0]);
   const idx = {
-    name:    headers.findIndex(h => /enterprise name/i.test(h)),
-    seg:     headers.findIndex(h => /customer segment/i.test(h)),
-    csPoc:   headers.findIndex(h => /cs poc/i.test(h)),
-    obPoc:   headers.findIndex(h => /ob poc/i.test(h)),
-    liveArr: headers.findIndex(h => /live arr/i.test(h)),
+    name:          headers.findIndex(h => /enterprise name/i.test(h)),
+    seg:           headers.findIndex(h => /customer segment/i.test(h)),
+    csPoc:         headers.findIndex(h => /cs poc/i.test(h)),
+    obPoc:         headers.findIndex(h => /ob poc/i.test(h)),
+    liveArr:       headers.findIndex(h => /live arr/i.test(h)),
+    contractedArr: headers.findIndex(h => /contracted arr/i.test(h)),
+    stage:         headers.findIndex(h => /^stage$/i.test(h)),
   };
 
-  console.log('[meta] CSV headers:', headers.slice(0, 8));
+  console.log('[meta] CSV headers:', headers.slice(0, 12));
   console.log('[meta] Column indices:', idx);
 
   lines.slice(1).forEach(line => {
@@ -68,19 +70,40 @@ function parseCSV(text) {
     const cols = parseLine(line);
     const name = (cols[idx.name] || '').trim();
     if (!name) return;
-    const seg    = (cols[idx.seg]    || '').trim();
-    const csPoc  = (cols[idx.csPoc]  || '').trim();
-    const obPoc  = (cols[idx.obPoc]  || '').trim();
-    const liveArr= (cols[idx.liveArr]|| '').trim();
+    const seg          = (cols[idx.seg]           || '').trim();
+    const csPoc        = (cols[idx.csPoc]         || '').trim();
+    const obPoc        = (cols[idx.obPoc]         || '').trim();
+    const liveArr      = (cols[idx.liveArr]       || '').trim();
+    const stage        = (cols[idx.stage]         || '').trim();
+    const contractedRaw= (cols[idx.contractedArr] || '').trim();
+    const contractedVal= parseFloat(contractedRaw.replace(/[^0-9.]/g, '')) || 0;
+    const isActive     = /live|onboarding/i.test(stage);
+
     if (!map[name]) {
-      map[name] = { segment: seg, csPoc, obPoc, liveArr };
+      map[name] = {
+        segment: seg, csPoc, obPoc, liveArr,
+        contractedArr:  isActive ? contractedVal : 0,
+        rooftopCount:   1,
+        activeRooftops: isActive ? 1 : 0,
+      };
     } else {
       if (!map[name].segment && seg)    map[name].segment = seg;
       if (!map[name].csPoc   && csPoc)  map[name].csPoc   = csPoc;
       if (!map[name].obPoc   && obPoc)  map[name].obPoc   = obPoc;
       if (!map[name].liveArr && liveArr)map[name].liveArr = liveArr;
+      if (isActive) {
+        map[name].contractedArr  = (map[name].contractedArr  || 0) + contractedVal;
+        map[name].activeRooftops = (map[name].activeRooftops || 0) + 1;
+      }
+      map[name].rooftopCount = (map[name].rooftopCount || 0) + 1;
     }
   });
+
+  // Build unified POC
+  Object.values(map).forEach(e => {
+    e.poc = (e.csPoc && e.csPoc !== '') ? e.csPoc : (e.obPoc || '');
+  });
+
   return map;
 }
 
