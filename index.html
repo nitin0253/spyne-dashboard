@@ -1549,10 +1549,27 @@ function buildPocData(months) {
 function renderPocChart(months) {
   const canvas = document.getElementById('ch-poc-arr');
   if (!canvas) return;
-  if (!Object.keys(ENT_META).length) return;
+  if (!Object.keys(ENT_META).length) {
+    // ENT_META not yet loaded — show loading message, will re-render when meta arrives
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#666';
+    ctx.font = '13px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Loading enterprise data from /api/meta…', canvas.width/2, 60);
+    return;
+  }
 
   const data = buildPocData(months);
-  if (!data.length) return;
+  if (!data.length) {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#666';
+    ctx.font = '13px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('No POC data available for current filters', canvas.width/2, 60);
+    return;
+  }
 
   // Store for click access
   window._pocChartData = data;
@@ -1843,9 +1860,9 @@ function showPocDetail(pocRow, months) {
 
 async function fetchMetabaseFallback(){
   try{
-    // Call our own Vercel proxy endpoint — avoids CORS and Metabase network restrictions
+    console.log('[meta] fetching /api/meta…');
     const res=await fetch('/api/meta');
-    if(!res.ok){console.warn('[meta] HTTP',res.status);return;}
+    if(!res.ok){console.warn('[meta] HTTP error',res.status,await res.text().catch(()=>''));return;}
     const json=await res.json();
     if(!json.enterpriseMeta||!Object.keys(json.enterpriseMeta).length){
       console.warn('[meta] empty response');return;
@@ -1860,7 +1877,13 @@ async function fetchMetabaseFallback(){
     buildDropdown('cspoc',[...csSet].sort());
     buildDropdown('obpoc',[...obSet].sort());
     console.log('[meta] loaded',json.count,'enterprises from /api/meta');
-    const months=filteredMonths();if(months.length){renderTables(months);if(CURRENT_VIEW==='enterprise')renderPocChart(months);}
+    const months=filteredMonths();
+    if(months.length){
+      renderTables(months);
+      // Always re-render POC chart — ENT_META is now populated
+      renderKPIs(months);
+      if(CURRENT_VIEW==='enterprise') renderPocChart(months);
+    }
   }catch(e){
     console.warn('[meta] /api/meta failed:',e.message);
   }
@@ -1897,10 +1920,9 @@ async function fetchData(){
       document.getElementById('tb-range').textContent=first+' – '+last+' '+yr;
     }
     initFilters();renderAll();
-    // Also fetch Metabase enrichment client-side (Vercel server may be blocked)
-    if(!DATA.enterpriseMeta||Object.keys(DATA.enterpriseMeta).length===0){
-      fetchMetabaseFallback();
-    }
+    // Always fetch fresh Metabase data from /api/meta proxy
+    // (backend may have timed out on the 4s deadline — /api/meta has 30s)
+    fetchMetabaseFallback();
   }catch(err){
     console.error('[dash]',err);
     overlayError(err.message,'Tried: '+API_URL+'\n\n'+err.message+'\n\nCheck Vercel env vars and function logs.');
