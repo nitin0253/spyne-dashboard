@@ -450,7 +450,7 @@ select.sel:focus{border-color:var(--blue)}
   <div class="section" style="margin-bottom:12px">
     <div class="sec-head">
       <div><div class="sec-title">POC — Contracted ARR vs Delivery Cost</div>
-      <div class="sec-sub">CS POC (OB POC where CS unavailable) · ARR in USD · Cost in INR · Live &amp; Onboarding rooftops · high to low</div></div>
+      <div class="sec-sub">CS POC (OB POC where CS unavailable) · MRR = ARR/12 · Cost in INR · Live &amp; Onboarding rooftops · % Cost/MRR</div></div>
       <div class="cf-row">
         <span class="cf-label">Metric:</span>
         <button class="cf-pill active" data-chart="poc" onclick="setPocMetric('arr',this)">ARR (USD)</button>
@@ -1138,10 +1138,10 @@ function renderKPIs(months){
     var totalContractedARR=0,totalDeliveryCost=0;
     Object.values(ENT_META).forEach(function(meta){if(meta.contractedArr)totalContractedARR+=meta.contractedArr;});
     Object.values(entCostsForKpi).forEach(function(c){totalDeliveryCost+=c;});
-    var totalArrINR=totalContractedARR*83;
+    var totalArrINR=(totalContractedARR/12)*83; // MRR = ARR/12, converted to INR
     var pctCostArr=totalArrINR>0?((totalDeliveryCost/totalArrINR)*100).toFixed(2):'—';
     document.getElementById('ent-kpis').innerHTML=[
-      kpi('% Cost / ARR',pctCostArr+(pctCostArr!=='—'?'%':''),'Delivery Cost ÷ ARR (INR basis)',null,'#f5a42a'),
+      kpi('% Cost / MRR',pctCostArr+(pctCostArr!=='—'?'%':''),'Delivery Cost ÷ MRR (ARR/12 × 83)',null,'#f5a42a'),
       kpi('₹ / Ent',f.inr(entSeg?entSeg.costPerUnit:0),(entSeg?entSeg.name:'Enterprise')+' · ₹/unit',null,'#4f78ff'),
       kpi('₹ / Mid',f.inr(midSeg?midSeg.costPerUnit:0),(midSeg?midSeg.name:'Mid')+' · ₹/unit',null,'#a07cff'),
       kpi('₹ / SMB',f.inr(smbSeg?smbSeg.costPerUnit:0),(smbSeg?smbSeg.name:'SMB')+' · ₹/unit',null,'#22d4a0'),
@@ -1609,7 +1609,7 @@ function renderPocChart(months) {
       type: 'line',
       data: data.map(function(p) {
         if (!p.arr || !p.cost) return 0;
-        var arrINR = p.arr * 83; // Contracted ARR USD → INR at ~83 rate
+        var arrINR = (p.arr / 12) * 83; // MRR = ARR/12, converted to INR
         return +((p.cost / arrINR) * 100).toFixed(2);
       }),
       borderColor: '#f5a42a',
@@ -1638,7 +1638,7 @@ function renderPocChart(months) {
         anchor: 'end', align: 'top', offset: 3, clamp: true,
         formatter: function(v, ctx) {
           var arr = data[ctx.dataIndex].arr, cost = data[ctx.dataIndex].cost;
-          var pct = (arr && cost) ? ((cost / (arr * 83)) * 100).toFixed(1) + '%' : '';
+          var pct = (arr && cost) ? ((cost / ((arr / 12) * 83)) * 100).toFixed(1) + '%' : '';
           var arrFmt = arr >= 1e6 ? '$' + (arr/1e6).toFixed(1) + 'M' : arr >= 1e3 ? '$' + (arr/1e3).toFixed(0) + 'K' : '$' + arr;
           return arrFmt + (pct ? ' | ' + pct : '');
         }
@@ -1696,12 +1696,20 @@ function renderPocChart(months) {
     };
   }
 
+  // Store data for click access (closure may not survive chart rebuild)
+  window._pocData = data;
+  window._pocMonths = months;
+
   mk('ch-poc-arr', {
     type: 'bar',
     data: { labels, datasets },
     options: {
       onClick: function(evt, els) {
-        if (els && els.length) showPocDetail(data[els[0].dataIndex], months);
+        if (els && els.length) {
+          var d = window._pocData;
+          var m = window._pocMonths;
+          if (d && d[els[0].dataIndex]) showPocDetail(d[els[0].dataIndex], m);
+        }
       },
       plugins: {
         legend: { labels: { color: '#F3F4F6', font: { size: 11 }, boxWidth: 10, padding: 12 } },
@@ -1714,12 +1722,12 @@ function renderPocChart(months) {
             },
             label: function(ctx) {
               var v = ctx.raw, d = data[ctx.dataIndex];
-              if (ctx.dataset.label === '% Cost / ARR') return ' % Cost/ARR (INR basis): ' + v.toFixed(2) + '%';
+              if (ctx.dataset.label === '% Cost / ARR') return ' % Cost/MRR (ARR/12×83): ' + v.toFixed(2) + '%';
               if (ctx.dataset.label.includes('ARR')) return ' ARR: ' + (v >= 1e6 ? '$' + (v/1e6).toFixed(2) + 'M' : '$' + v.toLocaleString());
               var costFmt = v >= 1e7 ? '₹' + (v/1e7).toFixed(2) + 'Cr' : v >= 1e5 ? '₹' + (v/1e5).toFixed(2) + 'L' : '₹' + v.toLocaleString('en-IN');
-              var arrINR = d.arr * 83;
+              var arrINR = (d.arr / 12) * 83; // MRR
               var pct = (arrINR && v) ? ((v / arrINR) * 100).toFixed(2) + '%' : '—';
-              return ' Cost: ' + costFmt + ' (' + pct + ' of ARR in INR)';
+              return ' Cost: ' + costFmt + ' (' + pct + ' of MRR)';
             }
           }
         }
@@ -1727,6 +1735,17 @@ function renderPocChart(months) {
       scales
     }
   });
+
+  // Fallback: also bind native canvas click in case Chart.js onClick doesn't fire
+  canvas.style.cursor = 'pointer';
+  canvas.onclick = function(evt) {
+    var chart = CHARTS['ch-poc-arr'];
+    if (!chart) return;
+    var points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, false);
+    if (points.length && window._pocData) {
+      showPocDetail(window._pocData[points[0].index], window._pocMonths || filteredMonths());
+    }
+  };
 }
 
 // ── POC DRILL-DOWN MODAL ──────────────────────────────────────────────────────
@@ -1745,7 +1764,7 @@ function showPocDetail(pocRow, months) {
     var meta = ENT_META[entName] || {};
     var arr  = meta.contractedArr || 0;
     var cost = entCosts[entName] || 0;
-    var arrINR = arr * 83; var pct = (arrINR && cost) ? +((cost / arrINR) * 100).toFixed(2) : 0;
+    var arrINR = (arr / 12) * 83; var pct = (arrINR && cost) ? +((cost / arrINR) * 100).toFixed(2) : 0;
     return { name: entName, arr: arr, cost: cost, pct: pct, segment: meta.segment || '—', activeRooftops: meta.activeRooftops || 0 };
   }).filter(function(a) { return a.arr > 0 || a.cost > 0; })
     .sort(function(a, b) { return (b.arr - a.arr) || (b.cost - a.cost); });
@@ -1754,7 +1773,7 @@ function showPocDetail(pocRow, months) {
   pocName = pocName.charAt(0).toUpperCase() + pocName.slice(1);
   var totalArr  = pocRow.arr;
   var totalCost = pocRow.cost;
-  var totalArrINR = totalArr * 83; var totalPct = (totalArrINR && totalCost) ? ((totalCost / totalArrINR) * 100).toFixed(2) : '—';
+  var totalArrINR = (totalArr / 12) * 83; var totalPct = (totalArrINR && totalCost) ? ((totalCost / totalArrINR) * 100).toFixed(2) : '—';
 
   function fmtArr(v) { return v >= 1e6 ? '$' + (v/1e6).toFixed(2) + 'M' : v >= 1e3 ? '$' + (v/1e3).toFixed(1) + 'K' : '$' + v; }
   function fmtCost(v) { return v >= 1e7 ? '₹' + (v/1e7).toFixed(2) + 'Cr' : v >= 1e5 ? '₹' + (v/1e5).toFixed(2) + 'L' : '₹' + v.toLocaleString('en-IN'); }
@@ -1798,7 +1817,7 @@ function showPocDetail(pocRow, months) {
     +   '</div>'
     +   '<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">'
     +     '<div style="font-size:18px;font-weight:700;color:#f5a42a">' + totalPct + (totalPct !== '—' ? '%' : '') + '</div>'
-    +     '<div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:3px">% Cost / ARR</div>'
+    +     '<div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:3px">% Cost / MRR</div>'
     +   '</div>'
     +   '<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">'
     +     '<div style="font-size:18px;font-weight:700;color:var(--text)">' + accounts.length + '</div>'
@@ -1812,7 +1831,7 @@ function showPocDetail(pocRow, months) {
     +   '<th class="r" style="font-size:10px">Rooftops</th>'
     +   '<th class="r" style="color:#4f78ff">ARR (USD)</th>'
     +   '<th class="r" style="color:#22d4a0">Delivery Cost</th>'
-    +   '<th class="r" style="color:#f5a42a">% Cost/ARR</th>'
+    +   '<th class="r" style="color:#f5a42a">% Cost/MRR</th>'
     + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
 
   modal.appendChild(inner);
