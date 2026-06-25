@@ -446,6 +446,21 @@ select.sel:focus{border-color:var(--blue)}
 <div id="enterprise-view" class="dash-view">
   <div class="kpi-grid" id="ent-kpis" style="margin-bottom:14px"></div>
 
+  <!-- POC ARR vs Delivery Cost chart -->
+  <div class="section" style="margin-bottom:12px">
+    <div class="sec-head">
+      <div><div class="sec-title">POC — Contracted ARR vs Delivery Cost</div>
+      <div class="sec-sub">CS POC (OB POC where CS unavailable) · ARR in USD · Cost in INR · Live &amp; Onboarding rooftops · high to low</div></div>
+      <div class="cf-row">
+        <span class="cf-label">Metric:</span>
+        <button class="cf-pill active" data-chart="poc" onclick="setPocMetric('arr',this)">ARR (USD)</button>
+        <button class="cf-pill" data-chart="poc" onclick="setPocMetric('cost',this)">Delivery Cost</button>
+        <button class="cf-pill" data-chart="poc" onclick="setPocMetric('both',this)">Both</button>
+      </div>
+    </div>
+    <div class="ch"><canvas id="ch-poc-arr" height="110"></canvas></div>
+  </div>
+
   <!-- CHART 2: Segment Breakdown — full width -->
   <div class="section" style="margin-bottom:12px">
     <div class="sec-head">
@@ -577,17 +592,12 @@ const DR={start:null,end:null,preset:'thismonth'};
 
 function filteredMonths(){
   if(!DATA)return[];
-  console.log('[filteredMonths] DR start:', DR.start, 'end:', DR.end, 'preset:', DR.preset);
-  console.log('[filteredMonths] available months:', DATA.months.map(function(m){return m.key;}));
-  // If no date range active, return all
-  if(!DR.start&&!DR.end){console.log('[filteredMonths] no filter → all');return DATA.months;}
+  if(!DR.start&&!DR.end)return DATA.months;
   return DATA.months.filter(function(m){
     const mDate=parseMonthKey(m.key);
-    if(!mDate){console.log('[filteredMonths]',m.key,'→ parseMonthKey failed');return true;}
+    if(!mDate)return true;
     const mStart=new Date(mDate.year,mDate.month,1);
     const mEnd=new Date(mDate.year,mDate.month+1,0);
-    const ok=DR.start&&DR.end?(mStart<=DR.end&&mEnd>=DR.start):(DR.start?mEnd>=DR.start:DR.end?mStart<=DR.end:true);
-    console.log('[filteredMonths]',m.key,'→ mStart:',mStart.toDateString(),'mEnd:',mEnd.toDateString(),'DR.start:',DR.start?.toDateString(),'DR.end:',DR.end?.toDateString(),'match:',ok);
     if(DR.start&&DR.end)return mStart<=DR.end&&mEnd>=DR.start;
     if(DR.start)return mEnd>=DR.start;
     if(DR.end)return mStart<=DR.end;
@@ -1072,7 +1082,6 @@ let _entData=[], _entSort={col:'units',dir:-1};
 // ── RENDER KPIs ──────────────────────────────────────────────────────────────
 function renderKPIs(months){
   try{
-    console.log('[renderKPIs] months count:', months.length, months.map(function(m){return m.month;}));
     const last=months[months.length-1],prev=months.length>1?months[months.length-2]:null;
     // Single month: show that month's data with MoM delta
     // Multiple months: aggregate totals, no delta
@@ -1108,7 +1117,8 @@ function renderKPIs(months){
     function d(k){if(!sp||!sp[k])return null;return((s[k]-sp[k])/sp[k])*100;}
     const tb=last.teamBreakdown||{},ih=tb.inhouse||{},os=tb.os||{};
     const segMap={};
-    (segProdData(last,'all')||[]).forEach(function(sg){if(sg&&sg.name)segMap[sg.name]=sg;});
+    // Use aggregated segments across all filtered months (not just last month)
+    (aggregateSegments(months)||[]).forEach(function(sg){if(sg&&sg.name)segMap[sg.name]=sg;});
     function findSeg(kw){const k=kw.toLowerCase();const m=Object.keys(segMap).find(function(n){return n.toLowerCase().indexOf(k)>=0;});return m?segMap[m]:null;}
     const entSeg=findSeg('ent')||findSeg('enterprise'),midSeg=findSeg('mid'),smbSeg=findSeg('smb'),resSeg=findSeg('resell');
     const knownNames=new Set();[entSeg,midSeg,smbSeg,resSeg].forEach(function(sg){if(sg)knownNames.add(sg.name);});
@@ -1156,6 +1166,7 @@ function renderCharts(months){
   const allMonths=DATA?DATA.months:months;
   if(CURRENT_VIEW==='enterprise'){
     renderChart2(months);
+    renderPocChart(months);
     return;
   }
   renderChart1(allMonths);
@@ -1425,6 +1436,181 @@ function bindEditorSearch(){
 document.addEventListener('DOMContentLoaded',bindEditorSearch);
 
 // ── FETCH ─────────────────────────────────────────────────────────────────────
+// ── POC ARR vs DELIVERY COST CHART ───────────────────────────────────────────
+let POC_METRIC = 'arr'; // 'arr' | 'cost' | 'both'
+
+function setPocMetric(metric, btn) {
+  POC_METRIC = metric;
+  document.querySelectorAll('.cf-pill[data-chart="poc"]').forEach(b => b.classList.remove('active','active-green','active-amber'));
+  if (btn) btn.classList.add('active');
+  if (!DATA) return;
+  const months = filteredMonths();
+  if (months.length) renderPocChart(months);
+}
+
+function buildPocData(months) {
+  // Aggregate delivery cost per enterprise across filtered months
+  const entCosts = {};
+  months.forEach(function(m) {
+    (m.enterpriseBreakdown || []).forEach(function(e) {
+      if (!entCosts[e.name]) entCosts[e.name] = 0;
+      // costPerUnit * units gives approximate cost for this enterprise this month
+      entCosts[e.name] += Math.round((e.costPerUnit || 0) * (e.units || 0));
+    });
+  });
+
+  // Build POC → {arr: $USD summed, cost: INR summed, enterprises: []}
+  const pocMap = {};
+  Object.entries(ENT_META).forEach(function([entName, meta]) {
+    const poc = (meta.csPoc && meta.csPoc !== '') ? meta.csPoc : (meta.obPoc || '');
+    if (!poc) return;
+
+    // Apply CS/OB POC filter
+    const csOk = FILTERS.cspoc.selected.size === 0 || FILTERS.cspoc.selected.size === FILTERS.cspoc.all.length ||
+                 (meta.csPoc && FILTERS.cspoc.selected.has(meta.csPoc));
+    const obOk = FILTERS.obpoc.selected.size === 0 || FILTERS.obpoc.selected.size === FILTERS.obpoc.all.length ||
+                 (meta.obPoc && FILTERS.obpoc.selected.has(meta.obPoc));
+    if (!csOk && !obOk) return;
+
+    // Only include enterprises that have activity in the filtered months
+    if (!entCosts[entName] && (meta.contractedArr || 0) === 0) return;
+
+    if (!pocMap[poc]) pocMap[poc] = { poc, arr: 0, cost: 0, enterprises: [] };
+    pocMap[poc].arr  += (meta.contractedArr || 0);   // USD
+    pocMap[poc].cost += (entCosts[entName] || 0);     // INR
+    pocMap[poc].enterprises.push(entName);
+  });
+
+  // Sort descending by ARR (primary), then by cost
+  return Object.values(pocMap)
+    .filter(function(p) { return p.arr > 0 || p.cost > 0; })
+    .sort(function(a, b) { return (b.arr - a.arr) || (b.cost - a.cost); });
+}
+
+function renderPocChart(months) {
+  const canvas = document.getElementById('ch-poc-arr');
+  if (!canvas) return;
+  if (!Object.keys(ENT_META).length) {
+    // No meta loaded yet — show placeholder
+    const ctx = canvas.getContext('2d');
+    if (ctx) { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+    return;
+  }
+
+  const data = buildPocData(months);
+  if (!data.length) return;
+
+  const labels = data.map(function(p) {
+    const name = p.poc.split('@')[0].replace('.', ' ');
+    return name.charAt(0).toUpperCase() + name.slice(1);
+  });
+
+  const datasets = [];
+
+  if (POC_METRIC === 'arr' || POC_METRIC === 'both') {
+    datasets.push({
+      label: 'Contracted ARR (USD)',
+      data: data.map(function(p) { return p.arr; }),
+      backgroundColor: 'rgba(79,120,255,.8)',
+      borderRadius: 3,
+      yAxisID: 'y',
+      order: 2,
+      barPercentage: POC_METRIC === 'both' ? 0.4 : 0.7,
+      categoryPercentage: 0.8,
+      datalabels: {
+        display: function(ctx) { return ctx.dataset.data[ctx.dataIndex] > 0; },
+        color: '#FFFFFF', font: { size: 9, weight: '600' },
+        anchor: 'end', align: 'top', offset: 2, clamp: true,
+        formatter: function(v) { return v >= 1e6 ? '$' + (v/1e6).toFixed(2) + 'M' : v >= 1e3 ? '$' + (v/1e3).toFixed(1) + 'K' : '$' + v; }
+      }
+    });
+  }
+
+  if (POC_METRIC === 'cost' || POC_METRIC === 'both') {
+    datasets.push({
+      label: 'Delivery Cost (INR)',
+      data: data.map(function(p) { return p.cost; }),
+      backgroundColor: 'rgba(34,212,160,.7)',
+      borderRadius: 3,
+      yAxisID: POC_METRIC === 'both' ? 'y1' : 'y',
+      order: 3,
+      barPercentage: POC_METRIC === 'both' ? 0.4 : 0.7,
+      categoryPercentage: 0.8,
+      datalabels: {
+        display: function(ctx) { return ctx.dataset.data[ctx.dataIndex] > 0; },
+        color: '#22d4a0', font: { size: 9, weight: '600' },
+        anchor: 'end', align: 'top', offset: 2, clamp: true,
+        formatter: function(v) {
+          if (v >= 1e7) return '₹' + (v/1e7).toFixed(2) + 'Cr';
+          if (v >= 1e5) return '₹' + (v/1e5).toFixed(2) + 'L';
+          return '₹' + v.toLocaleString('en-IN');
+        }
+      }
+    });
+  }
+
+  const scales = {
+    x: { ticks: { color: '#F3F4F6', font: { size: 10 } }, grid: { color: 'rgba(60,60,60,.5)' } },
+    y: {
+      type: 'linear', position: 'left',
+      ticks: { color: '#6a82a8', font: { size: 9 },
+        callback: function(v) { return v >= 1e6 ? '$' + (v/1e6).toFixed(1) + 'M' : v >= 1e3 ? '$' + (v/1e3).toFixed(0) + 'K' : '$' + v; }
+      },
+      grid: { color: 'rgba(60,60,60,.5)' }
+    }
+  };
+
+  if (POC_METRIC === 'both') {
+    scales.y.title = { display: true, text: 'ARR (USD)', color: '#4f78ff', font: { size: 10 } };
+    scales.y1 = {
+      type: 'linear', position: 'right',
+      ticks: { color: '#22d4a0', font: { size: 9 },
+        callback: function(v) {
+          if (v >= 1e7) return '₹' + (v/1e7).toFixed(1) + 'Cr';
+          if (v >= 1e5) return '₹' + (v/1e5).toFixed(1) + 'L';
+          return '₹' + v;
+        }
+      },
+      grid: { display: false }
+    };
+  } else if (POC_METRIC === 'cost') {
+    scales.y.ticks.callback = function(v) {
+      if (v >= 1e7) return '₹' + (v/1e7).toFixed(1) + 'Cr';
+      if (v >= 1e5) return '₹' + (v/1e5).toFixed(1) + 'L';
+      return '₹' + v;
+    };
+  }
+
+  mk('ch-poc-arr', {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      plugins: {
+        legend: { labels: { color: '#F3F4F6', font: { size: 11 }, boxWidth: 10, padding: 12 } },
+        tooltip: {
+          mode: 'index', intersect: false,
+          callbacks: {
+            title: function(items) {
+              const d = data[items[0].dataIndex];
+              return d.poc + ' (' + d.enterprises.length + ' enterprise' + (d.enterprises.length > 1 ? 's' : '') + ')';
+            },
+            label: function(ctx) {
+              const v = ctx.raw;
+              if (ctx.dataset.label.includes('ARR')) {
+                return ' ARR: ' + (v >= 1e6 ? '$' + (v/1e6).toFixed(2) + 'M' : '$' + v.toLocaleString());
+              }
+              if (v >= 1e7) return ' Cost: ₹' + (v/1e7).toFixed(2) + 'Cr';
+              if (v >= 1e5) return ' Cost: ₹' + (v/1e5).toFixed(2) + 'L';
+              return ' Cost: ₹' + v.toLocaleString('en-IN');
+            }
+          }
+        }
+      },
+      scales
+    }
+  });
+}
+
 async function fetchMetabaseFallback(){
   try{
     // Call our own Vercel proxy endpoint — avoids CORS and Metabase network restrictions
@@ -1444,7 +1630,7 @@ async function fetchMetabaseFallback(){
     buildDropdown('cspoc',[...csSet].sort());
     buildDropdown('obpoc',[...obSet].sort());
     console.log('[meta] loaded',json.count,'enterprises from /api/meta');
-    const months=filteredMonths();if(months.length)renderTables(months);
+    const months=filteredMonths();if(months.length){renderTables(months);if(CURRENT_VIEW==='enterprise')renderPocChart(months);}
   }catch(e){
     console.warn('[meta] /api/meta failed:',e.message);
   }
