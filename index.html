@@ -827,7 +827,8 @@ function renderKPIs(months){
     const last=months[months.length-1],prev=months.length>1?months[months.length-2]:null;
     // Single month: show that month's data with MoM delta
     // Multiple months: aggregate totals, no delta
-    const isMulti=months.length>1&&(FILTERS.month.selected.size<FILTERS.month.all.length||FILTERS.month.selected.size>1);
+    const monthFilterActive=FILTERS.month.selected.size>0&&FILTERS.month.selected.size<FILTERS.month.all.length;
+    const isMulti=months.length>1&&monthFilterActive;
     let s,sp=null;
     if(isMulti){
       // Sum/avg across all selected months
