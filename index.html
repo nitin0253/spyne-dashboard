@@ -287,7 +287,7 @@ select.sel:focus{border-color:var(--blue)}
         <button class="cf-pill" data-chart="cost" onclick="setChartFilter('cost','video',this)">Video</button>
       </div>
     </div>
-    <div class="ch"><canvas id="ch-cost-trend" height="100"></canvas></div>
+    <div class="ch"><canvas id="ch-cost-trend" height="120"></canvas></div>
   </div>
 
   <!-- CHART 2: Segment Breakdown — full width -->
@@ -306,7 +306,7 @@ select.sel:focus{border-color:var(--blue)}
         <button class="cf-pill" data-chart="segp" onclick="setChartFilter('segp','video',this)">Video</button>
       </div>
     </div>
-    <div class="ch"><canvas id="ch-seg-trend" height="100"></canvas></div>
+    <div class="ch"><canvas id="ch-seg-trend" height="120"></canvas></div>
   </div>
 
   <!-- CHART 3: Top 15 Editors — full width -->
@@ -325,7 +325,7 @@ select.sel:focus{border-color:var(--blue)}
         <button class="cf-pill" data-chart="edp" onclick="setChartFilter('edp','video',this)">Video</button>
       </div>
     </div>
-    <div class="ch"><canvas id="ch-ed-cost" height="130"></canvas></div>
+    <div class="ch"><canvas id="ch-ed-cost" height="150"></canvas></div>
   </div>
 
   <!-- CHART 4: Product Breakdown — full width -->
@@ -344,7 +344,7 @@ select.sel:focus{border-color:var(--blue)}
         <button class="cf-pill" data-chart="prodm" onclick="setChartFilter('prodm','cost',this)">Cost</button>
       </div>
     </div>
-    <div class="ch"><canvas id="ch-prod-trend" height="100"></canvas></div>
+    <div class="ch"><canvas id="ch-prod-trend" height="120"></canvas></div>
   </div>
 
   <!-- Top Enterprises — full width, Segment Summary removed -->
@@ -459,7 +459,7 @@ function mk(id,cfg){
   if(CHARTS[id]){CHARTS[id].destroy();delete CHARTS[id];}
   const el=document.getElementById(id);if(!el)return;
   const opts=deepMerge(JSON.parse(JSON.stringify(BASE)),cfg.options||{});
-  if(['bar','line'].includes(cfg.type)){if(!opts.layout)opts.layout={};if(!opts.layout.padding)opts.layout.padding={};opts.layout.padding.top=opts.layout.padding.top||30;}
+  if(['bar','line'].includes(cfg.type)){if(!opts.layout)opts.layout={};if(!opts.layout.padding)opts.layout.padding={};opts.layout.padding.top=opts.layout.padding.top||40;}
   if(cfg._lf&&cfg.data?.datasets){cfg.data.datasets.forEach(ds=>{if(!ds.datalabels)ds.datalabels={display:ctx=>{const v=ctx.dataset.data[ctx.dataIndex];return v!=null&&v!==0;},color:'#dce8f8',font:{size:10,weight:'500'},anchor:'end',align:'top',offset:3,clamp:true,formatter:cfg._lf};});}
   CHARTS[id]=new Chart(el,{...cfg,options:opts});
 }
@@ -985,33 +985,28 @@ document.addEventListener('DOMContentLoaded',bindEditorSearch);
 
 // ── FETCH ─────────────────────────────────────────────────────────────────────
 async function fetchMetabaseFallback(){
-  const URL='https://metabase.spyne.ai/public/question/84265073-fe7b-4ee1-81d7-5eb37a7e9b2f.csv';
   try{
-    const res=await fetch(URL);
-    if(!res.ok)return;
-    const text=await res.text();
-    const lines=text.trim().split('\n');if(lines.length<2)return;
-    function parseLine(line){const cols=[];let cur='',inQ=false;for(let i=0;i<line.length;i++){const c=line[i];if(c==='"'&&!inQ){inQ=true;}else if(c==='"'&&inQ&&line[i+1]==='"'){cur+='"';i++;}else if(c==='"'&&inQ){inQ=false;}else if(c===','&&!inQ){cols.push(cur);cur='';}else{cur+=c;}}cols.push(cur);return cols;}
-    const headers=parseLine(lines[0]);
-    const idx={name:headers.findIndex(h=>/enterprise name/i.test(h)),seg:headers.findIndex(h=>/customer segment/i.test(h)),csPoc:headers.findIndex(h=>/cs poc/i.test(h)),obPoc:headers.findIndex(h=>/ob poc/i.test(h)),liveArr:headers.findIndex(h=>/live arr/i.test(h))};
-    const newMeta={};const csSet=new Set(),obSet=new Set();
-    lines.slice(1).forEach(function(line){
-      if(!line.trim())return;
-      const cols=parseLine(line);
-      const name=(cols[idx.name]||'').trim();if(!name)return;
-      const cs=(cols[idx.csPoc]||'').trim(),ob=(cols[idx.obPoc]||'').trim();
-      if(!newMeta[name]){newMeta[name]={segment:(cols[idx.seg]||'').trim(),csPoc:cs,obPoc:ob,liveArr:(cols[idx.liveArr]||'').trim()};}
-      else{if(!newMeta[name].segment&&cols[idx.seg])newMeta[name].segment=(cols[idx.seg]||'').trim();if(!newMeta[name].csPoc&&cs)newMeta[name].csPoc=cs;if(!newMeta[name].obPoc&&ob)newMeta[name].obPoc=ob;if(!newMeta[name].liveArr&&cols[idx.liveArr])newMeta[name].liveArr=(cols[idx.liveArr]||'').trim();}
-      if(cs)csSet.add(cs);if(ob)obSet.add(ob);
+    // Call our own Vercel proxy endpoint — avoids CORS and Metabase network restrictions
+    const res=await fetch('/api/meta');
+    if(!res.ok){console.warn('[meta] HTTP',res.status);return;}
+    const json=await res.json();
+    if(!json.enterpriseMeta||!Object.keys(json.enterpriseMeta).length){
+      console.warn('[meta] empty response');return;
+    }
+    ENT_META=json.enterpriseMeta;
+    if(DATA)DATA.enterpriseMeta=json.enterpriseMeta;
+    const csSet=new Set(),obSet=new Set();
+    Object.values(json.enterpriseMeta).forEach(function(m){
+      if(m.csPoc)csSet.add(m.csPoc);
+      if(m.obPoc)obSet.add(m.obPoc);
     });
-    ENT_META=newMeta;
-    if(DATA)DATA.enterpriseMeta=newMeta;
     buildDropdown('cspoc',[...csSet].sort());
     buildDropdown('obpoc',[...obSet].sort());
-    console.log('[Metabase fallback] loaded',Object.keys(newMeta).length,'enterprises');
-    // Re-render enterprise table with enriched data
+    console.log('[meta] loaded',json.count,'enterprises from /api/meta');
     const months=filteredMonths();if(months.length)renderTables(months);
-  }catch(e){console.warn('[Metabase fallback] failed:',e.message);}
+  }catch(e){
+    console.warn('[meta] /api/meta failed:',e.message);
+  }
 }
 
 async function fetchData(){
