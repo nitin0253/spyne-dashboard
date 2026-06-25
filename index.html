@@ -560,10 +560,45 @@ function prodFilteredSummary(m,prodKey){
   FILTERS.product.selected=prevSel;FILTERS.product.all=prevAll;
   return result;
 }
+function productKeyMatches(name,prodKey){
+  if(!passesFilter('product',name))return false;
+  if(prodKey==='image')return /image/i.test(name);
+  if(prodKey==='360')return /360|spin/i.test(name);
+  if(prodKey==='video')return /video/i.test(name);
+  return true;
+}
+function summarizeProductMap(name,base,prodKey){
+  const hasProductData=base.byProduct&&Object.keys(base.byProduct).length;
+  if(!hasProductData){
+    const productFilterActive=FILTERS.product.selected.size>0&&FILTERS.product.selected.size<FILTERS.product.all.length;
+    return productFilterActive?null:base;
+  }
+  const rows=Object.entries(base.byProduct||{}).filter(function(kv){return productKeyMatches(kv[0],prodKey||'all');});
+  if(!rows.length)return null;
+  const total=rows.reduce(function(acc,kv){
+    const pd=kv[1]||{};
+    acc.units+=(pd.units||0);acc.skus+=(pd.skus||0);acc.images+=(pd.images||0);acc.vins+=(pd.vins||0);
+    acc.actualMins+=(pd.actualMins||0);acc.sumTarget+=(pd.sumTarget||0);
+    acc.cost+=(pd.cost!=null?pd.cost:(pd.costPerUnit||0)*(pd.units||0));
+    return acc;
+  },{units:0,skus:0,images:0,vins:0,actualMins:0,sumTarget:0,cost:0});
+  return {
+    ...base,name,units:Math.round(total.units),skus:Math.round(total.skus),images:Math.round(total.images),vins:Math.round(total.vins),
+    actualMins:Math.round(total.actualMins),sumTarget:Math.round(total.sumTarget),
+    efficiency:total.actualMins>0?+((total.sumTarget/total.actualMins)*100).toFixed(2):0,
+    costPerUnit:total.units>0?+(total.cost/total.units).toFixed(2):0,
+    costShare:0,
+  };
+}
 function segProdData(m,prodKey){
   const segs=filterBreakdown(m.segmentBreakdown,'segment');
-  if(prodKey==='all')return segs;
-  return segs.map(sg=>{const entry=Object.entries(sg.byProduct||{}).find(([k])=>{if(prodKey==='image')return /image/i.test(k);if(prodKey==='360')return /360|spin/i.test(k);if(prodKey==='video')return /video/i.test(k);return false;});if(!entry)return null;const pd=entry[1];return{...sg,units:pd.units||0,vins:pd.vins||0,actualMins:pd.actualMins||0,costPerUnit:pd.costPerUnit||0};}).filter(Boolean).filter(s=>(s.units||0)+(s.vins||0)>0);
+  const rows=segs.map(function(sg){return summarizeProductMap(sg.name,sg,prodKey);}).filter(Boolean).filter(s=>(s.units||0)+(s.vins||0)>0);
+  const totalCost=rows.reduce(function(sum,s){return sum+(s.costPerUnit||0)*(s.units||0);},0)||1;
+  rows.forEach(function(s){s.costShare=+(((s.costPerUnit||0)*(s.units||0)/totalCost)*100).toFixed(2);});
+  return rows;
+}
+function enterpriseProdData(m){
+  return (m.enterpriseBreakdown||[]).map(function(e){return summarizeProductMap(e.name,e,'all');}).filter(Boolean).filter(e=>(e.units||0)+(e.vins||0)>0);
 }
 
 // Dropdown management
@@ -683,7 +718,7 @@ function showEnterpriseDetail(name,e){
   const seg=e.segment||meta.segment||'';
   const months=filteredMonths();
   const monthRows=months.map(function(m){
-    const eb=m.enterpriseBreakdown.find(function(x){return x.name===name;});
+    const eb=enterpriseProdData(m).find(function(x){return x.name===name;});
     return eb?{month:m.month,units:eb.units,vins:eb.vins,efficiency:eb.efficiency,costPerUnit:eb.costPerUnit}:null;
   }).filter(Boolean);
   const trendRows=monthRows.map(function(r){
@@ -823,7 +858,7 @@ function renderKPIs(months){
     function d(k){if(!sp||!sp[k])return null;return((s[k]-sp[k])/sp[k])*100;}
     const tb=last.teamBreakdown||{},ih=tb.inhouse||{},os=tb.os||{};
     const segMap={};
-    (filterBreakdown(last.segmentBreakdown,'segment')||[]).forEach(function(sg){if(sg&&sg.name)segMap[sg.name]=sg;});
+    (segProdData(last,'all')||[]).forEach(function(sg){if(sg&&sg.name)segMap[sg.name]=sg;});
     function findSeg(kw){const k=kw.toLowerCase();const m=Object.keys(segMap).find(function(n){return n.toLowerCase().indexOf(k)>=0;});return m?segMap[m]:null;}
     const entSeg=findSeg('ent')||findSeg('enterprise'),midSeg=findSeg('mid'),smbSeg=findSeg('smb'),resSeg=findSeg('resell');
     const knownNames=new Set();[entSeg,midSeg,smbSeg,resSeg].forEach(function(sg){if(sg)knownNames.add(sg.name);});
@@ -997,8 +1032,8 @@ function renderEntTable(){
 
 function renderTables(months){
   const m=months[months.length-1];
-  _segData=filterBreakdown(m.segmentBreakdown,'segment');renderSegTable();
-  _entData=m.enterpriseBreakdown;renderEntTable();
+  _segData=segProdData(m,'all');renderSegTable();
+  _entData=enterpriseProdData(m);renderEntTable();
 }
 
 // ── 4. PRODUCTS ──────────────────────────────────────────────────────────────
