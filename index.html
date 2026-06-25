@@ -1210,16 +1210,45 @@ function renderChart2(months){
   segDS.forEach(function(ds){ds.datalabels.formatter=function(v){return smFmt(v);};});
   mk('ch-seg-trend',{type:'bar',data:{labels,datasets:segDS},options:{onClick:function(evt,els){if(els.length)showMonthDetail(months[els[0].index],'segment',allSegNames[els[0].datasetIndex]);},plugins:{legend:{position:'bottom',labels:{color:'#F3F4F6',font:{size:11},boxWidth:10,padding:10}},tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){return ctx.dataset.label+': '+smFmt(ctx.raw);},footer:function(items){const t=items.reduce(function(s,i){return s+i.raw;},0);return t>0?'Total: '+smFmt(t):'';}}},scales:{x:{stacked:true,ticks:{color:'#F3F4F6',font:{size:11}},grid:{color:'rgba(60,60,60,.5)'}},y:{stacked:true,ticks:{color:'#F3F4F6',font:{size:10},callback:smFmt},grid:{color:'rgba(60,60,60,.5)'}}}}}});
 }
+function aggregateEditors(months){
+  // Aggregate editor data across all filtered months
+  const acc={};
+  months.forEach(function(m){
+    filterBreakdown(m.editorBreakdown,'editor').forEach(function(e){
+      if(!acc[e.email])acc[e.email]={
+        email:e.email,teamType:e.teamType||'',
+        units:0,actualMins:0,sumTarget:0,salary:0,
+        byProduct:{}
+      };
+      const a=acc[e.email];
+      a.units+=e.units||0;
+      a.actualMins+=e.actualMins||0;
+      a.sumTarget+=e.sumTarget||0;
+      a.salary+=(e.salary||0);
+      // Merge byProduct
+      Object.entries(e.byProduct||{}).forEach(function(kv){
+        a.byProduct[kv[0]]=(a.byProduct[kv[0]]||0)+kv[1];
+      });
+    });
+  });
+  return Object.values(acc).map(function(e){
+    e.efficiency=e.actualMins>0?+((e.sumTarget/e.actualMins)*100).toFixed(2):0;
+    e.costPerUnit=e.units>0?+(e.salary/e.units).toFixed(2):0;
+    return e;
+  }).filter(function(e){return e.units>0;});
+}
+
 function renderChart3(months){
   const em=CF.ed,ep=CF.edp||'all',lastM=months[months.length-1];
-  let edFilt=filterBreakdown(lastM.editorBreakdown,'editor');
-  if(ep!=='all'){const pk=ep==='image'?/image/i:ep==='360'?/360|spin/i:/video/i;edFilt=edFilt.map(function(e){const u=Object.entries(e.byProduct||{}).filter(function(kv){return pk.test(kv[0]);}).reduce(function(s,kv){return s+kv[1];},0);return{...e,units:u};}).filter(function(e){return e.units>0;});}
+  // Aggregate across ALL filtered months (not just last month)
+  let edFilt=aggregateEditors(months);
+  if(ep!=='all'){const pk=ep==='image'?/image/i:ep==='360'?/360|spin/i:/video/i;edFilt=edFilt.map(function(e){const u=Object.entries(e.byProduct||{}).filter(function(kv){return pk.test(kv[0]);}).reduce(function(s,kv){return s+kv[1];},0);return{...e,units:u,costPerUnit:u>0?+(e.salary/u).toFixed(2):0};}).filter(function(e){return e.units>0;});}
   function edVal(e,m){if(m==='costPerUnit')return e.costPerUnit||0;if(m==='units')return e.units||0;return e.efficiency||0;}
   function edFmt(v,m){if(m==='costPerUnit')return'\u20b9'+Number(v).toFixed(2);if(m==='efficiency')return v.toFixed(2)+'%';return f.short(v);}
   const top15=[...edFilt].sort(function(a,b){return edVal(b,em)-edVal(a,em);}).slice(0,15);
   const edColors=top15.map(function(e){return/payroll/i.test(e.teamType)?'#22d4a0':'#f5a42a';});
   const subEl=document.getElementById('ed-chart-sub');if(subEl)subEl.textContent=lastM.month+(ep!=='all'?' \u00b7 '+ep:'')+' \u00b7 \uD83D\uDFE2 Inhouse  \uD83D\uDFE1 OS';
-  mk('ch-ed-cost',{type:'bar',data:{labels:top15.map(function(e){return f.email(e.email);}),datasets:[{label:em==='costPerUnit'?'\u20b9/Unit':em==='efficiency'?'Efficiency':'Units',data:top15.map(function(e){return edVal(e,em);}),backgroundColor:edColors,borderRadius:[0,3,3,0],datalabels:{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:'#FFFFFF',font:{size:10,weight:'600'},anchor:'end',align:'right',offset:5,formatter:function(v){return edFmt(v,em);}}}]},options:{indexAxis:'y',layout:{padding:{right:70}},onClick:function(evt,els){if(els.length)showEditorDetail(top15[els[0].index]);},plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return edFmt(ctx.raw,em);}}}},scales:{x:{ticks:{color:'#F3F4F6',font:{size:10},callback:function(v){return em==='costPerUnit'?'\u20b9'+v:em==='efficiency'?v+'%':f.short(v);}},grid:{color:'rgba(60,60,60,.5)'}},y:{ticks:{color:'#F3F4F6',font:{size:10.5}},grid:{display:false}}}}});
+  mk('ch-ed-cost',{type:'bar',data:{labels:top15.map(function(e){return f.email(e.email);}),datasets:[{label:em==='costPerUnit'?'\u20b9/Unit':em==='efficiency'?'Efficiency':'Units',data:top15.map(function(e){return edVal(e,em);}),backgroundColor:edColors,borderRadius:[0,3,3,0],datalabels:{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:'#FFFFFF',font:{size:10,weight:'600'},anchor:'end',align:'right',offset:5,formatter:function(v,ctx){const e=top15[ctx.dataIndex];if(em==='costPerUnit')return edFmt(v,em)+' ('+f.short(e.units)+')';if(em==='efficiency')return edFmt(v,em)+' ('+f.short(e.units)+')';return edFmt(v,em);}}}]},options:{indexAxis:'y',layout:{padding:{right:110}},onClick:function(evt,els){if(els.length)showEditorDetail(top15[els[0].index]);},plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){const e=top15[ctx.dataIndex];if(em==='costPerUnit')return' ₹/Unit: ₹'+Number(ctx.raw).toFixed(2)+' | Units: '+f.num(e.units);if(em==='efficiency')return' Efficiency: '+ctx.raw.toFixed(2)+'%';return' Units: '+f.short(ctx.raw);}}}},scales:{x:{ticks:{color:'#F3F4F6',font:{size:10},callback:function(v){return em==='costPerUnit'?'\u20b9'+v:em==='efficiency'?v+'%':f.short(v);}},grid:{color:'rgba(60,60,60,.5)'}},y:{ticks:{color:'#F3F4F6',font:{size:10.5}},grid:{display:false}}}}});
 }
 function renderChart4(months){
   const labels=months.map(m=>m.month.replace('-26','')),pp=CF.prod,pm=CF.prodm;
@@ -1490,15 +1519,14 @@ function buildPocData(months) {
 function renderPocChart(months) {
   const canvas = document.getElementById('ch-poc-arr');
   if (!canvas) return;
-  if (!Object.keys(ENT_META).length) {
-    // No meta loaded yet — show placeholder
-    const ctx = canvas.getContext('2d');
-    if (ctx) { ctx.clearRect(0, 0, canvas.width, canvas.height); }
-    return;
-  }
+  if (!Object.keys(ENT_META).length) return;
 
   const data = buildPocData(months);
   if (!data.length) return;
+
+  // Store for click access
+  window._pocChartData = data;
+  window._pocChartMonths = months;
 
   const labels = data.map(function(p) {
     const name = p.poc.split('@')[0].replace('.', ' ');
@@ -1506,19 +1534,23 @@ function renderPocChart(months) {
   });
 
   const datasets = [];
+  const isStacked = POC_METRIC === 'both';
 
   if (POC_METRIC === 'arr' || POC_METRIC === 'both') {
     datasets.push({
       label: 'Contracted ARR (USD)',
       data: data.map(function(p) { return p.arr; }),
       backgroundColor: 'rgba(79,120,255,.8)',
-      borderRadius: 3,
-      yAxisID: 'y',
-      order: 2,
-      barPercentage: POC_METRIC === 'both' ? 0.4 : 0.7,
-      categoryPercentage: 0.8,
+      borderRadius: isStacked ? 0 : 3,
+      yAxisID: 'y', order: 2,
+      stack: isStacked ? 'poc' : undefined,
+      barPercentage: 0.7, categoryPercentage: 0.8,
       datalabels: {
-        display: function(ctx) { return ctx.dataset.data[ctx.dataIndex] > 0; },
+        display: function(ctx) {
+          if (!isStacked) return ctx.dataset.data[ctx.dataIndex] > 0;
+          // on stacked: show on top of last dataset
+          var t=0; ctx.chart.data.datasets.forEach(function(d){t+=(+d.data[ctx.dataIndex]||0);}); return false;
+        },
         color: '#FFFFFF', font: { size: 9, weight: '600' },
         anchor: 'end', align: 'top', offset: 2, clamp: true,
         formatter: function(v) { return v >= 1e6 ? '$' + (v/1e6).toFixed(2) + 'M' : v >= 1e3 ? '$' + (v/1e3).toFixed(1) + 'K' : '$' + v; }
@@ -1531,37 +1563,96 @@ function renderPocChart(months) {
       label: 'Delivery Cost (INR)',
       data: data.map(function(p) { return p.cost; }),
       backgroundColor: 'rgba(34,212,160,.7)',
-      borderRadius: 3,
-      yAxisID: POC_METRIC === 'both' ? 'y1' : 'y',
-      order: 3,
-      barPercentage: POC_METRIC === 'both' ? 0.4 : 0.7,
-      categoryPercentage: 0.8,
-      datalabels: {
-        display: function(ctx) { return ctx.dataset.data[ctx.dataIndex] > 0; },
-        color: '#22d4a0', font: { size: 9, weight: '600' },
-        anchor: 'end', align: 'top', offset: 2, clamp: true,
-        formatter: function(v) {
-          if (v >= 1e7) return '₹' + (v/1e7).toFixed(2) + 'Cr';
-          if (v >= 1e5) return '₹' + (v/1e5).toFixed(2) + 'L';
-          return '₹' + v.toLocaleString('en-IN');
-        }
-      }
+      borderRadius: isStacked ? [3,3,0,0] : 3,
+      yAxisID: isStacked ? 'y2' : 'y', order: 3,
+      stack: isStacked ? 'poc' : undefined,
+      barPercentage: 0.7, categoryPercentage: 0.8,
+      datalabels: { display: false }
     });
   }
 
+  // "Both" stacked mode: show % line + stack total label
+  if (isStacked) {
+    // % of delivery cost against ARR as a line (right axis)
+    datasets.push({
+      label: '% Cost / ARR',
+      type: 'line',
+      data: data.map(function(p) {
+        if (!p.arr || !p.cost) return 0;
+        // Convert cost INR to USD roughly (or keep as ratio: cost/arr*100)
+        return +((p.cost / (p.arr * 83)) * 100).toFixed(2); // ~83 INR/USD
+      }),
+      borderColor: '#f5a42a',
+      borderWidth: 2.5,
+      tension: 0.3,
+      pointBackgroundColor: '#f5a42a',
+      pointRadius: 5,
+      yAxisID: 'y3',
+      order: 1,
+      fill: false,
+      stack: undefined,
+      datalabels: {
+        display: function(ctx) { return ctx.dataset.data[ctx.dataIndex] > 0; },
+        color: '#f5a42a', font: { size: 9, weight: '700' },
+        anchor: 'center', align: 'top', offset: 8,
+        formatter: function(v) { return v.toFixed(1) + '%'; }
+      }
+    });
+    // Stack total label on last bar dataset (Delivery Cost)
+    if (datasets[1]) {
+      datasets[1].datalabels = {
+        display: function(ctx) {
+          var t = 0; ctx.chart.data.datasets.slice(0,2).forEach(function(d){t+=(+d.data[ctx.dataIndex]||0);}); return t > 0;
+        },
+        color: '#FFFFFF', font: { size: 9, weight: '700' },
+        anchor: 'end', align: 'top', offset: 3, clamp: true,
+        formatter: function(v, ctx) {
+          var arr = data[ctx.dataIndex].arr, cost = data[ctx.dataIndex].cost;
+          var pct = (arr && cost) ? ((cost / (arr * 83)) * 100).toFixed(1) + '%' : '';
+          var arrFmt = arr >= 1e6 ? '$' + (arr/1e6).toFixed(1) + 'M' : arr >= 1e3 ? '$' + (arr/1e3).toFixed(0) + 'K' : '$' + arr;
+          return arrFmt + (pct ? ' | ' + pct : '');
+        }
+      };
+    }
+  }
+
   const scales = {
-    x: { ticks: { color: '#F3F4F6', font: { size: 10 } }, grid: { color: 'rgba(60,60,60,.5)' } },
+    x: {
+      stacked: isStacked,
+      ticks: { color: '#F3F4F6', font: { size: 10 } },
+      grid: { color: 'rgba(60,60,60,.5)' }
+    },
     y: {
+      stacked: isStacked,
       type: 'linear', position: 'left',
       ticks: { color: '#6a82a8', font: { size: 9 },
-        callback: function(v) { return v >= 1e6 ? '$' + (v/1e6).toFixed(1) + 'M' : v >= 1e3 ? '$' + (v/1e3).toFixed(0) + 'K' : '$' + v; }
+        callback: function(v) {
+          if (POC_METRIC === 'cost') {
+            if (v >= 1e7) return '₹' + (v/1e7).toFixed(1) + 'Cr';
+            if (v >= 1e5) return '₹' + (v/1e5).toFixed(1) + 'L';
+            return '₹' + v;
+          }
+          return v >= 1e6 ? '$' + (v/1e6).toFixed(1) + 'M' : v >= 1e3 ? '$' + (v/1e3).toFixed(0) + 'K' : '$' + v;
+        }
       },
       grid: { color: 'rgba(60,60,60,.5)' }
     }
   };
 
-  if (POC_METRIC === 'both') {
-    scales.y.title = { display: true, text: 'ARR (USD)', color: '#4f78ff', font: { size: 10 } };
+  if (isStacked) {
+    scales.y2 = {
+      stacked: true,
+      type: 'linear', position: 'left',
+      display: false,
+      grid: { display: false }
+    };
+    scales.y3 = {
+      type: 'linear', position: 'right',
+      ticks: { color: '#f5a42a', font: { size: 9 }, callback: function(v) { return v.toFixed(0) + '%'; } },
+      grid: { display: false },
+      title: { display: true, text: '% Cost / ARR', color: '#f5a42a', font: { size: 10 } }
+    };
+  } else if (POC_METRIC === 'both') {
     scales.y1 = {
       type: 'linear', position: 'right',
       ticks: { color: '#22d4a0', font: { size: 9 },
@@ -1573,35 +1664,31 @@ function renderPocChart(months) {
       },
       grid: { display: false }
     };
-  } else if (POC_METRIC === 'cost') {
-    scales.y.ticks.callback = function(v) {
-      if (v >= 1e7) return '₹' + (v/1e7).toFixed(1) + 'Cr';
-      if (v >= 1e5) return '₹' + (v/1e5).toFixed(1) + 'L';
-      return '₹' + v;
-    };
   }
 
   mk('ch-poc-arr', {
     type: 'bar',
     data: { labels, datasets },
     options: {
+      onClick: function(evt, els) {
+        if (els && els.length) showPocDetail(data[els[0].dataIndex], months);
+      },
       plugins: {
         legend: { labels: { color: '#F3F4F6', font: { size: 11 }, boxWidth: 10, padding: 12 } },
         tooltip: {
           mode: 'index', intersect: false,
           callbacks: {
             title: function(items) {
-              const d = data[items[0].dataIndex];
-              return d.poc + ' (' + d.enterprises.length + ' enterprise' + (d.enterprises.length > 1 ? 's' : '') + ')';
+              var d = data[items[0].dataIndex];
+              return d.poc + ' (' + d.enterprises.length + ' account' + (d.enterprises.length > 1 ? 's' : '') + ')';
             },
             label: function(ctx) {
-              const v = ctx.raw;
-              if (ctx.dataset.label.includes('ARR')) {
-                return ' ARR: ' + (v >= 1e6 ? '$' + (v/1e6).toFixed(2) + 'M' : '$' + v.toLocaleString());
-              }
-              if (v >= 1e7) return ' Cost: ₹' + (v/1e7).toFixed(2) + 'Cr';
-              if (v >= 1e5) return ' Cost: ₹' + (v/1e5).toFixed(2) + 'L';
-              return ' Cost: ₹' + v.toLocaleString('en-IN');
+              var v = ctx.raw, d = data[ctx.dataIndex];
+              if (ctx.dataset.label === '% Cost / ARR') return ' % Cost/ARR: ' + v.toFixed(2) + '%';
+              if (ctx.dataset.label.includes('ARR')) return ' ARR: ' + (v >= 1e6 ? '$' + (v/1e6).toFixed(2) + 'M' : '$' + v.toLocaleString());
+              var costFmt = v >= 1e7 ? '₹' + (v/1e7).toFixed(2) + 'Cr' : v >= 1e5 ? '₹' + (v/1e5).toFixed(2) + 'L' : '₹' + v.toLocaleString('en-IN');
+              var pct = (d.arr && v) ? ((v / (d.arr * 83)) * 100).toFixed(2) + '%' : '—';
+              return ' Cost: ' + costFmt + ' (' + pct + ' of ARR)';
             }
           }
         }
@@ -1610,6 +1697,99 @@ function renderPocChart(months) {
     }
   });
 }
+
+// ── POC DRILL-DOWN MODAL ──────────────────────────────────────────────────────
+function showPocDetail(pocRow, months) {
+  // Build account-wise breakdown for this POC
+  const entCosts = {};
+  months.forEach(function(m) {
+    (m.enterpriseBreakdown || []).forEach(function(e) {
+      if (!entCosts[e.name]) entCosts[e.name] = 0;
+      entCosts[e.name] += Math.round((e.costPerUnit || 0) * (e.units || 0));
+    });
+  });
+
+  // Collect accounts under this POC
+  var accounts = pocRow.enterprises.map(function(entName) {
+    var meta = ENT_META[entName] || {};
+    var arr  = meta.contractedArr || 0;
+    var cost = entCosts[entName] || 0;
+    var pct  = (arr && cost) ? +((cost / (arr * 83)) * 100).toFixed(2) : 0;
+    return { name: entName, arr: arr, cost: cost, pct: pct, segment: meta.segment || '—', activeRooftops: meta.activeRooftops || 0 };
+  }).filter(function(a) { return a.arr > 0 || a.cost > 0; })
+    .sort(function(a, b) { return (b.arr - a.arr) || (b.cost - a.cost); });
+
+  var pocName = pocRow.poc.split('@')[0].replace('.', ' ');
+  pocName = pocName.charAt(0).toUpperCase() + pocName.slice(1);
+  var totalArr  = pocRow.arr;
+  var totalCost = pocRow.cost;
+  var totalPct  = (totalArr && totalCost) ? ((totalCost / (totalArr * 83)) * 100).toFixed(2) : '—';
+
+  function fmtArr(v) { return v >= 1e6 ? '$' + (v/1e6).toFixed(2) + 'M' : v >= 1e3 ? '$' + (v/1e3).toFixed(1) + 'K' : '$' + v; }
+  function fmtCost(v) { return v >= 1e7 ? '₹' + (v/1e7).toFixed(2) + 'Cr' : v >= 1e5 ? '₹' + (v/1e5).toFixed(2) + 'L' : '₹' + v.toLocaleString('en-IN'); }
+
+  var rows = accounts.map(function(a, i) {
+    var segBadge = a.segment !== '—' ? '<span class="seg" style="background:' + sc(a.segment) + '22;color:' + sc(a.segment) + ';font-size:9px">' + a.segment + '</span>' : '—';
+    var pctBar = a.pct > 0 ? '<div style="display:inline-block;width:' + Math.min(a.pct * 2, 80) + 'px;height:4px;background:' + (a.pct > 10 ? '#f0566a' : a.pct > 5 ? '#f5a42a' : '#22d4a0') + ';border-radius:2px;vertical-align:middle;margin-left:4px"></div>' : '';
+    return '<tr>'
+      + '<td class="rank-num">' + (i+1) + '</td>'
+      + '<td class="bright" style="max-width:200px;overflow:hidden;text-overflow:ellipsis" title="' + a.name + '">' + a.name + '</td>'
+      + '<td>' + segBadge + '</td>'
+      + '<td style="font-size:10px;color:var(--muted);text-align:right">' + (a.activeRooftops || '—') + '</td>'
+      + '<td class="r" style="color:#4f78ff;font-weight:600">' + fmtArr(a.arr) + '</td>'
+      + '<td class="r" style="color:#22d4a0">' + fmtCost(a.cost) + '</td>'
+      + '<td class="r" style="color:' + (a.pct > 10 ? '#f0566a' : a.pct > 5 ? '#f5a42a' : '#aaaaaa') + '">' + (a.pct ? a.pct.toFixed(2) + '%' : '—') + pctBar + '</td>'
+      + '</tr>';
+  }).join('');
+
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(10,10,10,.9);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
+
+  var inner = document.createElement('div');
+  inner.style.cssText = 'background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:800px;max-width:95vw;max-height:88vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.7)';
+  inner.innerHTML = ''
+    + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px">'
+    +   '<div>'
+    +     '<div style="font-weight:700;font-size:16px;color:var(--text)">' + pocName + '</div>'
+    +     '<div style="font-size:11px;color:var(--muted);margin-top:2px">' + pocRow.poc + '</div>'
+    +   '</div>'
+    +   '<button id="poc-close-btn" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;line-height:1">✕</button>'
+    + '</div>'
+    // Summary KPIs
+    + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">'
+    +   '<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">'
+    +     '<div style="font-size:18px;font-weight:700;color:#4f78ff">' + fmtArr(totalArr) + '</div>'
+    +     '<div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:3px">Contracted ARR (USD)</div>'
+    +   '</div>'
+    +   '<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">'
+    +     '<div style="font-size:18px;font-weight:700;color:#22d4a0">' + fmtCost(totalCost) + '</div>'
+    +     '<div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:3px">Delivery Cost (INR)</div>'
+    +   '</div>'
+    +   '<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">'
+    +     '<div style="font-size:18px;font-weight:700;color:#f5a42a">' + totalPct + (totalPct !== '—' ? '%' : '') + '</div>'
+    +     '<div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:3px">% Cost / ARR</div>'
+    +   '</div>'
+    +   '<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">'
+    +     '<div style="font-size:18px;font-weight:700;color:var(--text)">' + accounts.length + '</div>'
+    +     '<div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:3px">Accounts</div>'
+    +   '</div>'
+    + '</div>'
+    // Table
+    + '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px">Account Breakdown</div>'
+    + '<div class="tbl-wrap"><table><thead><tr>'
+    +   '<th>#</th><th>Account</th><th>Segment</th>'
+    +   '<th class="r" style="font-size:10px">Rooftops</th>'
+    +   '<th class="r" style="color:#4f78ff">ARR (USD)</th>'
+    +   '<th class="r" style="color:#22d4a0">Delivery Cost</th>'
+    +   '<th class="r" style="color:#f5a42a">% Cost/ARR</th>'
+    + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+
+  modal.appendChild(inner);
+  inner.querySelector('#poc-close-btn').onclick = function() { modal.remove(); };
+  modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
+  document.body.appendChild(modal);
+}
+
 
 async function fetchMetabaseFallback(){
   try{
