@@ -433,7 +433,7 @@ select.sel:focus{border-color:var(--blue)}
         <th class="r" onclick="cycleSortUS('vidUnits')" style="cursor:pointer">Vid Units<span id="su-vidUnits" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
         <th class="r" onclick="cycleSortUS('vidCost')" style="cursor:pointer">Vid Cost<span id="su-vidCost" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
         <th class="r" onclick="cycleSortUS('totalUnits')" style="cursor:pointer">Total Units<span id="su-totalUnits" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-        <th class="r" onclick="cycleSortUS('efficiency')" style="cursor:pointer">Efficiency<span id="su-efficiency" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+
         <th class="r" onclick="cycleSortUS('costPerUnit')" style="cursor:pointer">₹/Unit<span id="su-costPerUnit" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
         <th class="r" onclick="cycleSortUS('totalCost')" style="cursor:pointer">Total Cost<span id="su-totalCost" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
       </tr></thead>
@@ -945,11 +945,16 @@ function safeRender(name,fn,months){
 function renderAll(){
   if(!DATA)return;
   const months=filteredMonths();
+  // Preserve scroll position — only scroll to top on view switch, not filter changes
+  const content=document.getElementById('content');
+  const scrollPos=content?content.scrollTop:0;
   if(!months.length){document.getElementById('ov-kpis').innerHTML='<div style="color:var(--muted);padding:16px">No data matches filter.</div>';return;}
   safeRender('kpi',renderKPIs,months);
   safeRender('charts',renderCharts,months);
   safeRender('tables',renderTables,months);
   safeRender('usersummary',renderUserSummary,months);
+  // Restore scroll position after re-render (use rAF to wait for paint)
+  if(content&&scrollPos>0)requestAnimationFrame(function(){content.scrollTop=scrollPos;});
 }
 
 
@@ -1175,10 +1180,24 @@ function renderChart2(months){
   const segColors=allSegNames.map(function(n){return sc(n);});
   function segVal(s,metric){if(metric==='cost')return Math.round((s.costPerUnit||0)*(s.units||0));if(metric==='units')return s.units||0;return s.costPerUnit||0;}
   const smFmt=sm==='cost'?function(v){return'\u20b9'+f.short(v);}:sm==='costPerUnit'?function(v){return'\u20b9'+Number(v).toFixed(2);}:function(v){return f.short(v);};
-  const segDS=allSegNames.map(function(sn,i){return{label:sn,data:months.map(function(m){const sd=segProdData(m,sp).find(function(x){return x.name===sn;});return sd?segVal(sd,sm):0;}),backgroundColor:segColors[i],borderRadius:3,barPercentage:.85,categoryPercentage:.85,datalabels:{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:'#FFFFFF',font:{size:10,weight:'600'},anchor:'end',align:'top',offset:2,clamp:true}};});
+  const segDS=allSegNames.map(function(sn,i){return{label:sn,data:months.map(function(m){const sd=segProdData(m,sp).find(function(x){return x.name===sn;});return sd?segVal(sd,sm):0;}),backgroundColor:segColors[i],borderRadius:3,barPercentage:.9,categoryPercentage:.7,stack:'seg',
+      datalabels:{display:false}};});
+  // Add stack total label on last dataset only
+  if(segDS.length>0){
+    const lastDS=segDS[segDS.length-1];
+    lastDS.datalabels={
+      display:function(ctx){
+        var t=0;ctx.chart.data.datasets.forEach(function(d){t+=(+d.data[ctx.dataIndex]||0);});return t>0;
+      },
+      color:'#FFFFFF',font:{size:10,weight:'700'},anchor:'end',align:'top',offset:3,clamp:true,
+      formatter:function(v,ctx){
+        var t=0;ctx.chart.data.datasets.forEach(function(d){t+=(+d.data[ctx.dataIndex]||0);});return t>0?smFmt(t):'';
+      }
+    };
+  }
   // Add formatter after (avoids variable capture issue with smFmt)
   segDS.forEach(function(ds){ds.datalabels.formatter=function(v){return smFmt(v);};});
-  mk('ch-seg-trend',{type:'bar',data:{labels,datasets:segDS},options:{onClick:function(evt,els){if(els.length)showMonthDetail(months[els[0].index],'segment',allSegNames[els[0].datasetIndex]);},plugins:{legend:{position:'bottom',labels:{color:'#F3F4F6',font:{size:11},boxWidth:10,padding:10}},tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){return ctx.dataset.label+': '+smFmt(ctx.raw);},footer:function(items){const t=items.reduce(function(s,i){return s+i.raw;},0);return t>0?'Total: '+smFmt(t):'';}}},scales:{x:{ticks:{color:'#F3F4F6',font:{size:11}},grid:{color:'rgba(60,60,60,.5)'}},y:{ticks:{color:'#F3F4F6',font:{size:10},callback:smFmt},grid:{color:'rgba(60,60,60,.5)'}}}}}});
+  mk('ch-seg-trend',{type:'bar',data:{labels,datasets:segDS},options:{onClick:function(evt,els){if(els.length)showMonthDetail(months[els[0].index],'segment',allSegNames[els[0].datasetIndex]);},plugins:{legend:{position:'bottom',labels:{color:'#F3F4F6',font:{size:11},boxWidth:10,padding:10}},tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){return ctx.dataset.label+': '+smFmt(ctx.raw);},footer:function(items){const t=items.reduce(function(s,i){return s+i.raw;},0);return t>0?'Total: '+smFmt(t):'';}}},scales:{x:{stacked:true,ticks:{color:'#F3F4F6',font:{size:11}},grid:{color:'rgba(60,60,60,.5)'}},y:{stacked:true,ticks:{color:'#F3F4F6',font:{size:10},callback:smFmt},grid:{color:'rgba(60,60,60,.5)'}}}}}});
 }
 function renderChart3(months){
   const em=CF.ed,ep=CF.edp||'all',lastM=months[months.length-1];
@@ -1212,7 +1231,7 @@ window.cycleSortUS=function(col){
     _usSort.dir=col==='email'?1:-1;
   }
   // Update all arrow indicators
-  ['email','imgUnits','imgCost','s360Units','s360Cost','vidUnits','vidCost','totalUnits','efficiency','costPerUnit','totalCost'].forEach(function(k){
+  ['email','imgUnits','imgCost','s360Units','s360Cost','vidUnits','vidCost','totalUnits','costPerUnit','totalCost'].forEach(function(k){
     const el=document.getElementById('su-'+k);if(el)el.textContent='';
   });
   const el=document.getElementById('su-'+col);
@@ -1243,7 +1262,7 @@ function renderUSTable(){
       +'<td class="r">'+f.num(e.vidUnits)+'</td>'
       +'<td class="r">'+f.inr0(e.vidCost)+'</td>'
       +'<td class="r" style="color:var(--text);font-weight:600">'+f.num(e.totalUnits)+'</td>'
-      +'<td class="r"><span class="'+effCls(e.efficiency)+'">'+f.pct(e.efficiency)+'</span></td>'
+
       +'<td class="r" style="color:var(--amber)">'+f.inr(e.costPerUnit)+'</td>'
       +'<td class="r" style="color:var(--blue)">'+f.inr0(e.totalCost)+'</td>'
       +'</tr>';
@@ -1264,7 +1283,7 @@ function renderUserSummary(months){
   if(o&&!o._wired){o.addEventListener('change',function(){
     _usSort.col=o.value;_usSort.dir=-1;
     // Clear header arrows, then set arrow on this col
-    ['email','imgUnits','imgCost','s360Units','s360Cost','vidUnits','vidCost','totalUnits','efficiency','costPerUnit','totalCost'].forEach(function(k){
+    ['email','imgUnits','imgCost','s360Units','s360Cost','vidUnits','vidCost','totalUnits','costPerUnit','totalCost'].forEach(function(k){
       const el=document.getElementById('su-'+k);if(el)el.textContent='';
     });
     renderUSTable();
