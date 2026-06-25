@@ -11,8 +11,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <style>
 :root{
-  --bg:#080c14;--surface:#0d1422;--card:#111926;--card2:#131f2e;
-  --border:#1a2540;--hover:#17213a;
+  --bg:#111111;--surface:#1a1a1a;--card:#222222;--card2:#282828;
+  --border:#333333;--hover:#2a2a2a;
   --blue:#4f78ff;--green:#22d4a0;--amber:#f5a42a;--red:#f0566a;--purple:#a07cff;--cyan:#38c4f0;
   --text:#dce8f8;--sub:#6a82a8;--muted:#3a4e70;--dim:#1e2d4a;
   --font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
@@ -52,7 +52,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .ms-btn-count{background:var(--blue);color:#fff;font-size:9px;font-weight:700;border-radius:10px;padding:1px 5px;flex-shrink:0}
 .ms-caret{flex-shrink:0;transition:transform .15s}
 .ms-btn.open .ms-caret{transform:rotate(180deg)}
-.ms-dropdown{position:absolute;top:calc(100% + 4px);left:0;min-width:200px;max-width:280px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:0 8px 32px rgba(0,0,0,.5);z-index:300;overflow:hidden}
+.ms-dropdown{position:absolute;top:calc(100% + 4px);left:0;min-width:200px;max-width:280px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:0 8px 32px rgba(0,0,0,.6);z-index:300;overflow:hidden}
 .ms-search{padding:8px;border-bottom:1px solid var(--border)}
 .ms-search input{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);padding:5px 8px;color:var(--text);font-size:11px;font-family:var(--font);outline:none}
 .ms-search input:focus{border-color:var(--blue)}
@@ -447,12 +447,12 @@ const BASE={
   responsive:true,maintainAspectRatio:true,animation:{duration:300},
   plugins:{
     legend:{labels:{color:'#8aa0c8',font:{size:11},boxWidth:10,padding:14}},
-    tooltip:{backgroundColor:'#111926',borderColor:'#1a2540',borderWidth:1,titleColor:'#6a82a8',bodyColor:'#dce8f8',titleFont:{size:11},bodyFont:{size:11},padding:10},
+    tooltip:{backgroundColor:'#1a1a1a',borderColor:'#333333',borderWidth:1,titleColor:'#6a82a8',bodyColor:'#dce8f8',titleFont:{size:11},bodyFont:{size:11},padding:10},
     datalabels:{display:false},
   },
   scales:{
-    x:{ticks:{color:'#6a82a8',font:{size:11}},grid:{color:'rgba(26,37,64,.4)'}},
-    y:{ticks:{color:'#6a82a8',font:{size:11}},grid:{color:'rgba(26,37,64,.4)'}},
+    x:{ticks:{color:'#6a82a8',font:{size:11}},grid:{color:'rgba(60,60,60,.5)'}},
+    y:{ticks:{color:'#6a82a8',font:{size:11}},grid:{color:'rgba(60,60,60,.5)'}},
   },
 };
 function mk(id,cfg){
@@ -653,7 +653,7 @@ function showEnterpriseDetail(name,e){
   const rawArr=e.liveArr||meta.liveArr||'';
   const arrVal=rawArr?Number(rawArr.replace(/[^0-9.]/g,'')):0;
   const modal=document.createElement('div');
-  modal.style.cssText='position:fixed;inset:0;background:rgba(8,12,20,.88);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(17,17,17,.92);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
   const inner=document.createElement('div');
   inner.style.cssText='background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;min-width:520px;max-width:680px;max-height:85vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.7)';
   const closeBtn=document.createElement('button');
@@ -708,7 +708,7 @@ function showMonthDetail(m,type,filter){
     }).filter(Boolean);
   }
   const modal=document.createElement('div');
-  modal.style.cssText='position:fixed;inset:0;background:rgba(8,12,20,.85);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(17,17,17,.88);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
   modal.innerHTML='<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;min-width:420px;max-width:600px;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.6)">'
     +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">'
     +'<div style="font-weight:700;font-size:15px;color:var(--text)">'+title+'</div>'
@@ -723,7 +723,7 @@ function showMonthDetail(m,type,filter){
 function showEditorDetail(e){
   const rows=Object.entries(e.byProduct||{}).map(function(kv){return'<tr><td>'+prodTag(kv[0])+'</td><td class="r">'+f.num(kv[1])+'</td></tr>';});
   const modal=document.createElement('div');
-  modal.style.cssText='position:fixed;inset:0;background:rgba(8,12,20,.85);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(17,17,17,.88);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
   const team=/payroll/i.test(e.teamType)?'<span style="color:#22d4a0">Inhouse</span>':'<span style="color:#f5a42a">OS</span>';
   modal.innerHTML='<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;min-width:360px;max-width:500px;box-shadow:0 20px 60px rgba(0,0,0,.6)">'
     +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">'
@@ -820,7 +820,7 @@ function renderChart1(months){
     {label:'Overall Cost',data:cms.map(s=>s.totalCost),backgroundColor:'rgba(79,120,255,.75)',borderRadius:3,yAxisID:'y',order:2,barPercentage:.45,categoryPercentage:.8,datalabels:dl(function(v){return'\u20b9'+f.short(v);})},
     {label:'Volume',data:cms.map(s=>s.totalUnits),backgroundColor:'rgba(34,212,160,.55)',borderRadius:3,yAxisID:'y1',order:3,barPercentage:.45,categoryPercentage:.8,datalabels:dl(function(v){return f.short(v);},'#22d4a0')},
     {label:'\u20b9/Unit',data:cms.map(s=>s.costPerUnit),type:'line',borderColor:'#f5a42a',borderWidth:2.5,tension:.3,pointBackgroundColor:'#f5a42a',pointRadius:5,yAxisID:'y2',order:1,fill:false,datalabels:{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:'#f5a42a',font:{size:10,weight:'700'},anchor:'center',align:'top',offset:10,formatter:function(v){return'\u20b9'+Number(v).toFixed(2);}}},
-  ]},options:{onClick:function(evt,els){if(els.length)showMonthDetail(months[els[0].index],'cost',cp);},plugins:{legend:{labels:{color:'#8aa0c8',font:{size:11},boxWidth:10,padding:14}},tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){if(ctx.dataset.label==='\u20b9/Unit')return' \u20b9/Unit: \u20b9'+Number(ctx.raw).toFixed(2);if(ctx.dataset.label==='Overall Cost')return' Cost: \u20b9'+f.short(ctx.raw);return' Volume: '+f.short(ctx.raw)+' units';}}}},scales:{x:{ticks:{color:'#6a82a8',font:{size:11}},grid:{color:'rgba(26,37,64,.4)'}},y:{type:'linear',position:'left',ticks:{color:'#6a82a8',font:{size:10},callback:function(v){return'\u20b9'+f.short(v);}},grid:{color:'rgba(26,37,64,.4)'}},y1:{type:'linear',position:'right',ticks:{color:'#22d4a0',font:{size:10},callback:function(v){return f.short(v);}},grid:{display:false}},y2:{type:'linear',position:'right',display:false}}}});
+  ]},options:{onClick:function(evt,els){if(els.length)showMonthDetail(months[els[0].index],'cost',cp);},plugins:{legend:{labels:{color:'#8aa0c8',font:{size:11},boxWidth:10,padding:14}},tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){if(ctx.dataset.label==='\u20b9/Unit')return' \u20b9/Unit: \u20b9'+Number(ctx.raw).toFixed(2);if(ctx.dataset.label==='Overall Cost')return' Cost: \u20b9'+f.short(ctx.raw);return' Volume: '+f.short(ctx.raw)+' units';}}}},scales:{x:{ticks:{color:'#6a82a8',font:{size:11}},grid:{color:'rgba(60,60,60,.5)'}},y:{type:'linear',position:'left',ticks:{color:'#6a82a8',font:{size:10},callback:function(v){return'\u20b9'+f.short(v);}},grid:{color:'rgba(60,60,60,.5)'}},y1:{type:'linear',position:'right',ticks:{color:'#22d4a0',font:{size:10},callback:function(v){return f.short(v);}},grid:{display:false}},y2:{type:'linear',position:'right',display:false}}}});
 }
 function renderChart2(months){
   const labels=months.map(m=>m.month.replace('-26','')),sm=CF.seg,sp=CF.segp;
@@ -831,7 +831,7 @@ function renderChart2(months){
   const segDS=allSegNames.map(function(sn,i){return{label:sn,data:months.map(function(m){const sd=segProdData(m,sp).find(function(x){return x.name===sn;});return sd?segVal(sd,sm):0;}),backgroundColor:segColors[i],borderRadius:3,barPercentage:.85,categoryPercentage:.85,datalabels:{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:'#dce8f8',font:{size:10,weight:'600'},anchor:'end',align:'top',offset:2,clamp:true}};});
   // Add formatter after (avoids variable capture issue with smFmt)
   segDS.forEach(function(ds){ds.datalabels.formatter=function(v){return smFmt(v);};});
-  mk('ch-seg-trend',{type:'bar',data:{labels,datasets:segDS},options:{onClick:function(evt,els){if(els.length)showMonthDetail(months[els[0].index],'segment',allSegNames[els[0].datasetIndex]);},plugins:{legend:{position:'bottom',labels:{color:'#8aa0c8',font:{size:11},boxWidth:10,padding:10}},tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){return ctx.dataset.label+': '+smFmt(ctx.raw);},footer:function(items){const t=items.reduce(function(s,i){return s+i.raw;},0);return t>0?'Total: '+smFmt(t):'';}}},scales:{x:{ticks:{color:'#6a82a8',font:{size:11}},grid:{color:'rgba(26,37,64,.4)'}},y:{ticks:{color:'#6a82a8',font:{size:10},callback:smFmt},grid:{color:'rgba(26,37,64,.4)'}}}}}});
+  mk('ch-seg-trend',{type:'bar',data:{labels,datasets:segDS},options:{onClick:function(evt,els){if(els.length)showMonthDetail(months[els[0].index],'segment',allSegNames[els[0].datasetIndex]);},plugins:{legend:{position:'bottom',labels:{color:'#8aa0c8',font:{size:11},boxWidth:10,padding:10}},tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){return ctx.dataset.label+': '+smFmt(ctx.raw);},footer:function(items){const t=items.reduce(function(s,i){return s+i.raw;},0);return t>0?'Total: '+smFmt(t):'';}}},scales:{x:{ticks:{color:'#6a82a8',font:{size:11}},grid:{color:'rgba(60,60,60,.5)'}},y:{ticks:{color:'#6a82a8',font:{size:10},callback:smFmt},grid:{color:'rgba(60,60,60,.5)'}}}}}});
 }
 function renderChart3(months){
   const em=CF.ed,ep=CF.edp||'all',lastM=months[months.length-1];
@@ -842,7 +842,7 @@ function renderChart3(months){
   const top15=[...edFilt].sort(function(a,b){return edVal(b,em)-edVal(a,em);}).slice(0,15);
   const edColors=top15.map(function(e){return/payroll/i.test(e.teamType)?'#22d4a0':'#f5a42a';});
   const subEl=document.getElementById('ed-chart-sub');if(subEl)subEl.textContent=lastM.month+(ep!=='all'?' \u00b7 '+ep:'')+' \u00b7 \uD83D\uDFE2 Inhouse  \uD83D\uDFE1 OS';
-  mk('ch-ed-cost',{type:'bar',data:{labels:top15.map(function(e){return f.email(e.email);}),datasets:[{label:em==='costPerUnit'?'\u20b9/Unit':em==='efficiency'?'Efficiency':'Units',data:top15.map(function(e){return edVal(e,em);}),backgroundColor:edColors,borderRadius:[0,3,3,0],datalabels:{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:'#dce8f8',font:{size:10,weight:'600'},anchor:'end',align:'right',offset:5,formatter:function(v){return edFmt(v,em);}}}]},options:{indexAxis:'y',layout:{padding:{right:70}},onClick:function(evt,els){if(els.length)showEditorDetail(top15[els[0].index]);},plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return edFmt(ctx.raw,em);}}}},scales:{x:{ticks:{color:'#6a82a8',font:{size:10},callback:function(v){return em==='costPerUnit'?'\u20b9'+v:em==='efficiency'?v+'%':f.short(v);}},grid:{color:'rgba(26,37,64,.4)'}},y:{ticks:{color:'#8aa0c8',font:{size:10.5}},grid:{display:false}}}}});
+  mk('ch-ed-cost',{type:'bar',data:{labels:top15.map(function(e){return f.email(e.email);}),datasets:[{label:em==='costPerUnit'?'\u20b9/Unit':em==='efficiency'?'Efficiency':'Units',data:top15.map(function(e){return edVal(e,em);}),backgroundColor:edColors,borderRadius:[0,3,3,0],datalabels:{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:'#dce8f8',font:{size:10,weight:'600'},anchor:'end',align:'right',offset:5,formatter:function(v){return edFmt(v,em);}}}]},options:{indexAxis:'y',layout:{padding:{right:70}},onClick:function(evt,els){if(els.length)showEditorDetail(top15[els[0].index]);},plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return edFmt(ctx.raw,em);}}}},scales:{x:{ticks:{color:'#6a82a8',font:{size:10},callback:function(v){return em==='costPerUnit'?'\u20b9'+v:em==='efficiency'?v+'%':f.short(v);}},grid:{color:'rgba(60,60,60,.5)'}},y:{ticks:{color:'#8aa0c8',font:{size:10.5}},grid:{display:false}}}}});
 }
 function renderChart4(months){
   const labels=months.map(m=>m.month.replace('-26','')),pp=CF.prod,pm=CF.prodm;
@@ -850,7 +850,7 @@ function renderChart4(months){
   function pVal(p,m){if(m==='units')return p?p.units||0:0;if(m==='costPerUnit')return p?p.costPerUnit||0:0;return p?Math.round((p.costSharePct||0)/100*(months[months.length-1].summary.totalCost||0)):0;}
   const pmFmt=pm==='cost'?function(v){return'\u20b9'+f.short(v);}:pm==='costPerUnit'?function(v){return'\u20b9'+Number(v).toFixed(2);}:function(v){return f.short(v);};
   const pDS=allPN.map(function(pn,i){return{label:pn,data:months.map(function(m){return pVal(getFilteredProducts(m).find(function(x){return x.name===pn;}),pm);}),backgroundColor:pc(pn,i),borderRadius:3,barPercentage:.8,categoryPercentage:.8,datalabels:{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:'#dce8f8',font:{size:10,weight:'600'},anchor:'end',align:'top',offset:2,clamp:true,formatter:function(v){return pmFmt(v);}}};});
-  mk('ch-prod-trend',{type:'bar',data:{labels,datasets:pDS},options:{onClick:function(evt,els){if(els.length)showMonthDetail(months[els[0].index],'product',allPN[els[0].datasetIndex]);},plugins:{legend:{position:'bottom',labels:{color:'#8aa0c8',font:{size:11},boxWidth:10,padding:10}},tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){return ctx.dataset.label+': '+pmFmt(ctx.raw);},footer:function(items){const t=items.reduce(function(s,i){return s+i.raw;},0);return t>0?'Total: '+pmFmt(t):'';}}},scales:{x:{ticks:{color:'#6a82a8',font:{size:11}},grid:{color:'rgba(26,37,64,.4)'}},y:{ticks:{color:'#6a82a8',font:{size:10},callback:pmFmt},grid:{color:'rgba(26,37,64,.4)'}}}}}});
+  mk('ch-prod-trend',{type:'bar',data:{labels,datasets:pDS},options:{onClick:function(evt,els){if(els.length)showMonthDetail(months[els[0].index],'product',allPN[els[0].datasetIndex]);},plugins:{legend:{position:'bottom',labels:{color:'#8aa0c8',font:{size:11},boxWidth:10,padding:10}},tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){return ctx.dataset.label+': '+pmFmt(ctx.raw);},footer:function(items){const t=items.reduce(function(s,i){return s+i.raw;},0);return t>0?'Total: '+pmFmt(t):'';}}},scales:{x:{ticks:{color:'#6a82a8',font:{size:11}},grid:{color:'rgba(60,60,60,.5)'}},y:{ticks:{color:'#6a82a8',font:{size:10},callback:pmFmt},grid:{color:'rgba(60,60,60,.5)'}}}}}});
 }
 
 // ── RENDER USER SUMMARY ───────────────────────────────────────────────────────
