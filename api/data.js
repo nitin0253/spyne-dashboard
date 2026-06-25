@@ -443,10 +443,33 @@ function computeMonth(config, outputRows, factorRows, enterpriseRows, removedRow
   const entGroups = groupSum(enriched, r => r.enterprise);
   const enterpriseBreakdown = Object.entries(entGroups).map(([name, g]) => {
     const cost = totalActMins > 0 ? (g.actualMins / totalActMins) * totalCost : 0;
+    const entRows = enriched.filter(r => r.enterprise === name);
+    const byProduct = {};
+    entRows.forEach(r => {
+      const p = r.product;
+      if (!byProduct[p]) byProduct[p] = { units:0, skus:0, images:0, vins:0, actualMins:0, sumTarget:0, rows:0 };
+      byProduct[p].units      += billingUnits(r);
+      byProduct[p].skus       += r.skus;
+      byProduct[p].images     += r.images;
+      byProduct[p].vins       += isVinProduct(r.product) ? r.skus : 0;
+      byProduct[p].actualMins += r.actualMins;
+      byProduct[p].sumTarget  += r.sumTarget;
+      byProduct[p].rows++;
+    });
+    Object.entries(byProduct).forEach(([, pd]) => {
+      const pCost = totalActMins > 0 ? (pd.actualMins / totalActMins) * totalCost : 0;
+      pd.cost = Math.round(pCost);
+      pd.costPerUnit = pd.units > 0 ? +(pCost / pd.units).toFixed(2) : 0;
+      pd.efficiency  = pd.actualMins > 0 ? +((pd.sumTarget / pd.actualMins) * 100).toFixed(2) : 0;
+      pd.units = Math.round(pd.units); pd.skus = Math.round(pd.skus);
+      pd.images = Math.round(pd.images); pd.vins = Math.round(pd.vins);
+      pd.actualMins = Math.round(pd.actualMins); pd.sumTarget = Math.round(pd.sumTarget);
+    });
     // Look up Metabase meta by normalized name match
     const meta = metaIndex ? lookupMeta(metaIndex, name) : null;
     return {
       ...enrichGroup(name, g, cost),
+      byProduct,
       segment:          entMap[name]?.segment          || meta?.segment || 'Unknown',
       inventoryVersion: entMap[name]?.inventoryVersion || '',
       // Metabase enrichment fields
@@ -454,7 +477,7 @@ function computeMonth(config, outputRows, factorRows, enterpriseRows, removedRow
       obPoc:   meta?.obPoc   || '',
       liveArr: meta?.liveArr || '',
     };
-  }).sort((a, b) => b.units - a.units).slice(0, 25);
+  }).sort((a, b) => b.units - a.units);
 
   // ── Inhouse vs OS breakdown
   const teamBreakdown = {
