@@ -42,6 +42,25 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .spinning svg{animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
+/* ── DATE RANGE PICKER ── */
+.dr-preset{display:block;width:100%;text-align:left;padding:7px 14px;background:none;border:none;color:var(--sub);font-size:12px;font-family:var(--font);cursor:pointer;transition:all .1s}
+.dr-preset:hover{background:var(--hover);color:var(--text)}
+.dr-preset.active{color:var(--blue);font-weight:600;border-left:2px solid var(--blue);padding-left:12px}
+#dr-panel{display:none}
+#dr-panel.open{display:flex !important}
+.cal-day{padding:5px 2px;border-radius:5px;cursor:pointer;font-size:11px;color:var(--sub);transition:all .1s}
+.cal-day:hover{background:var(--hover);color:var(--text)}
+.cal-day.today{font-weight:700;color:var(--text)}
+.cal-day.today::after{content:'.';display:block;width:4px;height:4px;border-radius:50%;background:var(--blue);margin:-2px auto 0}
+.cal-day.in-range{background:rgba(79,120,255,.15);color:var(--text);border-radius:0}
+.cal-day.range-start,.cal-day.range-end{background:var(--blue);color:#fff;font-weight:700;border-radius:5px}
+.cal-day.range-start{border-radius:5px 0 0 5px}
+.cal-day.range-end{border-radius:0 5px 5px 0}
+.cal-day.range-start.range-end{border-radius:5px}
+.cal-day.other-month{opacity:.3;cursor:default}
+.cal-day.other-month:hover{background:none}
+.cal-hdr{font-size:9px;font-weight:700;text-transform:uppercase;color:var(--muted);padding:4px 0}
+
 /* ── FILTER BAR ── */
 #filterbar{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 24px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0;position:sticky;top:48px;z-index:99}
 .fb-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);white-space:nowrap}
@@ -206,19 +225,42 @@ select.sel:focus{border-color:var(--blue)}
 <div id="filterbar">
   <span class="fb-label">Filters</span>
   <div class="fb-sep"></div>
-  <div class="ms-wrap" id="fw-month">
-    <div class="ms-btn" onclick="toggleDropdown('month')">
-      <span class="ms-btn-label" id="flbl-month">All Months</span>
-      <span class="ms-btn-count" id="fcnt-month" style="display:none"></span>
-      <svg class="ms-caret" width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+  <!-- DATE RANGE PICKER -->
+  <div class="ms-wrap" id="fw-daterange" style="position:relative">
+    <div class="ms-btn" onclick="toggleDatePicker()" id="dr-btn" style="min-width:160px;gap:8px">
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="flex-shrink:0;opacity:.7"><rect x="1" y="2" width="11" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M1 5h11M4 1v2M9 1v2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      <span id="dr-label" style="font-size:11px;font-weight:600">This month</span>
+      <svg class="ms-caret" width="10" height="10" viewBox="0 0 10 10" fill="none" style="margin-left:auto"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
     </div>
-    <div class="ms-dropdown" id="fdd-month" style="display:none">
-      <div class="ms-search"><input type="text" placeholder="Search months…" oninput="filterItems('month',this.value)"></div>
-      <div class="ms-actions">
-        <button class="ms-act sel-all" onclick="selectAll('month')">Select All</button>
-        <button class="ms-act desel-all" onclick="deselectAll('month')">Deselect All</button>
+    <div id="dr-panel" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:400;background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.5);width:560px;flex-direction:row;overflow:hidden">
+      <!-- Quick presets -->
+      <div id="dr-presets" style="width:150px;flex-shrink:0;border-right:1px solid var(--border);padding:12px 0">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:0 14px 8px">Quick Select</div>
+        <button class="dr-preset" onclick="applyPreset('all')">All time</button>
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:10px 14px 6px">Months</div>
+        <button class="dr-preset active" id="dr-p-thismonth" onclick="applyPreset('thismonth')">This month</button>
+        <button class="dr-preset" id="dr-p-lastmonth" onclick="applyPreset('lastmonth')">Last month</button>
+        <button class="dr-preset" id="dr-p-last3" onclick="applyPreset('last3')">Last 3 months</button>
+        <button class="dr-preset" id="dr-p-last6" onclick="applyPreset('last6')">Last 6 months</button>
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:10px 14px 6px">Custom</div>
+        <button class="dr-preset" id="dr-p-custom" onclick="showCustomCal()">Custom range</button>
       </div>
-      <div class="ms-list" id="flist-month"></div>
+      <!-- Calendar -->
+      <div id="dr-cal-pane" style="flex:1;padding:16px">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px">Custom Date Range</div>
+        <div style="font-size:11px;color:var(--sub);margin-bottom:12px">Click a date to set start, click another to set end and apply.</div>
+        <!-- Cal nav -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <button onclick="calNav(-1)" style="background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center">‹</button>
+          <span id="cal-title" style="font-weight:700;font-size:13px"></span>
+          <button onclick="calNav(1)" style="background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center">›</button>
+        </div>
+        <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;font-size:12px"></div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+          <span id="cal-range-label" style="font-size:11px;color:var(--sub);font-family:var(--mono)">Select a date</span>
+          <button onclick="clearDateRange()" style="font-size:10px;color:var(--sub);background:none;border:none;cursor:pointer;text-decoration:underline">Clear</button>
+        </div>
+      </div>
     </div>
   </div>
   <div class="ms-wrap" id="fw-segment">
@@ -529,7 +571,38 @@ function deepMerge(b,o){for(const k in o){if(o[k]&&typeof o[k]==='object'&&!Arra
 // ── FILTERS ──────────────────────────────────────────────────────────────────
 const FILTERS={month:{all:[],selected:new Set()},segment:{all:[],selected:new Set()},product:{all:[],selected:new Set()},user:{all:[],selected:new Set()},cspoc:{all:[],selected:new Set()},obpoc:{all:[],selected:new Set()}};
 function passesFilter(key,value){const f=FILTERS[key];if(!f||f.selected.size===0||f.selected.size===f.all.length)return true;return f.selected.has(value);}
-function filteredMonths(){if(!DATA)return[];return DATA.months.filter(m=>passesFilter('month',m.key));}
+// DATE RANGE STATE
+// DR.start and DR.end are Date objects (or null = no filter)
+const DR={start:null,end:null,preset:'thismonth'};
+
+function filteredMonths(){
+  if(!DATA)return[];
+  // If no date range active, return all
+  if(!DR.start&&!DR.end)return DATA.months;
+  return DATA.months.filter(function(m){
+    // m.key is like 'jan26', m.month is 'Jan-26'
+    // Parse month start/end dates from the key
+    const mDate=parseMonthKey(m.key);
+    if(!mDate)return true;
+    const mStart=new Date(mDate.year,mDate.month,1);
+    const mEnd=new Date(mDate.year,mDate.month+1,0); // last day of month
+    if(DR.start&&DR.end)return mStart<=DR.end&&mEnd>=DR.start;
+    if(DR.start)return mEnd>=DR.start;
+    if(DR.end)return mStart<=DR.end;
+    return true;
+  });
+}
+
+function parseMonthKey(key){
+  // 'jan26' → {month:0,year:2026}, 'feb26' → {month:1,year:2026}, etc.
+  const MONTHS={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+  const m=key.match(/^([a-z]+)(\d+)$/i);
+  if(!m)return null;
+  const mo=MONTHS[m[1].toLowerCase()];
+  if(mo===undefined)return null;
+  const yr=parseInt(m[2]);
+  return{month:mo,year:yr<100?2000+yr:yr};
+}
 function filterBreakdown(arr,type){
   if(!arr)return[];
   if(type==='product')return arr.filter(r=>passesFilter('product',r.name));
@@ -650,7 +723,7 @@ function filterItems(key,query){const q=query.toLowerCase();const filtered=q?FIL
 function toggleItem(key,value,checked){if(checked)FILTERS[key].selected.add(value);else FILTERS[key].selected.delete(value);updateFilterBtn(key);renderAll();}
 function selectAll(key){FILTERS[key].all.forEach(v=>FILTERS[key].selected.add(v));renderList(key,FILTERS[key].all);updateFilterBtn(key);renderAll();}
 function deselectAll(key){FILTERS[key].selected.clear();renderList(key,FILTERS[key].all);updateFilterBtn(key);renderAll();}
-function clearAllFilters(){['month','segment','product','user','cspoc','obpoc'].forEach(k=>selectAll(k));document.getElementById('fb-clear-btn').style.display='none';}
+function clearAllFilters(){['segment','product','user','cspoc','obpoc'].forEach(k=>selectAll(k));applyPreset('all');document.getElementById('fb-clear-btn').style.display='none';}
 function updateFilterBtn(key){
   const fi=FILTERS[key];const lbl=document.getElementById('flbl-'+key);const cnt=document.getElementById('fcnt-'+key);const btn=document.querySelector('#fw-'+key+' .ms-btn');
   if(!lbl)return;
@@ -658,19 +731,169 @@ function updateFilterBtn(key){
   const names={month:'All Months',segment:'All Segments',product:'All Products',user:'All Users',cspoc:'All CS POC',obpoc:'All OB POC'};
   if(isAll){lbl.textContent=names[key]||'All';cnt.style.display='none';if(btn)btn.classList.remove('has-filter');}
   else{const sel=fi.selected.size;lbl.textContent=sel===1?[...fi.selected][0]:sel+' selected';cnt.textContent=sel;cnt.style.display='inline';if(btn)btn.classList.add('has-filter');}
-  const anyActive=['month','segment','product','user','cspoc','obpoc'].some(k=>{const ff=FILTERS[k];return ff.selected.size>0&&ff.selected.size<ff.all.length;});
+  const anyActive=(DR.start||DR.end)?true:['segment','product','user','cspoc','obpoc'].some(k=>{const ff=FILTERS[k];return ff.selected.size>0&&ff.selected.size<ff.all.length;});
   document.getElementById('fb-clear-btn').style.display=anyActive?'':'none';
 }
 function initFilters(){
   if(!DATA)return;
   const months=DATA.months;
-  buildDropdown('month',months.map(m=>m.key),v=>months.find(m=>m.key===v)?.month||v);
+  // Date range: initialize to "this month" preset
+  applyPreset('thismonth',true); // true = silent (no re-render yet)
   const segs=[...new Set(months.flatMap(m=>m.segmentBreakdown.map(s=>s.name)))].sort();
   buildDropdown('segment',segs);
   const prods=[...new Set(months.flatMap(m=>m.productBreakdown.map(p=>p.name)))];
   buildDropdown('product',prods);
   const users=[...new Set(months.flatMap(m=>m.editorBreakdown.map(e=>e.email)))].sort();
   buildDropdown('user',users,v=>f.email(v)+' ('+v+')');
+}
+
+// ── DATE RANGE PICKER ────────────────────────────────────────────────────────
+let calViewDate=new Date(); // month being shown in calendar
+let calPickStep=0; // 0=pick start, 1=pick end
+let calTempStart=null;
+
+function toggleDatePicker(){
+  const panel=document.getElementById('dr-panel');
+  const isOpen=panel.classList.contains('open');
+  if(isOpen){panel.classList.remove('open');}
+  else{panel.classList.add('open');renderCal();}
+}
+document.addEventListener('click',function(e){
+  if(!e.target.closest('#fw-daterange'))document.getElementById('dr-panel').classList.remove('open');
+});
+
+function applyPreset(preset,silent){
+  const now=new Date();
+  const y=now.getFullYear(),mo=now.getMonth();
+  // Remove active from all preset buttons
+  document.querySelectorAll('.dr-preset').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('dr-p-'+preset);if(btn)btn.classList.add('active');
+  DR.preset=preset;
+  if(preset==='all'){
+    DR.start=null;DR.end=null;
+    setDRLabel('All time');
+  }else if(preset==='thismonth'){
+    DR.start=new Date(y,mo,1);DR.end=new Date(y,mo+1,0);
+    setDRLabel('This month');
+  }else if(preset==='lastmonth'){
+    DR.start=new Date(y,mo-1,1);DR.end=new Date(y,mo,0);
+    setDRLabel('Last month');
+  }else if(preset==='last3'){
+    DR.start=new Date(y,mo-2,1);DR.end=new Date(y,mo+1,0);
+    setDRLabel('Last 3 months');
+  }else if(preset==='last6'){
+    DR.start=new Date(y,mo-5,1);DR.end=new Date(y,mo+1,0);
+    setDRLabel('Last 6 months');
+  }
+  calPickStep=0;calTempStart=null;
+  if(!silent){document.getElementById('dr-panel').classList.remove('open');renderAll();}
+}
+
+function showCustomCal(){
+  document.getElementById('dr-p-custom').classList.add('active');
+  calViewDate=new Date();renderCal();
+}
+
+function setDRLabel(text){
+  const el=document.getElementById('dr-label');
+  if(el)el.textContent=text;
+  // Also pulse the button if a real filter is active
+  const btn=document.getElementById('dr-btn');
+  if(btn){if(text==='All time')btn.style.borderColor='';else btn.style.borderColor='var(--blue)';}
+  const anyActive=(DR.start||DR.end)||['segment','product','user','cspoc','obpoc'].some(k=>{const ff=FILTERS[k];return ff&&ff.selected.size>0&&ff.selected.size<ff.all.length;});
+  const clrBtn=document.getElementById('fb-clear-btn');
+  if(clrBtn)clrBtn.style.display=anyActive?'':'none';
+}
+
+function calNav(dir){
+  calViewDate=new Date(calViewDate.getFullYear(),calViewDate.getMonth()+dir,1);
+  renderCal();
+}
+
+function renderCal(){
+  const view=calViewDate;
+  const y=view.getFullYear(),mo=view.getMonth();
+  const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const DAYS=['SU','MO','TU','WE','TH','FR','SA'];
+  document.getElementById('cal-title').textContent=MONTHS[mo]+' '+y;
+  const grid=document.getElementById('cal-grid');
+  if(!grid)return;
+  let html='';
+  // Day headers
+  DAYS.forEach(d=>{html+='<div class="cal-hdr">'+d+'</div>';});
+  // First day of month
+  const firstDay=new Date(y,mo,1).getDay();
+  const daysInMonth=new Date(y,mo+1,0).getDate();
+  const today=new Date();today.setHours(0,0,0,0);
+  // Prev month days
+  const prevDays=new Date(y,mo,0).getDate();
+  for(let i=firstDay-1;i>=0;i--){
+    html+='<div class="cal-day other-month">'+(prevDays-i)+'</div>';
+  }
+  // Current month days
+  for(let d=1;d<=daysInMonth;d++){
+    const date=new Date(y,mo,d);date.setHours(0,0,0,0);
+    let cls='cal-day';
+    if(date.getTime()===today.getTime())cls+=' today';
+    // Range highlighting
+    const s=DR.start?new Date(DR.start.getTime()):null;if(s)s.setHours(0,0,0,0);
+    const e=DR.end?new Date(DR.end.getTime()):null;if(e)e.setHours(0,0,0,0);
+    const ts=calTempStart?new Date(calTempStart.getTime()):null;if(ts)ts.setHours(0,0,0,0);
+    if(ts&&!e){
+      // Picking end — show start highlighted
+      if(date.getTime()===ts.getTime())cls+=' range-start';
+    }else if(s&&e){
+      if(date.getTime()===s.getTime())cls+=' range-start';
+      else if(date.getTime()===e.getTime())cls+=' range-end';
+      else if(date>s&&date<e)cls+=' in-range';
+    }
+    html+='<div class="'+cls+'" onclick="calClickDay('+y+','+mo+','+d+')">'+d+'</div>';
+  }
+  // Next month padding
+  const totalCells=Math.ceil((firstDay+daysInMonth)/7)*7;
+  for(let d=1;d<=totalCells-firstDay-daysInMonth;d++){
+    html+='<div class="cal-day other-month">'+d+'</div>';
+  }
+  grid.innerHTML=html;
+  // Update range label
+  updateCalLabel();
+}
+
+function calClickDay(y,mo,d){
+  const clicked=new Date(y,mo,d);
+  if(calPickStep===0){
+    calTempStart=clicked;calPickStep=1;
+    DR.start=clicked;DR.end=null;
+    updateCalLabel();renderCal();
+  }else{
+    let start=calTempStart,end=clicked;
+    if(end<start){const tmp=start;start=end;end=tmp;}
+    DR.start=start;DR.end=end;
+    calPickStep=0;calTempStart=null;
+    DR.preset='custom';
+    document.querySelectorAll('.dr-preset').forEach(b=>b.classList.remove('active'));
+    document.getElementById('dr-p-custom').classList.add('active');
+    const fmt=d=>{const D=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return String(d.getDate()).padStart(2,'0')+' '+D[d.getMonth()]+' '+d.getFullYear();};
+    setDRLabel(fmt(DR.start)+' → '+fmt(DR.end));
+    document.getElementById('dr-panel').classList.remove('open');
+    renderCal();
+    renderAll();
+  }
+}
+
+function clearDateRange(){
+  DR.start=null;DR.end=null;DR.preset='all';calPickStep=0;calTempStart=null;
+  document.querySelectorAll('.dr-preset').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('dr-p-all');if(btn)btn.classList.add('active');
+  setDRLabel('All time');renderCal();
+}
+
+function updateCalLabel(){
+  const el=document.getElementById('cal-range-label');if(!el)return;
+  const fmt=d=>{const D=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return String(d.getDate()).padStart(2,'0')+' '+D[d.getMonth()]+' '+d.getFullYear();};
+  if(DR.start&&DR.end)el.textContent=fmt(DR.start)+' → '+fmt(DR.end);
+  else if(DR.start)el.textContent=fmt(DR.start)+' → ?';
+  else el.textContent='Select a date';
 }
 
 // ── SORT INFRASTRUCTURE ──────────────────────────────────────────────────────
