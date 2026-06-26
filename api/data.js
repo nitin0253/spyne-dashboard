@@ -3,33 +3,37 @@
 const { google } = require('googleapis');
 const https = require('https');
 
-const METABASE_CSV_URL = 'https://metabase.spyne.ai/public/question/84265073-fe7b-4ee1-81d7-5eb37a7e9b2f.csv';
+// ── Live Accounts Sheet (replaces Metabase) ──────────────────────────────────
+// Public Google Sheet CSV — columns: Enterprise ID, Enterprise Name, Stage,
+// Live ARR, CSM Name_New (=CS POC), Customer Segment, Overall RAG, ...
+const LIVE_ACCOUNTS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTS0ExA81qlU0Z2lRs9OobIbmQmLiCX4OGlTJ7Hi-Y4I4X1ovP4q_SG6cSyVtWJG_LYqwOJtNqGEdnC/pub?output=csv';
 
-// ── Fetch & parse Metabase enterprise CSV ─────────────────────────────────────
-// Returns map: enterpriseName → { segment, csPoc, obPoc, liveArr }
-function fetchMetabaseCSV() {
+function fetchLiveAccountsCSV() {
   return new Promise((resolve) => {
-    const req = https.get(METABASE_CSV_URL, { timeout: 5000 }, (res) => {
-      let data = '';
-      res.on('data', chunk => { data += chunk; });
-      res.on('end', () => {
-        try {
-          resolve(parseEnterpriseMeta(data));
-        } catch (e) {
-          console.error('[metabase] parse error:', e.message);
-          resolve({});
+    function doGet(url, redirects) {
+      if (redirects > 3) return resolve({});
+      const req = https.get(url, {
+        timeout: 20000,
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'text/csv,*/*' }
+      }, (res) => {
+        if (res.statusCode === 301 || res.statusCode === 302) {
+          return doGet(res.headers.location, redirects + 1);
         }
+        if (res.statusCode !== 200) {
+          console.error('[live-accounts] HTTP', res.statusCode);
+          return resolve({});
+        }
+        let data = '';
+        res.on('data', chunk => { data += chunk; });
+        res.on('end', () => {
+          try { resolve(parseLiveAccounts(data)); }
+          catch (e) { console.error('[live-accounts] parse error:', e.message); resolve({}); }
+        });
       });
-    });
-    req.on('error', (e) => {
-      console.error('[metabase] fetch error:', e.message);
-      resolve({});
-    });
-    req.on('timeout', () => {
-      console.error('[metabase] fetch timeout — skipping');
-      req.destroy();
-      resolve({});
-    });
+      req.on('error', (e) => { console.error('[live-accounts] fetch error:', e.message); resolve({}); });
+      req.on('timeout', () => { req.destroy(); console.error('[live-accounts] timeout'); resolve({}); });
+    }
+    doGet(LIVE_ACCOUNTS_CSV, 0);
   });
 }
 
@@ -37,79 +41,88 @@ function parseLine(line) {
   const cols = []; let cur = '', inQ = false;
   for (let i = 0; i < line.length; i++) {
     const c = line[i];
-    if (c === '"' && !inQ)               { inQ = true; }
+    if (c === '"' && !inQ)                         { inQ = true; }
     else if (c === '"' && inQ && line[i+1] === '"') { cur += '"'; i++; }
-    else if (c === '"' && inQ)           { inQ = false; }
-    else if (c === ',' && !inQ)          { cols.push(cur); cur = ''; }
-    else                                  { cur += c; }
+    else if (c === '"' && inQ)                     { inQ = false; }
+    else if (c === ',' && !inQ)                    { cols.push(cur); cur = ''; }
+    else                                            { cur += c; }
   }
   cols.push(cur);
   return cols;
 }
 
-function parseEnterpriseMeta(csvText) {
+function parseLiveAccounts(csvText) {
+  // Returns map: enterpriseName (lowercase+trim) → { segment, csPoc, liveArr, stage, rag, enterpriseId }
   const map = {};
   const lines = csvText.trim().split('\n');
   if (lines.length < 2) return map;
 
   const headers = parseLine(lines[0]);
-  const idx = {
-    name:          headers.findIndex(h => /enterprise name/i.test(h)),
-    seg:           headers.findIndex(h => /customer segment/i.test(h)),
-    csPoc:         headers.findIndex(h => /cs poc/i.test(h)),
-    obPoc:         headers.findIndex(h => /ob poc/i.test(h)),
-    liveArr:       headers.findIndex(h => /live arr/i.test(h)),
-    contractedArr: headers.findIndex(h => /contracted arr/i.test(h)),
-    stage:         headers.findIndex(h => /^stage$/i.test(h)),
-  };
+  console.log('[live-accounts] headers:', headers.slice(0, 10));
 
-  console.log('[metabase] headers:', headers.slice(0, 12));
-  console.log('[metabase] idx:', idx);
+  const idx = {
+    id:      headers.findIndex(h => /enterprise id/i.test(h)),
+    name:    headers.findIndex(h => /enterprise name/i.test(h)),
+    stage:   headers.findIndex(h => /^stage$/i.test(h.trim())),
+    liveArr: headers.findIndex(h => /live arr/i.test(h)),
+    csPoc:   headers.findIndex(h => /csm name_new/i.test(h) || /cs name/i.test(h)),
+    seg:     headers.findIndex(h => /customer segment/i.test(h)),
+    rag:     headers.findIndex(h => /overall rag/i.test(h)),
+  };
+  console.log('[live-accounts] idx:', idx);
 
   lines.slice(1).forEach(line => {
     if (!line.trim()) return;
-    const cols = parseLine(line);
-    const name = (cols[idx.name] || '').trim();
-    if (!name) return;
+    const cols  = parseLine(line);
+    const rawName = (cols[idx.name] || '').trim();
+    if (!rawName) return;
+    const key   = rawName.toLowerCase().trim(); // normalized key for matching
 
-    const segment      = (cols[idx.seg]           || '').trim();
-    const csPoc        = (cols[idx.csPoc]          || '').trim();
-    const obPoc        = (cols[idx.obPoc]          || '').trim();
-    const liveArr      = (cols[idx.liveArr]        || '').trim();
-    const stage        = (cols[idx.stage]          || '').trim();
-    const contractedRaw= (cols[idx.contractedArr]  || '').trim();
-    const contractedVal= parseFloat(contractedRaw.replace(/[^0-9.]/g, '')) || 0;
+    const stage   = (cols[idx.stage]   || '').trim();
+    const liveArrRaw = (cols[idx.liveArr] || '').trim();
+    const liveArrVal = parseFloat(liveArrRaw.replace(/[^0-9.]/g, '')) || 0;
+    const csPoc   = (cols[idx.csPoc]   || '').trim();
+    const seg     = (cols[idx.seg]     || '').trim();
+    const rag     = (cols[idx.rag]     || '').trim();
+    const entId   = (cols[idx.id]      || '').trim();
 
-    // Sum contractedArr only for Live or Onboarding rooftops (per enterprise)
-    const isActive = /live|onboarding/i.test(stage);
-
-    if (!map[name]) {
-      map[name] = {
-        segment, csPoc, obPoc, liveArr,
-        contractedArr: isActive ? contractedVal : 0,
+    if (!map[key]) {
+      map[key] = {
+        originalName: rawName,
+        enterpriseId: entId,
+        segment:  seg,
+        csPoc:    csPoc,
+        obPoc:    '',          // sheet has no separate OB POC
+        stage:    stage,
+        rag:      rag,
+        liveArr:  String(liveArrVal),
+        // liveArr IS the yearly ARR for this account (used as contractedArr equivalent)
+        contractedArr: liveArrVal,
         rooftopCount:  1,
-        activeRooftops: isActive ? 1 : 0,
+        activeRooftops: /live|onboarding/i.test(stage) ? 1 : 0,
       };
     } else {
-      // Subsequent rooftop rows — sum contractedArr, keep first non-empty meta
-      if (!map[name].segment && segment) map[name].segment = segment;
-      if (!map[name].csPoc   && csPoc)   map[name].csPoc   = csPoc;
-      if (!map[name].obPoc   && obPoc)   map[name].obPoc   = obPoc;
-      if (!map[name].liveArr && liveArr) map[name].liveArr = liveArr;
-      if (isActive) {
-        map[name].contractedArr  = (map[name].contractedArr  || 0) + contractedVal;
-        map[name].activeRooftops = (map[name].activeRooftops || 0) + 1;
-      }
-      map[name].rooftopCount = (map[name].rooftopCount || 0) + 1;
+      // Multiple rows for same enterprise — keep first non-empty, accumulate ARR
+      if (!map[key].segment  && seg)   map[key].segment  = seg;
+      if (!map[key].csPoc    && csPoc) map[key].csPoc    = csPoc;
+      if (!map[key].stage    && stage) map[key].stage    = stage;
+      if (!map[key].rag      && rag)   map[key].rag      = rag;
+      if (!map[key].enterpriseId && entId) map[key].enterpriseId = entId;
+      // Sum ARR across all rows for this enterprise
+      map[key].contractedArr  = (map[key].contractedArr  || 0) + liveArrVal;
+      map[key].liveArr        = String(map[key].contractedArr);
+      map[key].rooftopCount   = (map[key].rooftopCount   || 0) + 1;
+      if (/live|onboarding/i.test(stage)) map[key].activeRooftops = (map[key].activeRooftops || 0) + 1;
     }
   });
 
-  // Build unified POC: CS email primarily, OB email as fallback
-  Object.values(map).forEach(e => {
-    e.poc = (e.csPoc && e.csPoc !== '') ? e.csPoc : (e.obPoc || '');
-  });
+  // Unified POC — only csPoc from this sheet
+  Object.values(map).forEach(e => { e.poc = e.csPoc || ''; });
 
-  return map;
+  // Return as name-keyed map (both normalized and original)
+  const result = {};
+  Object.values(map).forEach(e => { result[e.originalName] = e; });
+  return result;
 }
 
 // Build a normalized (lowercase+trim) lookup index from the meta map
@@ -560,23 +573,28 @@ module.exports = async function handler(req, res) {
   try {
     const client = getSheetsClient();
 
-    // Step 1: Fetch all Google Sheets data (critical path)
-    const rawSheetsData = await Promise.all(
-      SHEETS.map(async cfg => {
-        const [outputRows, factorRows, entRows, removedRows] = await Promise.all([
-          fetchRange(client, cfg.id, 'output!A:M'),
-          fetchRange(client, cfg.id, 'factor_calculation!A:G'),
-          fetchRange(client, cfg.id, 'enterprise_details!A:D'),
-          fetchRange(client, cfg.id, 'remove_users!A:E'),
-        ]);
-        return { cfg, outputRows, factorRows, entRows, removedRows };
-      })
-    );
+    // Fetch Sheets and Metabase concurrently — both have independent timeouts
+    // Metabase deadline is 25s (within Vercel's 60s function limit)
+    const metaDeadline = new Promise(resolve => setTimeout(() => resolve({}), 25000));
 
-    // Step 2: Attempt Metabase fetch with hard 4s deadline (non-blocking — empty on timeout)
-    const metaDeadline = new Promise(resolve => setTimeout(() => resolve({}), 4000));
-    const enterpriseMeta = await Promise.race([fetchMetabaseCSV(), metaDeadline]);
-    console.log('[data.js] enterpriseMeta entries:', Object.keys(enterpriseMeta).length);
+    const [rawSheetsData, enterpriseMeta] = await Promise.all([
+      // Critical path: all 6 sheet ranges
+      Promise.all(
+        SHEETS.map(async cfg => {
+          const [outputRows, factorRows, entRows, removedRows] = await Promise.all([
+            fetchRange(client, cfg.id, 'output!A:M'),
+            fetchRange(client, cfg.id, 'factor_calculation!A:G'),
+            fetchRange(client, cfg.id, 'enterprise_details!A:D'),
+            fetchRange(client, cfg.id, 'remove_users!A:E'),
+          ]);
+          return { cfg, outputRows, factorRows, entRows, removedRows };
+        })
+      ),
+      // Live Accounts Sheet: up to 25s, never blocks the response
+      Promise.race([fetchLiveAccountsCSV(), metaDeadline]),
+    ]);
+
+    console.log('[data.js] live-accounts entries:', Object.keys(enterpriseMeta).length);
 
     // Step 3: Build index and compute months
     const metaIndex = buildMetaIndex(enterpriseMeta);
