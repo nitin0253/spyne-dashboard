@@ -1860,38 +1860,115 @@ function showPocDetail(pocRow, months) {
 }
 
 
-async function fetchMetabaseFallback(){
-  try{
-    // Skip if already populated (>50 accounts) from backend response
-    if(Object.keys(ENT_META).length>50){
-      console.log('[meta] ENT_META already loaded ('+Object.keys(ENT_META).length+'), skipping');
-      return;
-    }
-    console.log('[meta] fetching /api/meta (Live Accounts sheet)…');
-    const res=await fetch('/api/meta');
-    if(!res.ok){console.warn('[meta] HTTP error',res.status);return;}
-    const json=await res.json();
-    if(!json.enterpriseMeta||!Object.keys(json.enterpriseMeta).length){
-      console.warn('[meta] empty response');return;
-    }
-    ENT_META=json.enterpriseMeta;
-    if(DATA)DATA.enterpriseMeta=json.enterpriseMeta;
-    // Build CS POC dropdown — Live Accounts sheet only has csPoc
-    const csSet=new Set();
-    Object.values(json.enterpriseMeta).forEach(function(m){
-      if(m.csPoc)csSet.add(m.csPoc);
-    });
-    buildDropdown('cspoc',[...csSet].sort());
-    console.log('[meta] loaded',json.count,'enterprises from Live Accounts sheet');
-    const months=filteredMonths();
-    if(months.length){
-      renderTables(months);
-      renderKPIs(months);
-      if(CURRENT_VIEW==='enterprise')renderPocChart(months);
-    }
-  }catch(e){
-    console.warn('[meta] fetch failed:',e.message);
+const LIVE_ACCOUNTS_CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vTS0ExA81qlU0Z2lRs9OobIbmQmLiCX4OGlTJ7Hi-Y4I4X1ovP4q_SG6cSyVtWJG_LYqwOJtNqGEdnC/pub?output=csv';
+
+function parseCSVLine(line){
+  const cols=[];let cur='',inQ=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(c==='"'&&!inQ){inQ=true;}
+    else if(c==='"'&&inQ&&line[i+1]==='"'){cur+='"';i++;}
+    else if(c==='"'&&inQ){inQ=false;}
+    else if(c===','&&!inQ){cols.push(cur);cur='';}
+    else{cur+=c;}
   }
+  cols.push(cur);return cols;
+}
+
+function parseLiveAccountsCSV(text){
+  const map={};
+  const lines=text.trim().split('\n');
+  if(lines.length<2)return map;
+  const headers=parseCSVLine(lines[0]);
+  console.log('[live-csv] headers:',headers.slice(0,8));
+  const idx={
+    name:    headers.findIndex(function(h){return /enterprise name/i.test(h);}),
+    stage:   headers.findIndex(function(h){return /^stage$/i.test(h.trim());}),
+    liveArr: headers.findIndex(function(h){return /live arr/i.test(h);}),
+    csPoc:   headers.findIndex(function(h){return /csm name_new/i.test(h)||/cs name/i.test(h);}),
+    seg:     headers.findIndex(function(h){return /customer segment/i.test(h);}),
+    rag:     headers.findIndex(function(h){return /overall rag/i.test(h);}),
+  };
+  console.log('[live-csv] col indices:',idx);
+  lines.slice(1).forEach(function(line){
+    if(!line.trim())return;
+    const cols=parseCSVLine(line);
+    const rawName=(cols[idx.name]||'').trim();
+    if(!rawName)return;
+    const liveArrVal=parseFloat((cols[idx.liveArr]||'').replace(/[^0-9.]/g,''))||0;
+    const csPoc=(cols[idx.csPoc]||'').trim();
+    const seg=(cols[idx.seg]||'').trim();
+    const rag=(cols[idx.rag]||'').trim();
+    const stage=(cols[idx.stage]||'').trim();
+    if(!map[rawName]){
+      map[rawName]={originalName:rawName,segment:seg,csPoc:csPoc,obPoc:'',stage:stage,rag:rag,
+        liveArr:String(liveArrVal),contractedArr:liveArrVal,poc:csPoc};
+    } else {
+      if(!map[rawName].segment&&seg)map[rawName].segment=seg;
+      if(!map[rawName].csPoc&&csPoc)map[rawName].csPoc=csPoc;
+      if(!map[rawName].rag&&rag)map[rawName].rag=rag;
+      map[rawName].contractedArr=(map[rawName].contractedArr||0)+liveArrVal;
+      map[rawName].liveArr=String(map[rawName].contractedArr);
+      if(!map[rawName].poc&&csPoc)map[rawName].poc=csPoc;
+    }
+  });
+  // Add normalized keys
+  const result={};
+  Object.values(map).forEach(function(e){
+    result[e.originalName]=e;
+    const norm=e.originalName.toLowerCase().trim();
+    if(norm!==e.originalName)result[norm]=e;
+  });
+  return result;
+}
+
+function applyEntMeta(meta){
+  ENT_META=meta;
+  if(DATA)DATA.enterpriseMeta=meta;
+  const csSet=new Set();
+  Object.values(meta).forEach(function(m){if(m.csPoc)csSet.add(m.csPoc);});
+  buildDropdown('cspoc',[...csSet].sort());
+  console.log('[meta] ENT_META populated:',Object.keys(meta).length,'enterprises, sample:',Object.keys(meta).slice(0,3));
+  const months=filteredMonths();
+  if(months.length){renderTables(months);renderKPIs(months);if(CURRENT_VIEW==='enterprise')renderPocChart(months);}
+}
+
+async function fetchMetabaseFallback(){
+  if(Object.keys(ENT_META).length>50){
+    console.log('[meta] already loaded:',Object.keys(ENT_META).length);
+    return;
+  }
+  // Try 1: /api/meta proxy
+  try{
+    console.log('[meta] trying /api/meta…');
+    const r=await fetch('/api/meta');
+    if(r.ok){
+      const j=await r.json();
+      if(j.enterpriseMeta&&Object.keys(j.enterpriseMeta).length>0){
+        console.log('[meta] /api/meta success:',j.count,'enterprises');
+        applyEntMeta(j.enterpriseMeta);return;
+      }
+      console.warn('[meta] /api/meta returned empty');
+    } else {
+      console.warn('[meta] /api/meta HTTP',r.status);
+    }
+  }catch(e){console.warn('[meta] /api/meta error:',e.message);}
+
+  // Try 2: direct browser fetch of the published CSV (no CORS since it's public)
+  try{
+    console.log('[meta] trying direct CSV fetch…');
+    const r=await fetch(LIVE_ACCOUNTS_CSV_URL,{mode:'cors',cache:'no-cache'});
+    if(r.ok){
+      const text=await r.text();
+      console.log('[meta] direct CSV received, length:',text.length);
+      const meta=parseLiveAccountsCSV(text);
+      if(Object.keys(meta).length>0){applyEntMeta(meta);return;}
+      console.warn('[meta] direct CSV parsed 0 entries');
+    } else {
+      console.warn('[meta] direct CSV HTTP',r.status);
+    }
+  }catch(e){console.warn('[meta] direct CSV error:',e.message);}
+  console.error('[meta] all fetch attempts failed');
 }
 
 async function fetchData(){
