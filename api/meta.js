@@ -106,8 +106,17 @@ function parseCSV(text) {
     }
   });
 
-  Object.values(map).forEach(e => { e.poc = e.csPoc || ''; });
-  return map;
+  // Build result keyed by original name (for display) 
+  // AND add normalized-key duplicates for fuzzy matching
+  const result = {};
+  Object.values(map).forEach(e => {
+    e.poc = e.csPoc || '';
+    result[e.originalName] = e;
+    // Also store under normalized key (lowercase+trim) for matching
+    const normKey = e.originalName.toLowerCase().trim();
+    if (normKey !== e.originalName) result[normKey] = e;
+  });
+  return result;
 }
 
 async function getWithCache() {
