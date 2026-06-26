@@ -324,6 +324,21 @@ select.sel:focus{border-color:var(--blue)}
     </div>
   </div>
   
+  <div class="ms-wrap" id="fw-obpoc">
+    <div class="ms-btn" onclick="toggleDropdown('obpoc')">
+      <span class="ms-btn-label" id="flbl-obpoc">All OB POC</span>
+      <span class="ms-btn-count" id="fcnt-obpoc" style="display:none"></span>
+      <svg class="ms-caret" width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </div>
+    <div class="ms-dropdown" id="fdd-obpoc" style="display:none">
+      <div class="ms-search"><input type="text" placeholder="Search OB POC…" oninput="filterItems('obpoc',this.value)"></div>
+      <div class="ms-actions">
+        <button class="ms-act sel-all" onclick="selectAll('obpoc')">Select All</button>
+        <button class="ms-act desel-all" onclick="deselectAll('obpoc')">Deselect All</button>
+      </div>
+      <div class="ms-list" id="flist-obpoc"></div>
+    </div>
+  </div>
   <button class="fb-clear" id="fb-clear-btn" onclick="clearAllFilters()" style="display:none">✕ Clear Filters</button>
 </div>
 
@@ -436,7 +451,7 @@ select.sel:focus{border-color:var(--blue)}
   <div class="section" style="margin-bottom:12px">
     <div class="sec-head">
       <div><div class="sec-title">POC — Contracted ARR vs Delivery Cost</div>
-      <div class="sec-sub">CS POC (from Live Accounts sheet) · MRR × filtered months · Cost in INR · Live accounts · % Cost/MRR</div></div>
+      <div class="sec-sub">CS POC (OB POC where CS unavailable) · MRR × filtered months · Cost in INR · Live &amp; Onboarding · % Cost/MRR</div></div>
       <div class="cf-row">
         <span class="cf-label">Metric:</span>
         <button class="cf-pill active" data-chart="poc" onclick="setPocMetric('arr',this)">ARR (USD)</button>
@@ -579,7 +594,7 @@ function mk(id,cfg){
 function deepMerge(b,o){for(const k in o){if(o[k]&&typeof o[k]==='object'&&!Array.isArray(o[k]))b[k]=deepMerge(b[k]||{},o[k]);else b[k]=o[k];}return b;}
 
 // ── FILTERS ──────────────────────────────────────────────────────────────────
-const FILTERS={month:{all:[],selected:new Set()},segment:{all:[],selected:new Set()},product:{all:[],selected:new Set()},user:{all:[],selected:new Set()},cspoc:{all:[],selected:new Set()}};
+const FILTERS={month:{all:[],selected:new Set()},segment:{all:[],selected:new Set()},product:{all:[],selected:new Set()},user:{all:[],selected:new Set()},cspoc:{all:[],selected:new Set()},obpoc:{all:[],selected:new Set()}};
 function passesFilter(key,value){const f=FILTERS[key];if(!f||f.selected.size===0||f.selected.size===f.all.length)return true;return f.selected.has(value);}
 // DATE RANGE STATE
 // DR.start and DR.end are Date objects (or null = no filter)
@@ -730,7 +745,7 @@ function filterItems(key,query){const q=query.toLowerCase();const filtered=q?FIL
 function toggleItem(key,value,checked){if(checked)FILTERS[key].selected.add(value);else FILTERS[key].selected.delete(value);updateFilterBtn(key);renderAll();}
 function selectAll(key){FILTERS[key].all.forEach(v=>FILTERS[key].selected.add(v));renderList(key,FILTERS[key].all);updateFilterBtn(key);renderAll();}
 function deselectAll(key){FILTERS[key].selected.clear();renderList(key,FILTERS[key].all);updateFilterBtn(key);renderAll();}
-function clearAllFilters(){['segment','product','user','cspoc'].forEach(k=>selectAll(k));applyPreset('all');document.getElementById('fb-clear-btn').style.display='none';}
+function clearAllFilters(){['segment','product','user','cspoc','obpoc'].forEach(k=>selectAll(k));applyPreset('all');document.getElementById('fb-clear-btn').style.display='none';}
 function updateFilterBtn(key){
   const fi=FILTERS[key];const lbl=document.getElementById('flbl-'+key);const cnt=document.getElementById('fcnt-'+key);const btn=document.querySelector('#fw-'+key+' .ms-btn');
   if(!lbl)return;
@@ -807,7 +822,7 @@ function setDRLabel(text){
   // Also pulse the button if a real filter is active
   const btn=document.getElementById('dr-btn');
   if(btn){if(text==='All time')btn.style.borderColor='';else btn.style.borderColor='var(--blue)';}
-  const anyActive=(DR.start||DR.end)||['segment','product','user','cspoc'].some(k=>{const ff=FILTERS[k];return ff&&ff.selected.size>0&&ff.selected.size<ff.all.length;});
+  const anyActive=(DR.start||DR.end)||['segment','product','user','cspoc','obpoc'].some(k=>{const ff=FILTERS[k];return ff&&ff.selected.size>0&&ff.selected.size<ff.all.length;});
   const clrBtn=document.getElementById('fb-clear-btn');
   if(clrBtn)clrBtn.style.display=anyActive?'':'none';
 }
@@ -1359,9 +1374,12 @@ function renderEntTable(){
   var rows=_entData.filter(function(e){
     var meta=entMeta(e.name);
     var cs=e.csPoc||meta.csPoc||'';
+    var ob=e.obPoc||meta.obPoc||'—';
     var csOk=FILTERS.cspoc.selected.size===0||FILTERS.cspoc.selected.size===FILTERS.cspoc.all.length||
               (cs&&FILTERS.cspoc.selected.has(cs));
-    return csOk;
+    var obOk=FILTERS.obpoc.selected.size===0||FILTERS.obpoc.selected.size===FILTERS.obpoc.all.length||
+              (meta.obPoc&&FILTERS.obpoc.selected.has(meta.obPoc));
+    return csOk&&obOk;
   });
   rows=applySortArr(rows,_entSort.col,_entSort.dir);
   window._entList=rows;
@@ -1383,7 +1401,7 @@ function renderEntTable(){
       '<td class="bright" style="max-width:140px;overflow:hidden;text-overflow:ellipsis" title="'+e.name+'">'+e.name+'</td>'+
       '<td>'+segBadge+ragBadge+'</td>'+
       '<td style="font-size:11px;color:var(--sub);max-width:120px;overflow:hidden;text-overflow:ellipsis" title="'+cs+'">'+cs+'</td>'+
-
+      '<td style="font-size:11px;color:var(--sub);max-width:120px;overflow:hidden;text-overflow:ellipsis" title="'+ob+'">'+ob+'</td>'+
       '<td class="r" style="font-size:11px;color:var(--green)">'+arr+'</td>'+
       '<td class="r">'+f.num(e.vins)+'</td>'+
       '<td class="r">'+f.num(e.units)+'</td>'+
@@ -1425,7 +1443,7 @@ function aggregateEnterprises(months){
     const totalCost=m.summary.totalCost||0;
     (m.enterpriseBreakdown||[]).forEach(function(e){
       const n=e.name;
-      if(!acc[n])acc[n]={name:n,segment:e.segment||'',csPoc:e.csPoc||'',liveArr:e.liveArr||'',vins:0,units:0,actualMins:0,sumTarget:0,costPerUnit_sum:0,totalCost:0};
+      if(!acc[n])acc[n]={name:n,segment:e.segment||'',csPoc:e.csPoc||'',obPoc:e.obPoc||'',liveArr:e.liveArr||'',vins:0,units:0,actualMins:0,sumTarget:0,costPerUnit_sum:0,totalCost:0};
       acc[n].vins+=e.vins||0;
       acc[n].units+=e.units||0;
       acc[n].actualMins+=e.actualMins||0;
@@ -1435,6 +1453,7 @@ function aggregateEnterprises(months){
       acc[n].totalCost+=entCostThisMonth;
       if(!acc[n].segment&&e.segment)acc[n].segment=e.segment;
       if(!acc[n].csPoc&&e.csPoc)acc[n].csPoc=e.csPoc;
+      if(!acc[n].obPoc&&e.obPoc)acc[n].obPoc=e.obPoc;
       if(!acc[n].liveArr&&e.liveArr)acc[n].liveArr=e.liveArr;
     });
   });
@@ -1515,12 +1534,14 @@ function buildPocData(months) {
   // Build POC → {mrr: USD×numMonths, cost: INR, numMonths, enterprises:[]}
   const pocMap = {};
   Object.entries(ENT_META).forEach(function([entName, meta]) {
-    const poc = (meta.csPoc && meta.csPoc !== '') ? meta.csPoc : '';
+    const poc = (meta.csPoc && meta.csPoc !== '') ? meta.csPoc : (meta.obPoc || '');
     if (!poc) return;
 
     const csOk = FILTERS.cspoc.selected.size === 0 || FILTERS.cspoc.selected.size === FILTERS.cspoc.all.length ||
                  (meta.csPoc && FILTERS.cspoc.selected.has(meta.csPoc));
-    if (!csOk) return;
+    const obOk = FILTERS.obpoc.selected.size === 0 || FILTERS.obpoc.selected.size === FILTERS.obpoc.all.length ||
+                 (meta.obPoc && FILTERS.obpoc.selected.has(meta.obPoc));
+    if (!csOk && !obOk) return;
 
     if (!entCosts[entName] && (meta.contractedArr || 0) === 0) return;
 
@@ -1867,132 +1888,22 @@ function showPocDetail(pocRow, months) {
 }
 
 
-const LIVE_ACCOUNTS_CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vTS0ExA81qlU0Z2lRs9OobIbmQmLiCX4OGlTJ7Hi-Y4I4X1ovP4q_SG6cSyVtWJG_LYqwOJtNqGEdnC/pub?output=csv';
-
-function parseCSVLine(line){
-  const cols=[];let cur='',inQ=false;
-  for(let i=0;i<line.length;i++){
-    const c=line[i];
-    if(c==='"'&&!inQ){inQ=true;}
-    else if(c==='"'&&inQ&&line[i+1]==='"'){cur+='"';i++;}
-    else if(c==='"'&&inQ){inQ=false;}
-    else if(c===','&&!inQ){cols.push(cur);cur='';}
-    else{cur+=c;}
-  }
-  cols.push(cur);return cols;
-}
-
-function parseLiveAccountsCSV(text){
-  const map={};
-  const lines=text.trim().split('\n');
-  if(lines.length<2)return map;
-  const headers=parseCSVLine(lines[0]);
-  console.log('[live-csv] headers:',headers.slice(0,8));
-  const idx={
-    name:    headers.findIndex(function(h){return /enterprise name/i.test(h);}),
-    stage:   headers.findIndex(function(h){return /^stage$/i.test(h.trim());}),
-    liveArr: headers.findIndex(function(h){return /live arr/i.test(h);}),
-    csPoc:   headers.findIndex(function(h){return /csm name_new/i.test(h)||/cs name/i.test(h);}),
-    seg:     headers.findIndex(function(h){return /customer segment/i.test(h);}),
-    rag:     headers.findIndex(function(h){return /overall rag/i.test(h);}),
-  };
-  console.log('[live-csv] col indices:',idx);
-  lines.slice(1).forEach(function(line){
-    if(!line.trim())return;
-    const cols=parseCSVLine(line);
-    const rawName=(cols[idx.name]||'').trim();
-    if(!rawName)return;
-    const liveArrVal=parseFloat((cols[idx.liveArr]||'').replace(/[^0-9.]/g,''))||0;
-    const csPoc=(cols[idx.csPoc]||'').trim();
-    const seg=(cols[idx.seg]||'').trim();
-    const rag=(cols[idx.rag]||'').trim();
-    const stage=(cols[idx.stage]||'').trim();
-    if(!map[rawName]){
-      map[rawName]={originalName:rawName,segment:seg,csPoc:csPoc,obPoc:'',stage:stage,rag:rag,
-        liveArr:String(liveArrVal),contractedArr:liveArrVal,poc:csPoc};
-    } else {
-      if(!map[rawName].segment&&seg)map[rawName].segment=seg;
-      if(!map[rawName].csPoc&&csPoc)map[rawName].csPoc=csPoc;
-      if(!map[rawName].rag&&rag)map[rawName].rag=rag;
-      map[rawName].contractedArr=(map[rawName].contractedArr||0)+liveArrVal;
-      map[rawName].liveArr=String(map[rawName].contractedArr);
-      if(!map[rawName].poc&&csPoc)map[rawName].poc=csPoc;
-    }
-  });
-  // Add normalized keys
-  const result={};
-  Object.values(map).forEach(function(e){
-    result[e.originalName]=e;
-    const norm=e.originalName.toLowerCase().trim();
-    if(norm!==e.originalName)result[norm]=e;
-  });
-  return result;
-}
-
-function applyEntMeta(rawMeta){
-  // Deduplicate: keep only originalName entries (skip normalized-key duplicates)
-  ENT_META={};ENT_META_NORM={};
-  Object.values(rawMeta).forEach(function(e){
-    if(!e||!e.originalName)return;
-    ENT_META[e.originalName]=e;
-    ENT_META_NORM[e.originalName.toLowerCase().trim()]=e.originalName;
-  });
-  // Also handle if rawMeta isn't using originalName field (plain name-keyed)
-  if(Object.keys(ENT_META).length===0){
-    Object.entries(rawMeta).forEach(function([k,e]){
-      if(!e||typeof e!=='object')return;
-      const origName=e.originalName||k;
-      if(!ENT_META[origName]){
-        ENT_META[origName]=e;
-        ENT_META_NORM[origName.toLowerCase().trim()]=origName;
-      }
-    });
-  }
-  if(DATA)DATA.enterpriseMeta=ENT_META;
-  const csSet=new Set();
-  Object.values(ENT_META).forEach(function(m){if(m.csPoc)csSet.add(m.csPoc);});
-  buildDropdown('cspoc',[...csSet].sort());
-  console.log('[meta] ENT_META:',Object.keys(ENT_META).length,'unique enterprises');
-  const months=filteredMonths();
-  if(months.length){renderTables(months);renderKPIs(months);if(CURRENT_VIEW==='enterprise')renderPocChart(months);}
-}
-
 async function fetchMetabaseFallback(){
   if(Object.keys(ENT_META).length>50){
     console.log('[meta] already loaded:',Object.keys(ENT_META).length);
     return;
   }
-  // Try 1: /api/meta proxy
   try{
-    console.log('[meta] trying /api/meta…');
+    console.log('[meta] fetching /api/meta…');
     const r=await fetch('/api/meta');
     if(r.ok){
       const j=await r.json();
       if(j.enterpriseMeta&&Object.keys(j.enterpriseMeta).length>0){
-        console.log('[meta] /api/meta success:',j.count,'enterprises');
+        console.log('[meta] loaded',j.count,'enterprises');
         applyEntMeta(j.enterpriseMeta);return;
       }
-      console.warn('[meta] /api/meta returned empty');
-    } else {
-      console.warn('[meta] /api/meta HTTP',r.status);
     }
   }catch(e){console.warn('[meta] /api/meta error:',e.message);}
-
-  // Try 2: direct browser fetch of the published CSV (no CORS since it's public)
-  try{
-    console.log('[meta] trying direct CSV fetch…');
-    const r=await fetch(LIVE_ACCOUNTS_CSV_URL,{mode:'cors',cache:'no-cache'});
-    if(r.ok){
-      const text=await r.text();
-      console.log('[meta] direct CSV received, length:',text.length);
-      const meta=parseLiveAccountsCSV(text);
-      if(Object.keys(meta).length>0){applyEntMeta(meta);return;}
-      console.warn('[meta] direct CSV parsed 0 entries');
-    } else {
-      console.warn('[meta] direct CSV HTTP',r.status);
-    }
-  }catch(e){console.warn('[meta] direct CSV error:',e.message);}
-  console.error('[meta] all fetch attempts failed');
 }
 
 async function fetchData(){
