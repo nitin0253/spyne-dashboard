@@ -246,13 +246,20 @@ function aggregateMonth(records, salaryData, entMap) {
 
     // Editor
     const ed = row.editor;
-    if (!editorMap[ed]) editorMap[ed] = { editor: ed, images: 0, skus: 0, units: 0, target: 0, actual: 0, rows: 0, salary: 0, factorSalary: 0 };
+    if (!editorMap[ed]) editorMap[ed] = {
+      editor: ed, images: 0, skus: 0, units: 0, target: 0, actual: 0, rows: 0,
+      salary: 0, factorSalary: 0,
+      imgUnits: 0, s360Units: 0, vidUnits: 0,  // product split
+    };
     editorMap[ed].images += imgs;
     editorMap[ed].skus   += skus;
     editorMap[ed].units  += units;
     editorMap[ed].target += row.sumTarget;
     editorMap[ed].actual += row.actualMins;
     editorMap[ed].rows   += 1;
+    if (pl.includes('image'))      editorMap[ed].imgUnits  += units;
+    else if (pl.includes('360'))   editorMap[ed].s360Units += units;
+    else if (pl.includes('video')) editorMap[ed].vidUnits  += units;
     const sal = salaryByEmail[ed];
     if (sal) { editorMap[ed].salary = sal.salary; editorMap[ed].factorSalary = sal.factorSalary; }
 
@@ -291,6 +298,9 @@ function aggregateMonth(records, salaryData, entMap) {
     ...e,
     efficiency: e.target > 0 ? (e.target / (e.actual || e.target)) : 0,
     costPerUnit: e.units > 0 ? e.factorSalary / e.units : 0,
+    imgCost:  e.units > 0 ? Math.round(e.factorSalary * (e.imgUnits  / e.units)) : 0,
+    s360Cost: e.units > 0 ? Math.round(e.factorSalary * (e.s360Units / e.units)) : 0,
+    vidCost:  e.units > 0 ? Math.round(e.factorSalary * (e.vidUnits  / e.units)) : 0,
   })).sort((a, b) => b.units - a.units);
 
   // Enrich enterprises with delivery cost
