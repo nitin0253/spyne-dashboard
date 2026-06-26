@@ -510,11 +510,15 @@ window.addEventListener('unhandledrejection',function(e){console.error('[PROMISE
 const API_URL='/api/data';
 let DATA=null,CHARTS={};
 // Enterprise metadata from Metabase: name → {segment, csPoc, obPoc, liveArr}
-let ENT_META={};
+let ENT_META={};         // keyed by originalName only — no duplicates
+let ENT_META_NORM={};    // keyed by normalizedName → originalName (for lookup)
 // Normalized lookup: tries exact name first, then lowercase+trim
 function entMeta(name){
   if(!name)return{};
-  return ENT_META[name]||ENT_META[name.toLowerCase().trim()]||{};
+  if(ENT_META[name])return ENT_META[name];
+  const norm=name.toLowerCase().trim();
+  const origKey=ENT_META_NORM[norm];
+  return origKey?ENT_META[origKey]:{};
 }
 let CURRENT_VIEW='dashboard';
 
@@ -1066,7 +1070,7 @@ function showEditorDetail(e){
 }
 
 
-let _entData=[], _entSort={col:'units',dir:-1};
+let _entData=[], _entSort={col:'costPerUnit',dir:-1};
 
 // ── RENDER KPIs ──────────────────────────────────────────────────────────────
 function renderKPIs(months){
@@ -1349,7 +1353,7 @@ function renderUserSummary(months){
   });o._wired=true;}
 }
 
-window.cycleSortEnt=mkSorter('se',['vins','units','efficiency','costPerUnit'],function(col,dir){_entSort.col=col;_entSort.dir=dir;renderEntTable();});
+window.cycleSortEnt=mkSorter('se',['vins','units','totalCost','costPerUnit'],function(col,dir){_entSort.col=col;_entSort.dir=dir;renderEntTable();});
 function renderEntTable(){
   // Apply CS/OB POC filter
   var rows=_entData.filter(function(e){
@@ -1383,6 +1387,7 @@ function renderEntTable(){
       '<td class="r" style="font-size:11px;color:var(--green)">'+arr+'</td>'+
       '<td class="r">'+f.num(e.vins)+'</td>'+
       '<td class="r">'+f.num(e.units)+'</td>'+
+      '<td class="r" style="color:var(--blue)">'+f.inr0(e.totalCost||0)+'</td>'+
       '<td class="r" style="color:var(--amber)">'+f.inr(e.costPerUnit)+'</td>'+
       '</tr>';
   }).join('');
@@ -1420,13 +1425,14 @@ function aggregateEnterprises(months){
     const totalCost=m.summary.totalCost||0;
     (m.enterpriseBreakdown||[]).forEach(function(e){
       const n=e.name;
-      if(!acc[n])acc[n]={name:n,segment:e.segment||'',csPoc:e.csPoc||'',liveArr:e.liveArr||'',vins:0,units:0,actualMins:0,sumTarget:0,costPerUnit_sum:0};
+      if(!acc[n])acc[n]={name:n,segment:e.segment||'',csPoc:e.csPoc||'',liveArr:e.liveArr||'',vins:0,units:0,actualMins:0,sumTarget:0,costPerUnit_sum:0,totalCost:0};
       acc[n].vins+=e.vins||0;
       acc[n].units+=e.units||0;
       acc[n].actualMins+=e.actualMins||0;
       acc[n].sumTarget+=e.sumTarget||0;
+      const entCostThisMonth=Math.round((e.costPerUnit||0)*(e.units||0));
       acc[n].costPerUnit_sum+=(e.costPerUnit||0)*(e.units||0);
-      // keep first non-empty meta
+      acc[n].totalCost+=entCostThisMonth;
       if(!acc[n].segment&&e.segment)acc[n].segment=e.segment;
       if(!acc[n].csPoc&&e.csPoc)acc[n].csPoc=e.csPoc;
       if(!acc[n].liveArr&&e.liveArr)acc[n].liveArr=e.liveArr;
@@ -1436,7 +1442,7 @@ function aggregateEnterprises(months){
     e.efficiency=e.actualMins>0?+((e.sumTarget/e.actualMins)*100).toFixed(2):0;
     e.costPerUnit=e.units>0?+(e.costPerUnit_sum/e.units).toFixed(2):0;
     return e;
-  }).filter(function(e){return e.units>0;}).sort(function(a,b){return b.units-a.units;}).slice(0,25);
+  }).filter(function(e){return e.units>0;}).sort(function(a,b){return b.costPerUnit-a.costPerUnit;}).slice(0,25);
 }
 
 function renderTables(months){
@@ -1623,9 +1629,9 @@ function renderPocChart(months) {
       label: '% Cost / ARR',
       type: 'line',
       data: data.map(function(p) {
-        if (!p.arr || !p.cost) return 0;
-        var arrINR = (p.arr / 12) * 83; // MRR = ARR/12, converted to INR
-        return +((p.cost / arrINR) * 100).toFixed(2);
+        if (!p.mrr || !p.cost) return 0;
+        var mrrINR = p.mrr * 83; // mrr is already MRR×months in USD, convert to INR
+        return +(mrrINR > 0 ? (p.cost / mrrINR) * 100 : 0).toFixed(2);
       }),
       borderColor: '#f5a42a',
       borderWidth: 2.5,
@@ -1652,10 +1658,11 @@ function renderPocChart(months) {
         color: '#FFFFFF', font: { size: 9, weight: '700' },
         anchor: 'end', align: 'top', offset: 3, clamp: true,
         formatter: function(v, ctx) {
-          var arr = data[ctx.dataIndex].mrr, cost = data[ctx.dataIndex].cost;
-          var pct = (arr && cost) ? ((cost / ((arr / 12) * 83)) * 100).toFixed(1) + '%' : '';
-          var arrFmt = arr >= 1e6 ? '$' + (arr/1e6).toFixed(1) + 'M' : arr >= 1e3 ? '$' + (arr/1e3).toFixed(0) + 'K' : '$' + arr;
-          return arrFmt + (pct ? ' | ' + pct : '');
+          var d = data[ctx.dataIndex];
+          var mrrINR = (d.mrr || 0) * 83;
+          var pct = (mrrINR && d.cost) ? ((d.cost / mrrINR) * 100).toFixed(1) + '%' : '';
+          var mrrFmt = (d.mrr||0) >= 1e6 ? '$'+((d.mrr||0)/1e6).toFixed(1)+'M' : (d.mrr||0) >= 1e3 ? '$'+((d.mrr||0)/1e3).toFixed(0)+'K' : '$'+Math.round(d.mrr||0);
+          return mrrFmt + (pct ? ' | ' + pct : '');
         }
       };
     }
@@ -1922,13 +1929,30 @@ function parseLiveAccountsCSV(text){
   return result;
 }
 
-function applyEntMeta(meta){
-  ENT_META=meta;
-  if(DATA)DATA.enterpriseMeta=meta;
+function applyEntMeta(rawMeta){
+  // Deduplicate: keep only originalName entries (skip normalized-key duplicates)
+  ENT_META={};ENT_META_NORM={};
+  Object.values(rawMeta).forEach(function(e){
+    if(!e||!e.originalName)return;
+    ENT_META[e.originalName]=e;
+    ENT_META_NORM[e.originalName.toLowerCase().trim()]=e.originalName;
+  });
+  // Also handle if rawMeta isn't using originalName field (plain name-keyed)
+  if(Object.keys(ENT_META).length===0){
+    Object.entries(rawMeta).forEach(function([k,e]){
+      if(!e||typeof e!=='object')return;
+      const origName=e.originalName||k;
+      if(!ENT_META[origName]){
+        ENT_META[origName]=e;
+        ENT_META_NORM[origName.toLowerCase().trim()]=origName;
+      }
+    });
+  }
+  if(DATA)DATA.enterpriseMeta=ENT_META;
   const csSet=new Set();
-  Object.values(meta).forEach(function(m){if(m.csPoc)csSet.add(m.csPoc);});
+  Object.values(ENT_META).forEach(function(m){if(m.csPoc)csSet.add(m.csPoc);});
   buildDropdown('cspoc',[...csSet].sort());
-  console.log('[meta] ENT_META populated:',Object.keys(meta).length,'enterprises, sample:',Object.keys(meta).slice(0,3));
+  console.log('[meta] ENT_META:',Object.keys(ENT_META).length,'unique enterprises');
   const months=filteredMonths();
   if(months.length){renderTables(months);renderKPIs(months);if(CURRENT_VIEW==='enterprise')renderPocChart(months);}
 }
@@ -1980,15 +2004,10 @@ async function fetchData(){
     if(json.error)throw new Error(json.error+(json.hint?' | '+json.hint:''));
     DATA=json;
     // Populate ENT_META from backend response (Metabase data fetched server-side)
-    ENT_META={};
-    if(json.enterpriseMeta&&typeof json.enterpriseMeta==='object'){
-      ENT_META=json.enterpriseMeta;
-      const csPocSet=new Set();
-      Object.values(ENT_META).forEach(function(m){
-        if(m.csPoc)csPocSet.add(m.csPoc);
-      });
-      buildDropdown('cspoc',[...csPocSet].sort());
-      console.log('[ENT_META] loaded from API:',Object.keys(ENT_META).length,'enterprises');
+    if(json.enterpriseMeta&&typeof json.enterpriseMeta==='object'&&Object.keys(json.enterpriseMeta).length>0){
+      applyEntMeta(json.enterpriseMeta);
+    } else {
+      ENT_META={};ENT_META_NORM={};
     }
     overlayHide();
     document.getElementById('status-text').textContent=DATA.months.length+' months';
