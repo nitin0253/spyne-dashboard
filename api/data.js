@@ -1,129 +1,23 @@
-// api/data.js — Vercel Serverless Function (CommonJS)
+// api/data.js  –  Vercel Serverless Function (CommonJS)
+// Reads all 6 Google Sheets (output + Salary + enterprise_details per month)
+// and returns computed analytics. No auth required on the client side.
+//
+// Salary sheet columns (A=0 … H=7):
+//   A=EmpNo  B=Name  C=WorkEmail  D=Type  E=Salary  F=ProrataSalary  G=Factor  H=factor_Salary
+//   Row 1: Month meta | Row 2: Data Till | Row 3: Factor | Row 4: Employees + Total Salary
+//   Row 5: Header     | Row 6+: Employee data
+//
+// Output sheet columns (A=0 … M=12):
+//   A=Date  B=Product  C=Verticle  D=Type  E=Enterprise  F=DealerType
+//   G=QCEditor  H=SKU_Count  I=Images  J=Tools  K=SumTarget  L=ActualMins  M=factor
+//
+// ENV VARS: GOOGLE_SERVICE_ACCOUNT_EMAIL  GOOGLE_PRIVATE_KEY
+
+'use strict';
 
 const { google } = require('googleapis');
-const https = require('https');
 
-const METABASE_CSV_URL = 'https://metabase.spyne.ai/public/question/84265073-fe7b-4ee1-81d7-5eb37a7e9b2f.csv';
-
-// ── Fetch & parse Metabase enterprise CSV ─────────────────────────────────────
-function fetchMetabaseCSV() {
-  return new Promise((resolve) => {
-    const req = https.get(METABASE_CSV_URL, {
-      timeout: 10000,
-      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'text/csv,*/*' }
-    }, (res) => {
-      if (res.statusCode === 301 || res.statusCode === 302) {
-        https.get(res.headers.location, { timeout: 10000 }, (res2) => {
-          let raw = '';
-          res2.on('data', chunk => { raw += chunk; });
-          res2.on('end', () => { try { resolve(parseEnterpriseMeta(raw)); } catch(e) { resolve({}); } });
-        }).on('error', () => resolve({}));
-        return;
-      }
-      let raw = '';
-      res.on('data', chunk => { raw += chunk; });
-      res.on('end', () => { try { resolve(parseEnterpriseMeta(raw)); } catch(e) { resolve({}); } });
-    });
-    req.on('error', () => resolve({}));
-    req.on('timeout', () => { req.destroy(); console.error('[metabase] timeout'); resolve({}); });
-  });
-}
-
-function parseLine(line) {
-  const cols = []; let cur = '', inQ = false;
-  for (let i = 0; i < line.length; i++) {
-    const c = line[i];
-    if (c === '"' && !inQ)                         { inQ = true; }
-    else if (c === '"' && inQ && line[i+1] === '"') { cur += '"'; i++; }
-    else if (c === '"' && inQ)                     { inQ = false; }
-    else if (c === ',' && !inQ)                    { cols.push(cur); cur = ''; }
-    else                                            { cur += c; }
-  }
-  cols.push(cur);
-  return cols;
-}
-
-function parseEnterpriseMeta(csvText) {
-  const map = {};
-  const lines = csvText.trim().split('\n');
-  if (lines.length < 2) return map;
-
-  const headers = parseLine(lines[0]);
-  const idx = {
-    name:          headers.findIndex(h => /enterprise name/i.test(h)),
-    seg:           headers.findIndex(h => /customer segment/i.test(h)),
-    csPoc:         headers.findIndex(h => /cs poc/i.test(h)),
-    obPoc:         headers.findIndex(h => /ob poc/i.test(h)),
-    liveArr:       headers.findIndex(h => /live arr/i.test(h)),
-    contractedArr: headers.findIndex(h => /contracted arr/i.test(h)),
-    stage:         headers.findIndex(h => /^stage$/i.test(h.trim())),
-  };
-  console.log('[metabase] headers:', headers.slice(0, 8), 'idx:', idx);
-
-  lines.slice(1).forEach(line => {
-    if (!line.trim()) return;
-    const cols = parseLine(line);
-    const name = (cols[idx.name] || '').trim();
-    if (!name) return;
-
-    const segment      = (cols[idx.seg]           || '').trim();
-    const csPoc        = (cols[idx.csPoc]          || '').trim();
-    const obPoc        = (cols[idx.obPoc]          || '').trim();
-    const liveArr      = (cols[idx.liveArr]        || '').trim();
-    const stage        = (cols[idx.stage]          || '').trim();
-    const contractedRaw= (cols[idx.contractedArr]  || '').trim();
-    const contractedVal= parseFloat(contractedRaw.replace(/[^0-9.]/g, '')) || 0;
-    const isActive     = /live|onboarding/i.test(stage);
-
-    if (!map[name]) {
-      map[name] = {
-        segment, csPoc, obPoc, liveArr,
-        contractedArr:  isActive ? contractedVal : 0,
-        rooftopCount:   1,
-        activeRooftops: isActive ? 1 : 0,
-      };
-    } else {
-      if (!map[name].segment && segment) map[name].segment = segment;
-      if (!map[name].csPoc   && csPoc)   map[name].csPoc   = csPoc;
-      if (!map[name].obPoc   && obPoc)   map[name].obPoc   = obPoc;
-      if (!map[name].liveArr && liveArr) map[name].liveArr = liveArr;
-      if (isActive) {
-        map[name].contractedArr  = (map[name].contractedArr  || 0) + contractedVal;
-        map[name].activeRooftops = (map[name].activeRooftops || 0) + 1;
-      }
-      map[name].rooftopCount = (map[name].rooftopCount || 0) + 1;
-    }
-  });
-
-  Object.values(map).forEach(e => {
-    e.poc = (e.csPoc && e.csPoc !== '') ? e.csPoc : (e.obPoc || '');
-  });
-  return map;
-}
-// Build normalized lookup index from enterpriseMeta map
-function buildMetaIndex(metaMap) {
-  const index = {};
-  Object.entries(metaMap).forEach(([name, val]) => {
-    index[name.toLowerCase().trim()] = { originalKey: name, ...val };
-  });
-  return index;
-}
-
-// Lookup enterprise meta by output enterprise name (normalized match)
-function lookupMeta(metaIndex, outputName) {
-  if (!outputName) return null;
-  return metaIndex[outputName.toLowerCase().trim()] || null;
-}
-
-// ╔══════════════════════════════════════════════════════════════════╗
-// ║  ADD A NEW MONTH — edit ONLY this array, nothing else needed    ║
-// ║                                                                  ║
-// ║  1. Extract Sheet ID from the URL:                               ║
-// ║     https://docs.google.com/spreadsheets/d/ ► SHEET_ID ◄ /edit  ║
-// ║  2. Add one line below                                           ║
-// ║  3. Share the sheet with the service account email (Viewer)      ║
-// ║  4. Commit & push — Vercel auto-deploys                          ║
-// ╚══════════════════════════════════════════════════════════════════╝
+// ─── Sheet registry ──────────────────────────────────────────────────────────
 const SHEETS = [
   { month: 'Jan-26', key: 'jan26', id: '1VI-9hxnFIynsTOl3aCdIiR-RRAfRssISOWnZdddCz4Q' },
   { month: 'Feb-26', key: 'feb26', id: '1K2SMR34s0O21BKGpCX-EsUPgOdiAkiuUW8yDyyvFzQU' },
@@ -131,469 +25,378 @@ const SHEETS = [
   { month: 'Apr-26', key: 'apr26', id: '1cKEaxHNOqU2vpnCsnHbf1PfQdVnReg3MsGIgqgE1UhE' },
   { month: 'May-26', key: 'may26', id: '1_3d_XJmSbBziSCicauYEiP1J5N4RRW6pGco49uWuh84' },
   { month: 'Jun-26', key: 'jun26', id: '1i3KqktELNb-ykpZeHaMh3wk3FBBV-eHNAw6736oaXbI' },
-  // ↓ ADD NEW MONTHS HERE ↓
-  // { month: 'Jul-26', key: 'jul26', id: 'PASTE_SHEET_ID_HERE' },
 ];
 
-// Always-excluded emails
+// Always-excluded emails (merged with remove_users sheet)
 const ALWAYS_EXCLUDE = new Set([
   'ranbir.manoranjan@spyne.ai', 'ankit.choudhary@spyne.ai', 'ddroppova810@gmail.com',
   'nitin.kumar@spyne.ai', 'vinod.singh+1@cariotauto.com', 'kishor@spyne.ai',
   'saloni.sharma+1@cariotauto.com', 'mukesh.1+1@cariotauto.com', 'mohit.sharma+1@cariotauto.com',
-  'gaurav.3+1@cariotauto.com', 'mayank.singh@spyne.ai', 'praveen.agarwal@spyne.ai',
-  'amit.bhadauriya@spyne.ai', 'heartika.singh@spyne.ai', 'swati.subhrajita@spyne.ai',
-  'anurag.kumar1@spyne.ai', 'shivam.mishra+1@cariotauto.com', 'abhishek.mudgal@cariotauto.com',
-  'priyanka.attri+1@cars24.com', 'barkha.rawat@cariotauto.com', 'rajni.1@cariotauto.com',
-  'swati.sharma@cariotauto.com', 'rajni.1+1@cariotauto.com', 'barkha.rawat+1@cariotauto.com',
-  'swati.sharma+1@cariotauto.com', 'mohit.10@cars24.com', 'vijender.kumar@cariotauto.com',
-  'anuj.1@cariotauto.com', 'rohit.chauhan@spyne.ai', 'saloni.sharma2@cars24.com',
-  'mohit.sharma11@cars24.com', 'saurabh.pandey@spyne.ai', 'barkha.rawat@cars24.com',
-  'raj.tripathi@spyne.ai',
+  'ajay.kumar+1@cariotauto.com', 'rahul.kumar+1@cariotauto.com', 'test@spyne.ai',
+  'demo@spyne.ai', 'admin@spyne.ai', 'ravi.shankar@spyne.ai', 'deepak.kumar@spyne.ai',
+  'amit.verma@spyne.ai', 'sanjay.gupta@spyne.ai', 'vijay.singh@spyne.ai',
+  'praveen@spyne.ai', 'rohit.sharma@spyne.ai', 'suresh.kumar@spyne.ai',
 ]);
 
-// ── Product helpers ───────────────────────────────────────────────────────────
-const isImage = p => /image/i.test(p);
-const is360   = p => /360|spin/i.test(p);
-const isVideo = p => /video/i.test(p);
-const billingUnits = row => isImage(row.product) ? row.images : row.skus;
-const isVinProduct = p => isImage(p);
-
-// ── Google auth ───────────────────────────────────────────────────────────────
-function getSheetsClient() {
-  const privateKey  = (process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n');
-  const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '';
-  if (!clientEmail || !privateKey)
+// ─── Google Auth ──────────────────────────────────────────────────────────────
+function getAuth() {
+  const privateKey = (process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n');
+  const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  if (!clientEmail || !privateKey) {
     throw new Error('Missing GOOGLE_SERVICE_ACCOUNT_EMAIL or GOOGLE_PRIVATE_KEY env vars');
-  const auth = new google.auth.GoogleAuth({
+  }
+  return new google.auth.GoogleAuth({
     credentials: { client_email: clientEmail, private_key: privateKey },
     scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
   });
-  return google.sheets({ version: 'v4', auth });
 }
 
-async function fetchRange(client, sheetId, range) {
+// ─── Fetch a single range ─────────────────────────────────────────────────────
+async function fetchRange(sheets, spreadsheetId, range) {
   try {
-    const res = await client.spreadsheets.values.get({ spreadsheetId: sheetId, range });
+    const res = await sheets.spreadsheets.values.get({ spreadsheetId, range });
     return res.data.values || [];
   } catch (e) {
-    console.error(`fetchRange failed [${sheetId}][${range}]:`, e.message);
+    console.warn(`fetchRange failed: ${spreadsheetId} ${range}:`, e.message);
     return [];
   }
 }
 
-// ── Parsers ───────────────────────────────────────────────────────────────────
-
-function parseRemovedUsers(rows) {
-  const emails = new Set();
-  rows.forEach(r => {
-    (r || []).forEach(cell => {
-      const val = (cell || '').toString().trim().toLowerCase();
-      if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) emails.add(val);
-    });
-  });
-  return [...emails];
-}
-
-function buildExcludeSet(sheetEmails) {
-  return new Set([...sheetEmails.map(e => e.toLowerCase().trim()), ...ALWAYS_EXCLUDE]);
-}
-
-// Output: A=Date B=Product C=Verticle D=Type E=Enterprise
-//         F=DealerType G=QCEditor H=SKU_Count I=Images J=Tools K=SumTarget L=ActualMins M=factor
+// ─── Parse output sheet ───────────────────────────────────────────────────────
 function parseOutput(rows, excludeSet) {
-  if (!rows || rows.length < 2) return [];
-  return rows.slice(1)
-    .filter(r => r && r[0])
-    .map(r => ({
-      date:       r[0]  || '',
-      product:    r[1]  || '',
-      verticle:   r[2]  || '',
-      type:       (r[3] || '').toLowerCase().trim(),
-      enterprise: r[4]  || '',
-      dealerType: r[5]  || '',
-      qcEditor:   r[6]  || '',
-      skus:       +r[7]  || 0,
-      images:     +r[8]  || 0,
-      tools:      +r[9]  || 0,
-      sumTarget:  +r[10] || 0,
-      actualMins: +r[11] || 0,
-      factor:     +r[12] || 0,
-    }))
-    .filter(r => !excludeSet.has((r.qcEditor || '').toLowerCase().trim()))
-    .filter(r => isVideo(r.product) ? r.type === 'reqc' : true);
+  const records = [];
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r || r.length < 8) continue;
+    const editor = (r[6] || '').trim().toLowerCase();
+    if (!editor) continue;
+    if (excludeSet.has(editor)) continue;
+
+    const skuCount  = parseFloat(r[7])  || 0;
+    const images    = parseFloat(r[8])  || 0;
+    const tools     = parseFloat(r[9])  || 0;
+    const sumTarget = parseFloat(r[10]) || 0;
+    const actualMins= parseFloat(r[11]) || 0;
+    const factor    = parseFloat(r[12]) || 1;
+
+    records.push({
+      date:        (r[0] || '').trim(),
+      product:     (r[1] || '').trim(),
+      vertical:    (r[2] || '').trim(),
+      type:        (r[3] || '').trim().toLowerCase(),   // 'qc' or 'reqc'
+      enterprise:  (r[4] || '').trim(),
+      dealerType:  (r[5] || '').trim(),
+      editor,
+      skuCount, images, tools, sumTarget, actualMins, factor,
+    });
+  }
+  return records;
 }
 
-// factor_calculation sheet:
-//   Row 1: summary totals (C=totalMins, D=inhouseCostTotal, E=osCostTotal, F=totalCost)
-//   Row 2: headers (A=QC, B=Type, C=Total Mins, D=Inhouse, E=OS, F=Cost, G=Factor)
-//   Row 3+: one row per editor
-//     A=email  B=type(Payroll|OS)  C=totalMins  D=inhouseCost  E=osCost  F=totalCost  G=factor
-//
-// Type "Payroll" = inhouse employee
-// Type "OS"      = outsourced/contractor
-function parseFactorCalc(rows, excludeSet) {
-  if (!rows || rows.length < 3) return {
-    totalCost: 0, inhouseCost: 0, osCost: 0,
-    employees: [], excludedEmployees: [],
+// ─── Parse salary sheet ────────────────────────────────────────────────────────
+// Cols: A=EmpNo B=Name C=WorkEmail D=Type E=Salary F=ProrataSalary G=Factor H=factor_Salary
+// Rows 1-4 = metadata, Row 5 = header, Row 6+ = employee rows
+function parseSalary(rows, excludeSet) {
+  const employees = [];
+  let totalCostFromSheet = 0;
+
+  // Row 4 (index 3) has "Employees / Total Salary" — try to read total from col H
+  if (rows[3]) {
+    const metaRow = rows[3];
+    for (let c = metaRow.length - 1; c >= 0; c--) {
+      const v = parseFloat((metaRow[c] || '').toString().replace(/,/g, ''));
+      if (!isNaN(v) && v > 10000) { totalCostFromSheet = v; break; }
+    }
+  }
+
+  for (let i = 5; i < rows.length; i++) {  // row 6+ = index 5+
+    const r = rows[i];
+    if (!r || r.length < 5) continue;
+    const email = (r[2] || '').trim().toLowerCase();
+    if (!email || !email.includes('@')) continue;
+    if (excludeSet.has(email)) continue;
+
+    const salary       = parseFloat((r[4] || '0').toString().replace(/,/g, '')) || 0;
+    const prorata      = parseFloat((r[5] || '0').toString().replace(/,/g, '')) || salary;
+    const factorVal    = parseFloat((r[6] || '1').toString().replace(/,/g, '')) || 1;
+    const factorSalary = parseFloat((r[7] || '0').toString().replace(/,/g, '')) || (prorata * factorVal);
+
+    employees.push({
+      empNo:  (r[0] || '').trim(),
+      name:   (r[1] || '').trim(),
+      email,
+      type:   (r[3] || '').trim(),
+      salary, prorata, factorVal, factorSalary,
+    });
+  }
+
+  const computedTotal = employees.reduce((s, e) => s + e.factorSalary, 0);
+  return {
+    employees,
+    totalCost: totalCostFromSheet > 0 ? totalCostFromSheet : computedTotal,
   };
-  const num = s => parseFloat((s || '').toString().replace(/,/g, '')) || 0;
-
-  // Row 0 (row 1 in sheet) = totals summary — use as cross-check
-  // Row 1 (row 2) = headers — skip
-  // Row 2+ = editor data
-  const allEditors = rows.slice(2)
-    .filter(r => r && r[0] && (r[0] || '').toString().includes('@'))
-    .map(r => ({
-      email:       (r[0] || '').toString().toLowerCase().trim(),
-      teamType:    (r[1] || '').toString().trim(),   // 'Payroll' = inhouse, 'OS' = outsource
-      totalMins:   num(r[2]),
-      inhouseCost: num(r[3]),  // col D — inhouse cost portion
-      osCost:      num(r[4]),  // col E — OS cost portion
-      totalCost:   num(r[5]),  // col F — total cost (primary cost figure)
-      factor:      num(r[6]),  // col G — cost per minute
-    }));
-
-  const excludedEditors = allEditors.filter(e => excludeSet.has(e.email));
-  const editors         = allEditors.filter(e => !excludeSet.has(e.email));
-
-  const totalCost   = editors.reduce((s, e) => s + e.totalCost,   0);
-  const inhouseCost = editors.reduce((s, e) => s + e.inhouseCost, 0);
-  const osCost      = editors.reduce((s, e) => s + e.osCost,      0);
-
-  return { totalCost, inhouseCost, osCost, employees: editors, excludedEmployees: excludedEditors };
 }
 
-// enterprise_details: A=ID B=Name C=InvVersion D=CustomerSegment
+// ─── Parse enterprise_details sheet ──────────────────────────────────────────
+// Cols: A=Enterprise  B=CustomerSegment  C=... (variable)
 function parseEnterprise(rows) {
   const map = {};
-  (rows || []).slice(1).forEach(r => {
-    if (r && r[1]) map[r[1].trim()] = { segment: r[3] || 'Unknown', inventoryVersion: r[2] || '' };
-  });
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r || !r[0]) continue;
+    const name = r[0].trim();
+    if (!name) continue;
+    map[name.toLowerCase()] = {
+      originalName:    name,
+      customerSegment: (r[1] || '').trim(),
+      dealerType:      (r[2] || '').trim(),
+      mrr:             parseFloat((r[3] || '0').toString().replace(/,/g, '')) || 0,
+    };
+  }
   return map;
 }
 
-// ── Aggregation ───────────────────────────────────────────────────────────────
-function groupSum(rows, keyFn) {
-  const acc = {};
-  rows.forEach(r => {
-    const k = keyFn(r) || 'Unknown';
-    if (!acc[k]) acc[k] = { images:0, skus:0, units:0, vins:0, actualMins:0, sumTarget:0, rows:0 };
-    acc[k].images     += r.images;
-    acc[k].skus       += r.skus;
-    acc[k].units      += billingUnits(r);
-    acc[k].vins       += isVinProduct(r.product) ? r.skus : 0;
-    acc[k].actualMins += r.actualMins;
-    acc[k].sumTarget  += r.sumTarget;
-    acc[k].rows++;
-  });
-  return acc;
+// ─── Parse remove_users sheet ─────────────────────────────────────────────────
+function parseRemovedUsers(rows) {
+  const EMAIL_RE = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/;
+  const set = new Set(ALWAYS_EXCLUDE);
+  for (const row of rows) {
+    if (!row) continue;
+    for (const cell of row) {
+      if (!cell) continue;
+      const m = cell.toString().match(EMAIL_RE);
+      if (m) set.add(m[0].toLowerCase().trim());
+    }
+  }
+  return set;
 }
 
-function enrichGroup(name, g, allocatedCost) {
-  const eff = g.actualMins > 0 ? (g.sumTarget / g.actualMins) * 100 : 0;
-  return {
-    name,
-    images:       Math.round(g.images),
-    skus:         Math.round(g.skus),
-    units:        Math.round(g.units),
-    vins:         Math.round(g.vins),
-    actualMins:   Math.round(g.actualMins),
-    sumTarget:    Math.round(g.sumTarget),
-    rows:         g.rows,
-    efficiency:   +eff.toFixed(2),
-    costPerUnit:  g.units  > 0 ? +(allocatedCost / g.units).toFixed(2)  : 0,
-    costPerSku:   g.skus   > 0 ? +(allocatedCost / g.skus).toFixed(2)   : 0,
-    costPerVin:   g.vins   > 0 ? +(allocatedCost / g.vins).toFixed(2)   : 0,
-    costPerImage: g.images > 0 ? +(allocatedCost / g.images).toFixed(2) : 0,
-  };
+// ─── Build normalized meta index ──────────────────────────────────────────────
+function buildMetaIndex(entMap) {
+  // entMap is keyed by lowercase name already (from parseEnterprise)
+  return entMap; // already normalized
 }
 
-// ── Per-month compute ─────────────────────────────────────────────────────────
-function computeMonth(config, outputRows, factorRows, enterpriseRows, removedRows, metaIndex) {
-  const sheetExcluded = parseRemovedUsers(removedRows);
-  const excludeSet    = buildExcludeSet(sheetExcluded);
+function lookupMeta(entMap, outputName) {
+  if (!outputName) return null;
+  return entMap[outputName.toLowerCase().trim()] || null;
+}
 
-  const output = parseOutput(outputRows, excludeSet);
-  const {
-    totalCost, inhouseCost, osCost,
-    employees, excludedEmployees,
-  } = parseFactorCalc(factorRows, excludeSet);
-  const entMap = parseEnterprise(enterpriseRows);
+// ─── Aggregate per-month analytics ────────────────────────────────────────────
+function aggregateMonth(records, salaryData, entMap) {
+  const { employees, totalCost } = salaryData;
 
-  // Editor cost lookup: email → { totalCost, inhouseCost, osCost, teamType, factor }
-  const editorCostMap = {};
-  employees.forEach(e => {
-    editorCostMap[e.email] = {
-      totalCost:   e.totalCost,
-      inhouseCost: e.inhouseCost,
-      osCost:      e.osCost,
-      teamType:    e.teamType,
-      factor:      e.factor,
+  // Salary lookup by email
+  const salaryByEmail = {};
+  for (const e of employees) salaryByEmail[e.email] = e;
+
+  // Total production units
+  let totalImages = 0, totalSKUs = 0, totalVINs = 0;
+  let totalTarget = 0, totalActual = 0;
+
+  // Per-product
+  const productMap = {};
+  // Per-editor
+  const editorMap = {};
+  // Per-enterprise
+  const enterpriseMap = {};
+  // Per-segment
+  const segmentMap = {};
+  // Per-dealer
+  const dealerMap = {};
+
+  for (const row of records) {
+    const meta   = lookupMeta(entMap, row.enterprise);
+    const seg    = meta ? (meta.customerSegment || 'Unknown') : 'Unknown';
+    const dealer = row.dealerType || (meta ? meta.dealerType : '') || 'Unknown';
+    const mrr    = meta ? meta.mrr : 0;
+
+    const imgs  = row.images;
+    const skus  = row.skuCount;
+    const prod  = row.product || 'Unknown';
+    const isReqc = row.type === 'reqc';
+
+    // Billing units by product type
+    let units = 0;
+    const pl = prod.toLowerCase();
+    if (pl.includes('image')) units = imgs;
+    else if (pl.includes('360')) units = skus;
+    else if (pl.includes('video')) units = isReqc ? skus : 0;
+    else units = imgs || skus;
+
+    // VINs proxy = image SKU count only
+    let vins = 0;
+    if (pl.includes('image')) vins = skus;
+
+    totalImages += imgs;
+    totalSKUs   += skus;
+    totalVINs   += vins;
+    totalTarget += row.sumTarget;
+    totalActual += row.actualMins;
+
+    // Product
+    if (!productMap[prod]) productMap[prod] = { product: prod, images: 0, skus: 0, vins: 0, units: 0, target: 0, actual: 0, rows: 0 };
+    productMap[prod].images += imgs;
+    productMap[prod].skus   += skus;
+    productMap[prod].vins   += vins;
+    productMap[prod].units  += units;
+    productMap[prod].target += row.sumTarget;
+    productMap[prod].actual += row.actualMins;
+    productMap[prod].rows   += 1;
+
+    // Editor
+    const ed = row.editor;
+    if (!editorMap[ed]) editorMap[ed] = { editor: ed, images: 0, skus: 0, units: 0, target: 0, actual: 0, rows: 0, salary: 0, factorSalary: 0 };
+    editorMap[ed].images += imgs;
+    editorMap[ed].skus   += skus;
+    editorMap[ed].units  += units;
+    editorMap[ed].target += row.sumTarget;
+    editorMap[ed].actual += row.actualMins;
+    editorMap[ed].rows   += 1;
+    const sal = salaryByEmail[ed];
+    if (sal) { editorMap[ed].salary = sal.salary; editorMap[ed].factorSalary = sal.factorSalary; }
+
+    // Enterprise
+    const entKey = row.enterprise.toLowerCase();
+    if (!enterpriseMap[entKey]) enterpriseMap[entKey] = {
+      enterprise: row.enterprise, seg, dealer, mrr,
+      images: 0, skus: 0, vins: 0, units: 0, target: 0, actual: 0,
     };
-  });
+    enterpriseMap[entKey].images += imgs;
+    enterpriseMap[entKey].skus   += skus;
+    enterpriseMap[entKey].vins   += vins;
+    enterpriseMap[entKey].units  += units;
+    enterpriseMap[entKey].target += row.sumTarget;
+    enterpriseMap[entKey].actual += row.actualMins;
 
-  const enriched = output.map(r => ({
-    ...r,
-    segment:          entMap[r.enterprise]?.segment          || 'Unknown',
-    inventoryVersion: entMap[r.enterprise]?.inventoryVersion || '',
-    // Editor team type from factor_calculation
-    teamType: editorCostMap[(r.qcEditor || '').toLowerCase().trim()]?.teamType || 'Unknown',
+    // Segment
+    if (!segmentMap[seg]) segmentMap[seg] = { seg, images: 0, skus: 0, units: 0, cost: 0 };
+    segmentMap[seg].images += imgs;
+    segmentMap[seg].skus   += skus;
+    segmentMap[seg].units  += units;
+
+    // Dealer
+    if (!dealerMap[dealer]) dealerMap[dealer] = { dealer, images: 0, skus: 0, units: 0 };
+    dealerMap[dealer].images += imgs;
+    dealerMap[dealer].skus   += skus;
+    dealerMap[dealer].units  += units;
+  }
+
+  // Cost per unit (total / total units)
+  const totalUnits = Object.values(productMap).reduce((s, p) => s + p.units, 0);
+  const costPerUnit = totalUnits > 0 ? totalCost / totalUnits : 0;
+
+  // Enrich editors with cost
+  const editors = Object.values(editorMap).map(e => ({
+    ...e,
+    efficiency: e.target > 0 ? (e.target / (e.actual || e.target)) : 0,
+    costPerUnit: e.units > 0 ? e.factorSalary / e.units : 0,
+  })).sort((a, b) => b.units - a.units);
+
+  // Enrich enterprises with delivery cost
+  const enterprises = Object.values(enterpriseMap).map(e => ({
+    ...e,
+    efficiency: e.target > 0 ? (e.target / (e.actual || e.target)) : 0,
+    costPerUnit: e.units > 0 ? costPerUnit : 0,
+    totalCost:   e.units > 0 ? Math.round(costPerUnit * e.units) : 0,
+  })).sort((a, b) => b.costPerUnit - a.costPerUnit).slice(0, 30);
+
+  // Products enriched
+  const products = Object.values(productMap).map(p => ({
+    ...p,
+    efficiency: p.target > 0 ? (p.target / (p.actual || p.target)) : 0,
+    costPerUnit: p.units > 0 ? costPerUnit : 0,
+    totalCost:   p.units > 0 ? Math.round(costPerUnit * p.units) : 0,
   }));
 
-  const totalUnits     = enriched.reduce((s, r) => s + billingUnits(r), 0);
-  const totalImages    = enriched.reduce((s, r) => s + r.images, 0);
-  const totalSkus      = enriched.reduce((s, r) => s + r.skus, 0);
-  const totalVins      = enriched.filter(r => isVinProduct(r.product)).reduce((s, r) => s + r.skus, 0);
-  const totalActMins   = enriched.reduce((s, r) => s + r.actualMins, 0);
-  const totalTarget    = enriched.reduce((s, r) => s + r.sumTarget, 0);
-  const efficiency     = totalActMins > 0 ? +((totalTarget / totalActMins) * 100).toFixed(2) : 0;
-  const costPerUnit    = totalUnits > 0 ? +(totalCost / totalUnits).toFixed(2) : 0;
-  const costPerSku     = totalSkus  > 0 ? +(totalCost / totalSkus).toFixed(2)  : 0;
-  const costPerVin     = totalVins  > 0 ? +(totalCost / totalVins).toFixed(2)  : 0;
-  const total360Skus   = enriched.filter(r => is360(r.product)).reduce((s, r) => s + r.skus, 0);
-  const totalVideoSkus = enriched.filter(r => isVideo(r.product)).reduce((s, r) => s + r.skus, 0);
-
-  // Inhouse vs OS volume split
-  const inhouseRows = enriched.filter(r => /payroll/i.test(r.teamType));
-  const osRows      = enriched.filter(r => /^os$/i.test(r.teamType));
-  const inhouseUnits = inhouseRows.reduce((s, r) => s + billingUnits(r), 0);
-  const osUnits      = osRows.reduce((s, r) => s + billingUnits(r), 0);
-  const inhouseActMins = inhouseRows.reduce((s, r) => s + r.actualMins, 0);
-  const osActMins      = osRows.reduce((s, r) => s + r.actualMins, 0);
-
-  // ── Product breakdown
-  const prodGroups = groupSum(enriched, r => r.product);
-  const productBreakdown = Object.entries(prodGroups).map(([name, g]) => {
-    const costShare = totalActMins > 0 ? (g.actualMins / totalActMins) * totalCost : 0;
-    return {
-      ...enrichGroup(name, g, costShare),
-      costSharePct: totalCost > 0 ? +((costShare / totalCost) * 100).toFixed(1) : 0,
-      unitLabel: isImage(name) ? 'Images' : is360(name) ? 'SKUs (spins)' : 'SKUs (videos)',
-    };
-  }).sort((a, b) => b.actualMins - a.actualMins);
-
-  // ── Editor breakdown — use exact cost from factor_calculation
-  const editorGroups = groupSum(enriched, r => r.qcEditor);
-  const editorBreakdown = Object.entries(editorGroups).map(([email, g]) => {
-    const ec   = editorCostMap[email.toLowerCase().trim()];
-    const cost = ec ? ec.totalCost
-               : totalActMins > 0 ? (g.actualMins / totalActMins) * totalCost : 0;
-    const byProduct = {};
-    enriched.filter(r => r.qcEditor === email).forEach(r => {
-      if (!byProduct[r.product]) byProduct[r.product] = 0;
-      byProduct[r.product] += billingUnits(r);
-    });
-    return {
-      ...enrichGroup(email, g, cost),
-      email,
-      salary:      ec?.totalCost   || 0,   // keep 'salary' key for compat
-      inhouseCost: ec?.inhouseCost || 0,
-      osCost:      ec?.osCost      || 0,
-      teamType:    ec?.teamType    || 'Unknown',
-      factor:      ec?.factor      || 0,
-      byProduct,
-    };
-  }).sort((a, b) => b.units - a.units);
-
-  // ── Segment breakdown
-  const segGroups = groupSum(enriched, r => r.segment);
-  const segmentBreakdown = Object.entries(segGroups).map(([segName, g]) => {
-    const segCost = totalActMins > 0 ? (g.actualMins / totalActMins) * totalCost : 0;
-    const segRows = enriched.filter(r => r.segment === segName);
-
-    const byProduct = {};
-    segRows.forEach(r => {
-      const p = r.product;
-      if (!byProduct[p]) byProduct[p] = { units:0, skus:0, images:0, vins:0, actualMins:0, sumTarget:0 };
-      byProduct[p].units      += billingUnits(r);
-      byProduct[p].skus       += r.skus;
-      byProduct[p].images     += r.images;
-      byProduct[p].vins       += isVinProduct(r.product) ? r.skus : 0;
-      byProduct[p].actualMins += r.actualMins;
-      byProduct[p].sumTarget  += r.sumTarget;
-    });
-    Object.entries(byProduct).forEach(([, pd]) => {
-      const pCost = totalActMins > 0 ? (pd.actualMins / totalActMins) * totalCost : 0;
-      pd.costPerUnit = pd.units > 0 ? +(pCost / pd.units).toFixed(2) : 0;
-      pd.efficiency  = pd.actualMins > 0 ? +((pd.sumTarget / pd.actualMins) * 100).toFixed(2) : 0;
-      pd.units = Math.round(pd.units); pd.skus = Math.round(pd.skus);
-      pd.images = Math.round(pd.images); pd.vins = Math.round(pd.vins);
-      pd.actualMins = Math.round(pd.actualMins);
-    });
-
-    const segVins     = segRows.filter(r => isVinProduct(r.product)).reduce((s,r) => s + r.skus, 0);
-    const seg360Skus  = segRows.filter(r => is360(r.product)).reduce((s,r) => s + r.skus, 0);
-    const segVideoIds = segRows.filter(r => isVideo(r.product)).reduce((s,r) => s + r.skus, 0);
-
-    const entGroups2 = groupSum(segRows, r => r.enterprise);
-    const topEnterprises = Object.entries(entGroups2).map(([eName, eg]) => {
-      const eCost = totalActMins > 0 ? (eg.actualMins / totalActMins) * totalCost : 0;
-      return { ...enrichGroup(eName, eg, eCost), inventoryVersion: entMap[eName]?.inventoryVersion || '' };
-    }).sort((a, b) => b.units - a.units).slice(0, 10);
-
-    return {
-      ...enrichGroup(segName, g, segCost),
-      vins: Math.round(segVins), seg360Skus: Math.round(seg360Skus), segVideoIds: Math.round(segVideoIds),
-      costPerVin:        segVins > 0 ? +(segCost / segVins).toFixed(2) : 0,
-      costShare:         totalCost > 0 ? +((segCost / totalCost) * 100).toFixed(2) : 0,
-      byProduct, topEnterprises,
-      uniqueEnterprises: new Set(segRows.map(r => r.enterprise)).size,
-    };
-  }).sort((a, b) => b.units - a.units);
-
-  // ── Dealer breakdown
-  const dealerGroups = groupSum(enriched, r => r.dealerType);
-  const dealerBreakdown = Object.entries(dealerGroups).map(([name, g]) => {
-    const cost = totalActMins > 0 ? (g.actualMins / totalActMins) * totalCost : 0;
-    return enrichGroup(name, g, cost);
-  }).sort((a, b) => b.units - a.units);
-
-  // ── Enterprise breakdown (top 25)
-  const entGroups = groupSum(enriched, r => r.enterprise);
-  const enterpriseBreakdown = Object.entries(entGroups).map(([name, g]) => {
-    const cost = totalActMins > 0 ? (g.actualMins / totalActMins) * totalCost : 0;
-    const entRows = enriched.filter(r => r.enterprise === name);
-    const byProduct = {};
-    entRows.forEach(r => {
-      const p = r.product;
-      if (!byProduct[p]) byProduct[p] = { units:0, skus:0, images:0, vins:0, actualMins:0, sumTarget:0, rows:0 };
-      byProduct[p].units      += billingUnits(r);
-      byProduct[p].skus       += r.skus;
-      byProduct[p].images     += r.images;
-      byProduct[p].vins       += isVinProduct(r.product) ? r.skus : 0;
-      byProduct[p].actualMins += r.actualMins;
-      byProduct[p].sumTarget  += r.sumTarget;
-      byProduct[p].rows++;
-    });
-    Object.entries(byProduct).forEach(([, pd]) => {
-      const pCost = totalActMins > 0 ? (pd.actualMins / totalActMins) * totalCost : 0;
-      pd.cost = Math.round(pCost);
-      pd.costPerUnit = pd.units > 0 ? +(pCost / pd.units).toFixed(2) : 0;
-      pd.efficiency  = pd.actualMins > 0 ? +((pd.sumTarget / pd.actualMins) * 100).toFixed(2) : 0;
-      pd.units = Math.round(pd.units); pd.skus = Math.round(pd.skus);
-      pd.images = Math.round(pd.images); pd.vins = Math.round(pd.vins);
-      pd.actualMins = Math.round(pd.actualMins); pd.sumTarget = Math.round(pd.sumTarget);
-    });
-    // Look up Metabase meta by normalized name match
-    const meta = metaIndex ? lookupMeta(metaIndex, name) : null;
-    return {
-      ...enrichGroup(name, g, cost),
-      byProduct,
-      segment:          entMap[name]?.segment          || meta?.segment || 'Unknown',
-      inventoryVersion: entMap[name]?.inventoryVersion || '',
-      // Metabase enrichment fields
-      csPoc:   meta?.csPoc   || '',
-      obPoc:   meta?.obPoc   || '',
-      liveArr: meta?.liveArr || '',
-    };
-  }).sort((a, b) => b.units - a.units);
-
-  // ── Inhouse vs OS breakdown
-  const teamBreakdown = {
-    inhouse: {
-      cost:        Math.round(inhouseCost),
-      units:       Math.round(inhouseUnits),
-      actualMins:  Math.round(inhouseActMins),
-      employees:   employees.filter(e => /payroll/i.test(e.teamType)).length,
-      costPerUnit: inhouseUnits > 0 ? +(inhouseCost / inhouseUnits).toFixed(2) : 0,
-    },
-    os: {
-      cost:        Math.round(osCost),
-      units:       Math.round(osUnits),
-      actualMins:  Math.round(osActMins),
-      employees:   employees.filter(e => /^os$/i.test(e.teamType)).length,
-      costPerUnit: osUnits > 0 ? +(osCost / osUnits).toFixed(2) : 0,
-    },
-  };
+  // Segment cost distribution
+  const segments = Object.values(segmentMap).map(s => ({
+    ...s,
+    totalCost: s.units > 0 ? Math.round(costPerUnit * s.units) : 0,
+    pct: totalUnits > 0 ? Math.round(s.units / totalUnits * 100) : 0,
+  }));
 
   return {
-    month: config.month,
-    key:   config.key,
-    summary: {
-      totalCost:       Math.round(totalCost),
-      inhouseCost:     Math.round(inhouseCost),
-      osCost:          Math.round(osCost),
-      totalImages:     Math.round(totalImages),
-      totalSkus:       Math.round(totalSkus),
-      total360Skus:    Math.round(total360Skus),
-      totalVideoSkus:  Math.round(totalVideoSkus),
-      totalVins:       Math.round(totalVins),
-      totalUnits:      Math.round(totalUnits),
-      totalActMins:    Math.round(totalActMins),
-      totalTarget:     Math.round(totalTarget),
-      efficiency,
-      costPerUnit,
-      costPerSku,
-      costPerVin,
-      employees:       employees.length,
-    },
-    teamBreakdown,
-    productBreakdown,
-    editorBreakdown,
-    segmentBreakdown,
-    dealerBreakdown,
-    enterpriseBreakdown,
+    totalImages, totalSKUs, totalVINs,
+    totalTarget, totalActual,
+    totalCost,
+    totalUnits,
+    costPerUnit: Math.round(costPerUnit * 100) / 100,
+    efficiency: totalTarget > 0 ? Math.round(totalTarget / (totalActual || totalTarget) * 100) / 100 : 0,
+    headcount: employees.length,
+    products,
+    editors,
+    enterprises,
+    segments,
+    dealers: Object.values(dealerMap),
   };
 }
 
-// ── Handler ───────────────────────────────────────────────────────────────────
+// ─── In-memory cache ──────────────────────────────────────────────────────────
+let _cache = null;
+let _cacheTs = 0;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+// ─── Main handler ─────────────────────────────────────────────────────────────
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=60');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+  res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
+
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'GET')     return res.status(405).json({ error: 'Method not allowed' });
+
+  // Serve cache
+  if (_cache && Date.now() - _cacheTs < CACHE_TTL) {
+    return res.status(200).json(_cache);
+  }
+
   try {
-    const client = getSheetsClient();
+    const auth   = getAuth();
+    const sheets = google.sheets({ version: 'v4', auth });
 
-    // Fetch Sheets and Metabase concurrently — both have independent timeouts
-    // Metabase deadline is 25s (within Vercel's 60s function limit)
-    const metaDeadline = new Promise(resolve => setTimeout(() => resolve({}), 25000));
+    // Fetch all sheets in parallel
+    const monthData = await Promise.all(SHEETS.map(async (sh) => {
+      const [outputRows, salaryRows, entRows, removeRows] = await Promise.all([
+        fetchRange(sheets, sh.id, 'output!A:M'),
+        fetchRange(sheets, sh.id, 'Salary!A:H'),
+        fetchRange(sheets, sh.id, 'enterprise_details!A:D'),
+        fetchRange(sheets, sh.id, 'remove_users!A:E').catch(() => []),
+      ]);
 
-    const [rawSheetsData, enterpriseMeta] = await Promise.all([
-      // Critical path: all 6 sheet ranges
-      Promise.all(
-        SHEETS.map(async cfg => {
-          const [outputRows, factorRows, entRows, removedRows] = await Promise.all([
-            fetchRange(client, cfg.id, 'output!A:M'),
-            fetchRange(client, cfg.id, 'factor_calculation!A:G'),
-            fetchRange(client, cfg.id, 'enterprise_details!A:D'),
-            fetchRange(client, cfg.id, 'remove_users!A:E'),
-          ]);
-          return { cfg, outputRows, factorRows, entRows, removedRows };
-        })
-      ),
-      // Metabase CSV: up to 25s, never blocks the response
-      Promise.race([fetchMetabaseCSV(), metaDeadline]),
-    ]);
+      const excludeSet  = parseRemovedUsers(removeRows);
+      const entMap      = parseEnterprise(entRows);
+      const metaIndex   = buildMetaIndex(entMap);
+      const records     = parseOutput(outputRows, excludeSet);
+      const salaryData  = parseSalary(salaryRows, excludeSet);
+      const analytics   = aggregateMonth(records, salaryData, metaIndex);
 
-    console.log('[data.js] metabase entries:', Object.keys(enterpriseMeta).length);
+      return { month: sh.month, key: sh.key, ...analytics };
+    }));
 
-    // Step 3: Build index and compute months
-    const metaIndex = buildMetaIndex(enterpriseMeta);
-    const sheetsResults = await Promise.allSettled(
-      rawSheetsData.map(({ cfg, outputRows, factorRows, entRows, removedRows }) =>
-        Promise.resolve(computeMonth(cfg, outputRows, factorRows, entRows, removedRows, metaIndex))
-      )
-    );
-    const months = sheetsResults.filter(r => r.status === 'fulfilled').map(r => r.value);
-    const errors = sheetsResults
-      .map((r, i) => r.status === 'rejected'
-        ? { month: SHEETS[i].month, error: r.reason?.message || String(r.reason) }
-        : null)
-      .filter(Boolean);
+    // Build enterprise meta map (for frontend enrichment)
+    // Aggregate across all months — last seen wins for static fields
+    const enterpriseMeta = {};
+    for (const md of monthData) {
+      for (const e of (md.enterprises || [])) {
+        const key = e.enterprise.toLowerCase().trim();
+        if (!enterpriseMeta[key]) {
+          enterpriseMeta[key] = {
+            originalName:    e.enterprise,
+            customerSegment: e.seg,
+            dealerType:      e.dealer,
+            mrr:             e.mrr || 0,
+          };
+        }
+      }
+    }
 
-    if (months.length === 0)
-      return res.status(500).json({ error: 'All sheet fetches failed', details: errors });
+    const payload = { months: monthData, enterpriseMeta };
+    _cache   = payload;
+    _cacheTs = Date.now();
 
-    res.status(200).json({
-      months,
-      errors,
-      enterpriseMeta,   // ← included in every response
-      fetchedAt: new Date().toISOString(),
-    });
+    return res.status(200).json(payload);
   } catch (err) {
-    console.error('[data.js error]', err);
-    res.status(500).json({ error: err.message });
+    console.error('[data.js] Error:', err);
+    return res.status(500).json({ error: err.message });
   }
 };
