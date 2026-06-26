@@ -450,7 +450,7 @@ select.sel:focus{border-color:var(--blue)}
   <div class="section" style="margin-bottom:12px">
     <div class="sec-head">
       <div><div class="sec-title">POC — Contracted ARR vs Delivery Cost</div>
-      <div class="sec-sub">CS POC (OB POC where CS unavailable) · MRR = ARR/12 · Cost in INR · Live &amp; Onboarding rooftops · % Cost/MRR</div></div>
+      <div class="sec-sub">CS POC (OB POC where CS unavailable) · MRR × filtered months · Cost in INR · Live &amp; Onboarding · % Cost/MRR</div></div>
       <div class="cf-row">
         <span class="cf-label">Metric:</span>
         <button class="cf-pill active" data-chart="poc" onclick="setPocMetric('arr',this)">ARR (USD)</button>
@@ -1508,42 +1508,43 @@ function setPocMetric(metric, btn) {
 }
 
 function buildPocData(months) {
+  const numMonths = months.length || 1;
+
   // Aggregate delivery cost per enterprise across filtered months
   const entCosts = {};
   months.forEach(function(m) {
     (m.enterpriseBreakdown || []).forEach(function(e) {
       if (!entCosts[e.name]) entCosts[e.name] = 0;
-      // costPerUnit * units gives approximate cost for this enterprise this month
       entCosts[e.name] += Math.round((e.costPerUnit || 0) * (e.units || 0));
     });
   });
 
-  // Build POC → {arr: $USD summed, cost: INR summed, enterprises: []}
+  // Build POC → {mrr: USD×numMonths, cost: INR, numMonths, enterprises:[]}
   const pocMap = {};
   Object.entries(ENT_META).forEach(function([entName, meta]) {
     const poc = (meta.csPoc && meta.csPoc !== '') ? meta.csPoc : (meta.obPoc || '');
     if (!poc) return;
 
-    // Apply CS/OB POC filter
     const csOk = FILTERS.cspoc.selected.size === 0 || FILTERS.cspoc.selected.size === FILTERS.cspoc.all.length ||
                  (meta.csPoc && FILTERS.cspoc.selected.has(meta.csPoc));
     const obOk = FILTERS.obpoc.selected.size === 0 || FILTERS.obpoc.selected.size === FILTERS.obpoc.all.length ||
                  (meta.obPoc && FILTERS.obpoc.selected.has(meta.obPoc));
     if (!csOk && !obOk) return;
 
-    // Only include enterprises that have activity in the filtered months
     if (!entCosts[entName] && (meta.contractedArr || 0) === 0) return;
 
-    if (!pocMap[poc]) pocMap[poc] = { poc, arr: 0, cost: 0, enterprises: [] };
-    pocMap[poc].arr  += (meta.contractedArr || 0);   // USD
-    pocMap[poc].cost += (entCosts[entName] || 0);     // INR
+    // MRR = ARR / 12, then multiply by number of selected months
+    const mrrUSD = ((meta.contractedArr || 0) / 12) * numMonths;
+
+    if (!pocMap[poc]) pocMap[poc] = { poc, mrr: 0, cost: 0, numMonths, enterprises: [] };
+    pocMap[poc].mrr  += mrrUSD;                    // USD — MRR × numMonths
+    pocMap[poc].cost += (entCosts[entName] || 0);  // INR — actual delivery cost
     pocMap[poc].enterprises.push(entName);
   });
 
-  // Sort descending by ARR (primary), then by cost
   return Object.values(pocMap)
-    .filter(function(p) { return p.arr > 0 || p.cost > 0; })
-    .sort(function(a, b) { return (b.arr - a.arr) || (b.cost - a.cost); });
+    .filter(function(p) { return p.mrr > 0 || p.cost > 0; })
+    .sort(function(a, b) { return (b.mrr - a.mrr) || (b.cost - a.cost); });
 }
 
 function renderPocChart(months) {
@@ -1585,9 +1586,9 @@ function renderPocChart(months) {
 
   if (POC_METRIC === 'arr' || POC_METRIC === 'both') {
     datasets.push({
-      label: 'Contracted ARR (USD)',
-      data: data.map(function(p) { return p.arr; }),
-      backgroundColor: 'rgba(79,120,255,.8)',
+      label: 'MRR × ' + data[0].numMonths + (data[0].numMonths===1?' month':' months') + ' (USD)',
+      data: data.map(function(p) { return p.mrr; }),
+      backgroundColor: 'rgba(79,120,255,0.85)',
       borderRadius: isStacked ? 0 : 3,
       yAxisID: 'y', order: 2,
       stack: isStacked ? 'poc' : undefined,
@@ -1607,14 +1608,26 @@ function renderPocChart(months) {
 
   if (POC_METRIC === 'cost' || POC_METRIC === 'both') {
     datasets.push({
-      label: 'Delivery Cost (INR)',
-      data: data.map(function(p) { return p.cost; }),
-      backgroundColor: 'rgba(34,212,160,.7)',
+      label: isStacked ? 'Delivery Cost (USD equiv.)' : 'Delivery Cost (INR)',
+      // In stacked mode convert INR→USD so both bars share the same scale
+      data: data.map(function(p) { return isStacked ? Math.round(p.cost / 83) : p.cost; }),
+      backgroundColor: 'rgba(34,212,160,0.85)',
+      borderColor: 'rgba(34,212,160,1)',
+      borderWidth: 1,
       borderRadius: isStacked ? [3,3,0,0] : 3,
-      yAxisID: isStacked ? 'y2' : 'y', order: 3,
+      yAxisID: isStacked ? 'y' : 'y', order: 3,
       stack: isStacked ? 'poc' : undefined,
       barPercentage: 0.7, categoryPercentage: 0.8,
-      datalabels: { display: false }
+      datalabels: {
+        display: function(ctx) { return isStacked && ctx.dataset.data[ctx.dataIndex] > 0; },
+        color: '#22d4a0', font: { size: 9, weight: '700' },
+        anchor: 'start', align: 'bottom', offset: 2, clamp: true,
+        formatter: function(v, ctx) {
+          // v is USD-equiv in stacked mode — show original INR
+          var costINR = data[ctx.dataIndex].cost;
+          return costINR >= 1e7 ? '₹'+(costINR/1e7).toFixed(1)+'Cr' : costINR >= 1e5 ? '₹'+(costINR/1e5).toFixed(1)+'L' : '₹'+costINR.toLocaleString('en-IN');
+        }
+      }
     });
   }
 
@@ -1654,7 +1667,7 @@ function renderPocChart(months) {
         color: '#FFFFFF', font: { size: 9, weight: '700' },
         anchor: 'end', align: 'top', offset: 3, clamp: true,
         formatter: function(v, ctx) {
-          var arr = data[ctx.dataIndex].arr, cost = data[ctx.dataIndex].cost;
+          var arr = data[ctx.dataIndex].mrr, cost = data[ctx.dataIndex].cost;
           var pct = (arr && cost) ? ((cost / ((arr / 12) * 83)) * 100).toFixed(1) + '%' : '';
           var arrFmt = arr >= 1e6 ? '$' + (arr/1e6).toFixed(1) + 'M' : arr >= 1e3 ? '$' + (arr/1e3).toFixed(0) + 'K' : '$' + arr;
           return arrFmt + (pct ? ' | ' + pct : '');
@@ -1700,16 +1713,14 @@ function renderPocChart(months) {
       title: { display: true, text: '% Cost / ARR', color: '#f5a42a', font: { size: 10 } }
     };
   } else if (POC_METRIC === 'both') {
-    scales.y1 = {
-      type: 'linear', position: 'right',
-      ticks: { color: '#22d4a0', font: { size: 9 },
-        callback: function(v) {
-          if (v >= 1e7) return '₹' + (v/1e7).toFixed(1) + 'Cr';
-          if (v >= 1e5) return '₹' + (v/1e5).toFixed(1) + 'L';
-          return '₹' + v;
-        }
-      },
-      grid: { display: false }
+    // Single USD axis — both MRR and Cost are in USD for stacking
+    scales.x.stacked = true;
+    scales.y.stacked = true;
+    delete scales.y1;
+    scales.y.ticks.callback = function(v) {
+      if (v >= 1e6) return '$' + (v/1e6).toFixed(1) + 'M';
+      if (v >= 1e3) return '$' + (v/1e3).toFixed(0) + 'K';
+      return '$' + v;
     };
   }
 
@@ -1740,10 +1751,12 @@ function renderPocChart(months) {
             label: function(ctx) {
               var v = ctx.raw, d = data[ctx.dataIndex];
               if (ctx.dataset.label === '% Cost / ARR') return ' % Cost/MRR (ARR/12×83): ' + v.toFixed(2) + '%';
-              if (ctx.dataset.label.includes('ARR')) return ' ARR: ' + (v >= 1e6 ? '$' + (v/1e6).toFixed(2) + 'M' : '$' + v.toLocaleString());
-              var costFmt = v >= 1e7 ? '₹' + (v/1e7).toFixed(2) + 'Cr' : v >= 1e5 ? '₹' + (v/1e5).toFixed(2) + 'L' : '₹' + v.toLocaleString('en-IN');
-              var arrINR = (d.arr / 12) * 83; // MRR
-              var pct = (arrINR && v) ? ((v / arrINR) * 100).toFixed(2) + '%' : '—';
+              if (ctx.dataset.label.includes('MRR') || ctx.dataset.label.includes('ARR')) return ' MRR: ' + (v >= 1e6 ? '$' + (v/1e6).toFixed(2) + 'M' : '$' + v.toLocaleString());
+              // v is USD-equiv in stacked, INR in cost-only mode
+              var costINR = isStacked ? v * 83 : v;
+              var costFmt = costINR >= 1e7 ? '₹'+(costINR/1e7).toFixed(2)+'Cr' : costINR >= 1e5 ? '₹'+(costINR/1e5).toFixed(2)+'L' : '₹'+costINR.toLocaleString('en-IN');
+              var mrrINR = d.mrr * 83;
+              var pct = (mrrINR && costINR) ? ((costINR / mrrINR) * 100).toFixed(2) + '%' : '—';
               return ' Cost: ' + costFmt + ' (' + pct + ' of MRR)';
             }
           }
@@ -1777,22 +1790,26 @@ function showPocDetail(pocRow, months) {
   });
 
   // Collect accounts under this POC
+  var numMonths = pocRow.numMonths || months.length || 1;
   var accounts = pocRow.enterprises.map(function(entName) {
     var meta = ENT_META[entName] || {};
-    var arr  = meta.contractedArr || 0;
+    var annualArr = meta.contractedArr || 0;
+    var mrr  = (annualArr / 12) * numMonths;  // MRR × numMonths
     var cost = entCosts[entName] || 0;
-    var arrINR = (arr / 12) * 83; var pct = (arrINR && cost) ? +((cost / arrINR) * 100).toFixed(2) : 0;
-    return { name: entName, arr: arr, cost: cost, pct: pct, segment: meta.segment || '—', activeRooftops: meta.activeRooftops || 0 };
-  }).filter(function(a) { return a.arr > 0 || a.cost > 0; })
-    .sort(function(a, b) { return (b.arr - a.arr) || (b.cost - a.cost); });
+    var mrrINR = mrr * 83;
+    var pct = (mrrINR && cost) ? +((cost / mrrINR) * 100).toFixed(2) : 0;
+    return { name: entName, mrr: mrr, cost: cost, pct: pct, segment: meta.segment || '—', activeRooftops: meta.activeRooftops || 0 };
+  }).filter(function(a) { return a.mrr > 0 || a.cost > 0; })
+    .sort(function(a, b) { return (b.mrr - a.mrr) || (b.cost - a.cost); });
 
   var pocName = pocRow.poc.split('@')[0].replace('.', ' ');
   pocName = pocName.charAt(0).toUpperCase() + pocName.slice(1);
-  var totalArr  = pocRow.arr;
+  var totalMrr  = pocRow.mrr;
   var totalCost = pocRow.cost;
-  var totalArrINR = (totalArr / 12) * 83; var totalPct = (totalArrINR && totalCost) ? ((totalCost / totalArrINR) * 100).toFixed(2) : '—';
+  var totalMrrINR = totalMrr * 83;
+  var totalPct = (totalMrrINR && totalCost) ? ((totalCost / totalMrrINR) * 100).toFixed(2) : '—';
 
-  function fmtArr(v) { return v >= 1e6 ? '$' + (v/1e6).toFixed(2) + 'M' : v >= 1e3 ? '$' + (v/1e3).toFixed(1) + 'K' : '$' + v; }
+  function fmtMrr(v) { return v >= 1e6 ? '$' + (v/1e6).toFixed(2) + 'M' : v >= 1e3 ? '$' + (v/1e3).toFixed(1) + 'K' : '$' + v; }
   function fmtCost(v) { return v >= 1e7 ? '₹' + (v/1e7).toFixed(2) + 'Cr' : v >= 1e5 ? '₹' + (v/1e5).toFixed(2) + 'L' : '₹' + v.toLocaleString('en-IN'); }
 
   var rows = accounts.map(function(a, i) {
@@ -1803,7 +1820,7 @@ function showPocDetail(pocRow, months) {
       + '<td class="bright" style="max-width:200px;overflow:hidden;text-overflow:ellipsis" title="' + a.name + '">' + a.name + '</td>'
       + '<td>' + segBadge + '</td>'
       + '<td style="font-size:10px;color:var(--muted);text-align:right">' + (a.activeRooftops || '—') + '</td>'
-      + '<td class="r" style="color:#4f78ff;font-weight:600">' + fmtArr(a.arr) + '</td>'
+      + '<td class="r" style="color:#4f78ff;font-weight:600">' + fmtMrr(a.mrr) + '</td>'
       + '<td class="r" style="color:#22d4a0">' + fmtCost(a.cost) + '</td>'
       + '<td class="r" style="color:' + (a.pct > 10 ? '#f0566a' : a.pct > 5 ? '#f5a42a' : '#aaaaaa') + '">' + (a.pct ? a.pct.toFixed(2) + '%' : '—') + pctBar + '</td>'
       + '</tr>';
@@ -1825,8 +1842,8 @@ function showPocDetail(pocRow, months) {
     // Summary KPIs
     + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">'
     +   '<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">'
-    +     '<div style="font-size:18px;font-weight:700;color:#4f78ff">' + fmtArr(totalArr) + '</div>'
-    +     '<div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:3px">Contracted ARR (USD)</div>'
+    +     '<div style="font-size:18px;font-weight:700;color:#4f78ff">' + fmtMrr(totalMrr) + '</div>'
+    +     '<div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:3px">MRR × '+numMonths+' months (USD)</div>'
     +   '</div>'
     +   '<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">'
     +     '<div style="font-size:18px;font-weight:700;color:#22d4a0">' + fmtCost(totalCost) + '</div>'
@@ -1846,7 +1863,7 @@ function showPocDetail(pocRow, months) {
     + '<div class="tbl-wrap"><table><thead><tr>'
     +   '<th>#</th><th>Account</th><th>Segment</th>'
     +   '<th class="r" style="font-size:10px">Rooftops</th>'
-    +   '<th class="r" style="color:#4f78ff">ARR (USD)</th>'
+    +   '<th class="r" style="color:#4f78ff">MRR (' + numMonths + 'mo) USD</th>'
     +   '<th class="r" style="color:#22d4a0">Delivery Cost</th>'
     +   '<th class="r" style="color:#f5a42a">% Cost/MRR</th>'
     + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
@@ -1860,6 +1877,11 @@ function showPocDetail(pocRow, months) {
 
 async function fetchMetabaseFallback(){
   try{
+    // Skip if already populated from backend response
+    if(Object.keys(ENT_META).length>50){
+      console.log('[meta] ENT_META already loaded ('+Object.keys(ENT_META).length+'), skipping /api/meta');
+      return;
+    }
     console.log('[meta] fetching /api/meta…');
     const res=await fetch('/api/meta');
     if(!res.ok){console.warn('[meta] HTTP error',res.status,await res.text().catch(()=>''));return;}
@@ -1933,7 +1955,10 @@ function overlayShow(msg){const el=document.getElementById('overlay');el.style.d
 function overlayHide(){document.getElementById('overlay').style.display='none';}
 function overlayError(msg,detail){document.getElementById('overlay').innerHTML='<div class="err-box"><h3>Failed to load data</h3><p>'+msg+'</p><pre style="margin-top:8px;font-size:9px;color:#F3F4F6;text-align:left;white-space:pre-wrap;background:#0a0f1a;padding:8px;border-radius:4px;max-height:100px;overflow-y:auto">'+detail+'</pre><p style="margin-top:10px;font-size:10px;line-height:1.6">1. Check GOOGLE_SERVICE_ACCOUNT_EMAIL + GOOGLE_PRIVATE_KEY in Vercel<br>2. Share sheets with service account (Viewer)<br>3. Redeploy after env var changes</p><button onclick="location.reload()">Retry</button></div>';}
 
+// Fire both requests immediately in parallel
 fetchData();
+// Pre-warm ENT_META in background — don't wait for fetchData to complete
+fetchMetabaseFallback();
 </script>
 </body>
 </html>
