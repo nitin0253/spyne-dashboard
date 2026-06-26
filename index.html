@@ -1,256 +1,443 @@
+<!-- v3.0 — Refreshed design system -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Spyne Costing Dashboard</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Spyne · Production Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-  :root {
-    --bg:    #0d0f14;
-    --card:  #151820;
-    --border:#1e2330;
-    --text:  #e2e8f0;
-    --muted: #64748b;
-    --blue:  #3b82f6;
-    --green: #22c55e;
-    --amber: #f59e0b;
-    --red:   #ef4444;
-    --purple:#a855f7;
-    --cyan:  #06b6d4;
-    --indigo:#6366f1;
-    --teal:  #14b8a6;
-    --font:  'Inter', system-ui, sans-serif;
-    --r:     10px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; min-height: 100vh; }
-  a { color: var(--blue); text-decoration: none; }
+:root{
+  --bg:#111111;--surface:#1a1a1a;--card:#222222;--card2:#282828;
+  --border:#333333;--hover:#2a2a2a;
+  --blue:#4f78ff;--green:#22d4a0;--amber:#f5a42a;--red:#f0566a;--purple:#a07cff;--cyan:#38c4f0;
+  --text:#FFFFFF;--sub:#F3F4F6;--muted:#E6E6E6;--dim:#A0A0A0;
+  --font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
+  --r:10px;--r-sm:6px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;min-height:100%;display:flex;flex-direction:column}
 
-  /* ── Layout ── */
-  #app { display: flex; min-height: 100vh; }
-  #sidebar {
-    width: 220px; min-height: 100vh; background: var(--card);
-    border-right: 1px solid var(--border); padding: 0; flex-shrink: 0;
-    display: flex; flex-direction: column;
-  }
-  #main { flex: 1; overflow-x: hidden; }
+/* ── TOP BAR ── */
+#topbar{height:48px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:14px;flex-shrink:0;position:sticky;top:0;z-index:100}
+.logo-mark{width:28px;height:28px;background:var(--blue);border-radius:6px;display:grid;place-items:center;font-weight:800;font-size:12px;color:#fff;flex-shrink:0}
+.logo-name{font-weight:700;font-size:13px;letter-spacing:-.2px}
+.tb-sep{width:1px;height:20px;background:var(--border)}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.view-toggle{display:flex;align-items:center;gap:2px;background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);padding:2px}
+.view-btn{border:0;background:transparent;color:var(--sub);font-family:var(--font);font-size:11px;font-weight:700;padding:5px 12px;border-radius:4px;cursor:pointer;transition:all .12s}
+.view-btn:hover{color:var(--text)}
+.view-btn.active{background:var(--blue);color:#fff}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600}
+.pill-green{background:#0a2419;border:1px solid #143a25;color:var(--green)}
+.pill-dot{width:5px;height:5px;border-radius:50%;background:currentColor;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.tb-time{font-size:10px;color:var(--muted);font-family:var(--mono)}
+.refresh-btn{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:var(--r-sm);background:none;border:1px solid var(--border);color:var(--sub);cursor:pointer;font-size:11px;font-family:var(--font);transition:all .12s}
+.refresh-btn:hover{border-color:var(--blue);color:var(--text)}
+.spinning svg{animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-  /* ── Sidebar ── */
-  .sb-logo {
-    padding: 20px 20px 16px;
-    font-size: 16px; font-weight: 700; letter-spacing: -0.3px; color: var(--text);
-    border-bottom: 1px solid var(--border);
-  }
-  .sb-logo span { color: var(--blue); }
-  .sb-section { padding: 12px 10px 4px; font-size: 10px; text-transform: uppercase;
-    letter-spacing: 1px; color: var(--muted); font-weight: 600; }
-  .sb-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 9px 16px; cursor: pointer; border-radius: 6px;
-    margin: 2px 8px; font-size: 13px; color: var(--muted); transition: all .15s;
-  }
-  .sb-item:hover { background: rgba(255,255,255,.05); color: var(--text); }
-  .sb-item.active { background: rgba(59,130,246,.15); color: var(--blue); font-weight: 500; }
-  .sb-item svg { width: 16px; height: 16px; flex-shrink: 0; }
-  .sb-footer { margin-top: auto; padding: 14px 16px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); }
+/* ── FILTER BAR ── */
+#filterbar{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 24px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0;position:sticky;top:48px;z-index:99}
+.fb-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);white-space:nowrap}
+.fb-sep{width:1px;height:20px;background:var(--border);margin:0 2px}
+.fb-clear{margin-left:auto;font-size:10px;font-weight:600;color:var(--sub);cursor:pointer;padding:3px 10px;border-radius:4px;border:1px solid var(--border);background:none;font-family:var(--font);transition:all .12s;white-space:nowrap}
+.fb-clear:hover{color:var(--red);border-color:var(--red)}
 
-  /* ── Topbar ── */
-  #topbar {
-    height: 56px; border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0 24px; background: var(--card); position: sticky; top: 0; z-index: 10;
-  }
-  #topbar h1 { font-size: 15px; font-weight: 600; }
-  .filters { display: flex; gap: 10px; align-items: center; }
-  .filters select, .filters button {
-    background: var(--bg); border: 1px solid var(--border); color: var(--text);
-    padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;
-    font-family: var(--font);
-  }
-  .filters select:focus, .filters button:focus { outline: none; border-color: var(--blue); }
-  #refresh-btn { color: var(--blue); border-color: var(--blue); }
-  #refresh-btn:hover { background: rgba(59,130,246,.1); }
+/* ── MULTISELECT ── */
+.ms-wrap{position:relative;flex-shrink:0}
+.ms-btn{display:flex;align-items:center;gap:6px;padding:5px 10px;background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;font-size:11px;font-weight:500;color:var(--sub);font-family:var(--font);white-space:nowrap;transition:all .12s;user-select:none;min-width:130px}
+.ms-btn:hover,.ms-btn.open{border-color:var(--blue);color:var(--text)}
+.ms-btn.has-filter{border-color:var(--blue);background:rgba(79,120,255,.08);color:var(--blue)}
+.ms-btn-label{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis}
+.ms-btn-count{background:var(--blue);color:#fff;font-size:9px;font-weight:700;border-radius:10px;padding:1px 6px;flex-shrink:0}
+.ms-caret{flex-shrink:0;transition:transform .15s}
+.ms-btn.open .ms-caret{transform:rotate(180deg)}
+.ms-dropdown{position:absolute;top:calc(100% + 4px);left:0;min-width:220px;max-width:300px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:0 8px 32px rgba(0,0,0,.6);z-index:300;overflow:hidden}
+.ms-search{padding:8px;border-bottom:1px solid var(--border)}
+.ms-search input{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);padding:6px 10px;color:var(--text);font-size:11px;font-family:var(--font);outline:none}
+.ms-search input:focus{border-color:var(--blue)}
+.ms-actions{display:flex;gap:6px;padding:6px 8px;border-bottom:1px solid var(--border)}
+.ms-act{flex:1;padding:5px 0;text-align:center;font-size:10px;font-weight:600;cursor:pointer;border-radius:4px;transition:all .12s;border:1px solid var(--border);background:none;font-family:var(--font);color:var(--sub)}
+.ms-act:hover{background:var(--hover);color:var(--text)}
+.ms-act.sel-all{color:var(--green);border-color:rgba(34,212,160,.3)}
+.ms-act.sel-all:hover{background:rgba(34,212,160,.08)}
+.ms-act.desel-all{color:var(--red);border-color:rgba(240,86,106,.3)}
+.ms-act.desel-all:hover{background:rgba(240,86,106,.08)}
+.ms-list{max-height:240px;overflow-y:auto;padding:4px}
+.ms-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:var(--r-sm);cursor:pointer;transition:background .1s;user-select:none}
+.ms-item:hover{background:var(--hover)}
+.ms-item input[type=checkbox]{width:13px;height:13px;accent-color:var(--blue);cursor:pointer;flex-shrink:0}
+.ms-item-label{font-size:11px;color:var(--sub);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ms-item:hover .ms-item-label,.ms-item input:checked~.ms-item-label{color:var(--text)}
+.ms-empty{padding:14px;text-align:center;font-size:11px;color:var(--muted)}
 
-  /* ── Page content ── */
-  #page { padding: 24px; }
+/* ── CONTENT ── */
+#content{flex:1;overflow-y:auto;padding:20px 24px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.dash-view{display:none}
+.dash-view.active{display:block}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}::-webkit-scrollbar-thumb:hover{background:#444}
 
-  /* ── KPI cards ── */
-  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px; }
-  .kpi {
-    background: var(--card); border: 1px solid var(--border); border-radius: var(--r);
-    padding: 18px 20px;
-  }
-  .kpi-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
-  .kpi-val { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
-  .kpi-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
-  .kpi.blue  .kpi-val { color: var(--blue); }
-  .kpi.green .kpi-val { color: var(--green); }
-  .kpi.amber .kpi-val { color: var(--amber); }
-  .kpi.red   .kpi-val { color: var(--red); }
-  .kpi.purple.kpi-val { color: var(--purple); }
-  .kpi.cyan  .kpi-val { color: var(--cyan); }
+/* ── KPI GRID ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;position:relative;overflow:hidden;transition:border-color .15s}
+.kpi:hover{border-color:rgba(79,120,255,.35)}
+.kpi-accent{width:3px;position:absolute;left:0;top:0;bottom:0;border-radius:10px 0 0 10px}
+.kpi-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--sub);margin-bottom:5px}
+.kpi-value{font-size:22px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-.5px;font-family:var(--mono)}
+.kpi-sub{font-size:10px;color:var(--muted);margin-top:6px}
+.kpi-delta{font-size:10px;font-weight:600;margin-top:3px;font-family:var(--mono)}
+.kpi-delta.up{color:var(--green)}.kpi-delta.down{color:var(--red)}
 
-  /* ── Cards ── */
-  .card {
-    background: var(--card); border: 1px solid var(--border); border-radius: var(--r);
-    padding: 20px; margin-bottom: 18px;
-  }
-  .card-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-  .card-title span { font-size: 11px; color: var(--muted); font-weight: 400; }
+/* ── SECTION CARDS ── */
+.section{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px}
+.sec-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:nowrap}
+.sec-title{font-weight:700;font-size:14px;letter-spacing:-.2px}
+.sec-sub{font-size:11px;color:var(--sub);margin-top:3px}
+.sec-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;flex-shrink:0}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:1100px){.g3{grid-template-columns:1fr 1fr}}
+@media(max-width:800px){.g2,.g3{grid-template-columns:1fr}}
+.g2 .section,.g3 .section{margin-bottom:0}
 
-  /* ── Charts ── */
-  .chart-wrap { position: relative; }
-  .chart-wrap canvas { max-width: 100%; }
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
-  @media (max-width: 900px) { .two-col, .three-col { grid-template-columns: 1fr; } }
+/* ── INLINE PILLS ── */
+.cf-row{display:flex;align-items:center;gap:4px;flex-wrap:nowrap}
+.cf-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-right:2px}
+.cf-pill{padding:4px 11px;border-radius:5px;border:1px solid var(--border);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);background:transparent;color:var(--sub);transition:all .12s;user-select:none}
+.cf-pill:hover{color:var(--text);border-color:var(--sub)}
+.cf-pill.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.search{background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);padding:5px 10px;color:var(--text);font-size:11px;font-family:var(--font);outline:none;width:200px;transition:border-color .15s}
+.search:focus{border-color:var(--blue)}.search::placeholder{color:var(--muted)}
+.sel{background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);padding:5px 9px;color:var(--sub);font-size:11px;font-family:var(--font);outline:none;cursor:pointer}
+.sel:focus{border-color:var(--blue)}
 
-  /* ── Tables ── */
-  .tbl-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  thead th {
-    background: rgba(255,255,255,.04); padding: 10px 12px;
-    text-align: left; font-size: 11px; font-weight: 600;
-    color: var(--muted); border-bottom: 1px solid var(--border);
-    white-space: nowrap; text-transform: uppercase; letter-spacing: .4px;
-  }
-  thead th.r, td.r { text-align: right; }
-  thead th.c, td.c { text-align: center; }
-  tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
-  tbody tr:hover { background: rgba(255,255,255,.03); }
-  tbody td { padding: 10px 12px; color: var(--text); white-space: nowrap; }
-  .badge {
-    display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500;
-  }
-  .badge-ent    { background: rgba(99,102,241,.2); color: var(--indigo); }
-  .badge-mid    { background: rgba(59,130,246,.2); color: var(--blue); }
-  .badge-smb    { background: rgba(34,197,94,.2);  color: var(--green); }
-  .badge-res    { background: rgba(245,158,11,.2); color: var(--amber); }
-  .badge-unk    { background: rgba(100,116,139,.2);color: var(--muted); }
+/* ── TABLES ── */
+.tbl-wrap{overflow-x:auto;overflow-y:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{padding:8px 10px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--sub);white-space:nowrap;border-bottom:1px solid var(--border);background:var(--card)}
+thead th.r{text-align:right}
+thead th.sortable{cursor:pointer;user-select:none;transition:color .12s}
+thead th.sortable:hover{color:var(--text)}
+.sort-arrow{font-size:9px;color:var(--blue);margin-left:3px}
+tbody tr{border-bottom:1px solid rgba(255,255,255,.04);transition:background .1s}
+tbody tr:hover{background:var(--hover)}
+tbody td{padding:9px 10px;color:var(--text);white-space:nowrap;font-size:12px}
+tbody td.r{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:12px}
+.rank-num{color:var(--muted);font-size:10px;font-family:var(--mono)}
+.seg-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;letter-spacing:.02em}
+.seg-ent{background:rgba(160,124,255,.12);border:1px solid rgba(160,124,255,.3);color:var(--purple)}
+.seg-mid{background:rgba(79,120,255,.12);border:1px solid rgba(79,120,255,.3);color:var(--blue)}
+.seg-smb{background:rgba(34,212,160,.12);border:1px solid rgba(34,212,160,.3);color:var(--green)}
+.seg-res{background:rgba(245,164,42,.12);border:1px solid rgba(245,164,42,.3);color:var(--amber)}
+.seg-unk{background:rgba(160,160,160,.08);border:1px solid rgba(160,160,160,.2);color:var(--dim)}
+.eff-hi{color:var(--green);font-weight:600}
+.eff-md{color:var(--amber);font-weight:600}
+.eff-lo{color:var(--red);font-weight:600}
 
-  /* ── Tabs ── */
-  .tab-bar { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
-  .tab {
-    padding: 8px 16px; cursor: pointer; font-size: 13px; color: var(--muted);
-    border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all .15s;
-  }
-  .tab:hover { color: var(--text); }
-  .tab.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 500; }
+/* ── CHARTS ── */
+.ch{position:relative}
 
-  /* ── Loading / Error ── */
-  #loader {
-    position: fixed; inset: 0; background: var(--bg);
-    display: flex; align-items: center; justify-content: center; z-index: 100;
-    flex-direction: column; gap: 16px;
-  }
-  .spinner {
-    width: 40px; height: 40px; border: 3px solid var(--border);
-    border-top-color: var(--blue); border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .loader-text { color: var(--muted); font-size: 13px; }
-
-  #error-box {
-    display: none; max-width: 520px; margin: 60px auto;
-    background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.3);
-    border-radius: var(--r); padding: 28px; text-align: center;
-  }
-  #error-box h2 { color: var(--red); margin-bottom: 12px; }
-  #error-box pre { font-size: 11px; color: var(--muted); background: var(--card); padding: 12px; border-radius: 6px; text-align: left; white-space: pre-wrap; margin: 12px 0; }
-  .retry-btn {
-    background: var(--red); color: #fff; border: none; padding: 8px 20px;
-    border-radius: 6px; cursor: pointer; font-family: var(--font); font-size: 13px;
-  }
-
-  /* ── Misc ── */
-  .pill {
-    display: inline-flex; align-items: center; gap: 4px;
-    background: rgba(255,255,255,.06); border-radius: 20px;
-    padding: 3px 10px; font-size: 11px; color: var(--muted);
-  }
-  .trend-up   { color: var(--green); font-size: 11px; }
-  .trend-down { color: var(--red);   font-size: 11px; }
-  .sort-icon  { font-size: 10px; color: var(--blue); margin-left: 2px; }
-  thead th[data-sort] { cursor: pointer; user-select: none; }
-  thead th[data-sort]:hover { color: var(--text); }
+/* ── OVERLAY ── */
+#overlay{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:999}
+.spinner{width:32px;height:32px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
+.overlay-msg{font-size:12px;color:var(--sub)}
+.err-box{background:#120810;border:1px solid #4a1525;border-radius:var(--r);padding:20px 24px;max-width:480px;text-align:center}
+.err-box h3{color:var(--red);margin-bottom:8px}
+.err-box p{color:var(--sub);font-size:11px;line-height:1.7}
+.err-box pre{margin-top:8px;font-size:9px;color:var(--sub);text-align:left;white-space:pre-wrap;background:#0a0f1a;padding:10px;border-radius:4px;max-height:120px;overflow-y:auto}
+.err-box button{margin-top:14px;background:var(--red);border:none;color:#fff;padding:7px 18px;border-radius:var(--r-sm);cursor:pointer;font-size:12px;font-family:var(--font)}
 </style>
 </head>
 <body>
 
-<!-- ── Loading overlay ── -->
-<div id="loader">
+<!-- LOADING / ERROR OVERLAY -->
+<div id="overlay">
   <div class="spinner"></div>
-  <div class="loader-text">Loading dashboard data…</div>
+  <div class="overlay-msg" id="overlay-msg">Connecting to Google Sheets…</div>
 </div>
 
-<div id="app" style="display:none">
-  <!-- ── Sidebar ── -->
-  <nav id="sidebar">
-    <div class="sb-logo">Spyne <span>Costs</span></div>
-    <div class="sb-section">Reports</div>
-    <div class="sb-item active" data-view="overview" onclick="switchView('overview')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-      Overview
-    </div>
-    <div class="sb-item" data-view="costing" onclick="switchView('costing')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-      Costing
-    </div>
-    <div class="sb-item" data-view="product" onclick="switchView('product')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-      Product
-    </div>
-    <div class="sb-item" data-view="enterprise" onclick="switchView('enterprise')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      Enterprise
-    </div>
-    <div class="sb-item" data-view="editor" onclick="switchView('editor')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      QC Editors
-    </div>
-    <div class="sb-footer" id="last-updated">—</div>
-  </nav>
-
-  <!-- ── Main ── -->
-  <div id="main">
-    <div id="topbar">
-      <h1 id="page-title">Overview</h1>
-      <div class="filters">
-        <select id="month-filter" onchange="onFilterChange()">
-          <option value="all">All Months</option>
-        </select>
-        <button id="refresh-btn" onclick="loadData(true)">↻ Refresh</button>
-      </div>
-    </div>
-    <div id="page"></div>
+<!-- TOP BAR -->
+<div id="topbar">
+  <div class="logo-mark">Sp</div>
+  <div class="logo-name">Spyne Production Dashboard</div>
+  <div class="tb-sep"></div>
+  <div class="view-toggle">
+    <button class="view-btn active" id="vb-dashboard" onclick="setView('dashboard')">Dashboard</button>
+    <button class="view-btn" id="vb-enterprise" onclick="setView('enterprise')">Enterprise</button>
+  </div>
+  <div class="tb-sep"></div>
+  <span style="font-size:12px;color:var(--muted)" id="tb-range">Jan – Jun 2026</span>
+  <div class="tb-right">
+    <div class="pill pill-green"><span class="pill-dot"></span><span id="status-text">Loading…</span></div>
+    <div class="tb-time" id="fetched-at"></div>
+    <button class="refresh-btn" id="refresh-btn" onclick="refreshData()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>
+        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>
+      </svg>Refresh
+    </button>
   </div>
 </div>
 
-<!-- ── Error box ── -->
-<div id="error-box">
-  <h2>Failed to load data</h2>
-  <pre id="error-msg"></pre>
-  <p style="font-size:12px;color:var(--muted);margin-bottom:14px">
-    1. Check GOOGLE_SERVICE_ACCOUNT_EMAIL + GOOGLE_PRIVATE_KEY in Vercel<br>
-    2. Share sheets with service account (Viewer)<br>
-    3. Redeploy after env var changes
-  </p>
-  <button class="retry-btn" onclick="loadData(true)">Retry</button>
+<!-- FILTER BAR -->
+<div id="filterbar">
+  <span class="fb-label">Filters</span>
+  <div class="fb-sep"></div>
+
+  <div class="ms-wrap" id="fw-month">
+    <div class="ms-btn" onclick="toggleDropdown('month')">
+      <span class="ms-btn-label" id="flbl-month">All Months</span>
+      <span class="ms-btn-count" id="fcnt-month" style="display:none"></span>
+      <svg class="ms-caret" width="10" height="10" viewBox="0 0 10 10"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
+    </div>
+    <div class="ms-dropdown" id="fdd-month" style="display:none">
+      <div class="ms-actions">
+        <button class="ms-act sel-all" onclick="selectAll('month')">Select All</button>
+        <button class="ms-act desel-all" onclick="deselectAll('month')">Deselect All</button>
+      </div>
+      <div class="ms-list" id="flist-month"></div>
+    </div>
+  </div>
+
+  <div class="ms-wrap" id="fw-segment">
+    <div class="ms-btn" onclick="toggleDropdown('segment')">
+      <span class="ms-btn-label" id="flbl-segment">All Segments</span>
+      <span class="ms-btn-count" id="fcnt-segment" style="display:none"></span>
+      <svg class="ms-caret" width="10" height="10" viewBox="0 0 10 10"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
+    </div>
+    <div class="ms-dropdown" id="fdd-segment" style="display:none">
+      <div class="ms-actions">
+        <button class="ms-act sel-all" onclick="selectAll('segment')">Select All</button>
+        <button class="ms-act desel-all" onclick="deselectAll('segment')">Deselect All</button>
+      </div>
+      <div class="ms-list" id="flist-segment"></div>
+    </div>
+  </div>
+
+  <div class="ms-wrap" id="fw-product">
+    <div class="ms-btn" onclick="toggleDropdown('product')">
+      <span class="ms-btn-label" id="flbl-product">All Products</span>
+      <span class="ms-btn-count" id="fcnt-product" style="display:none"></span>
+      <svg class="ms-caret" width="10" height="10" viewBox="0 0 10 10"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
+    </div>
+    <div class="ms-dropdown" id="fdd-product" style="display:none">
+      <div class="ms-actions">
+        <button class="ms-act sel-all" onclick="selectAll('product')">Select All</button>
+        <button class="ms-act desel-all" onclick="deselectAll('product')">Deselect All</button>
+      </div>
+      <div class="ms-list" id="flist-product"></div>
+    </div>
+  </div>
+
+  <div class="ms-wrap" id="fw-user">
+    <div class="ms-btn" onclick="toggleDropdown('user')">
+      <span class="ms-btn-label" id="flbl-user">All Editors</span>
+      <span class="ms-btn-count" id="fcnt-user" style="display:none"></span>
+      <svg class="ms-caret" width="10" height="10" viewBox="0 0 10 10"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
+    </div>
+    <div class="ms-dropdown" id="fdd-user" style="display:none">
+      <div class="ms-search"><input type="text" placeholder="Search editors…" oninput="filterItems('user',this.value)"></div>
+      <div class="ms-actions">
+        <button class="ms-act sel-all" onclick="selectAll('user')">Select All</button>
+        <button class="ms-act desel-all" onclick="deselectAll('user')">Deselect All</button>
+      </div>
+      <div class="ms-list" id="flist-user"></div>
+    </div>
+  </div>
+
+  <button class="fb-clear" id="fb-clear-btn" onclick="clearAllFilters()" style="display:none">✕ Clear Filters</button>
+</div>
+
+<!-- CONTENT -->
+<div id="content">
+
+<!-- ═══════════ DASHBOARD VIEW ═══════════ -->
+<div id="dashboard-view" class="dash-view active">
+
+  <div class="kpi-grid" id="dash-kpis"></div>
+
+  <!-- Cost Trend -->
+  <div class="section">
+    <div class="sec-head">
+      <div>
+        <div class="sec-title">Cost Trend</div>
+        <div class="sec-sub">MoM · Total Cost · Volume · ₹/Unit</div>
+      </div>
+      <div class="cf-row">
+        <span class="cf-label">Metric:</span>
+        <button class="cf-pill active" data-chart="cost" onclick="setChartFilter('cost','cost',this)">Cost</button>
+        <button class="cf-pill" data-chart="cost" onclick="setChartFilter('cost','units',this)">Volume</button>
+        <button class="cf-pill" data-chart="cost" onclick="setChartFilter('cost','cpu',this)">₹/Unit</button>
+      </div>
+    </div>
+    <div class="ch"><canvas id="ch-cost-trend" height="120"></canvas></div>
+  </div>
+
+  <!-- Top 15 Editors -->
+  <div class="section">
+    <div class="sec-head">
+      <div>
+        <div class="sec-title">Top 15 Editors</div>
+        <div class="sec-sub" id="ed-chart-sub">Sorted by ₹/Unit · highest first</div>
+      </div>
+      <div class="cf-row">
+        <span class="cf-label">Sort:</span>
+        <button class="cf-pill active" data-chart="ed" onclick="setChartFilter('ed','costPerUnit',this)">₹/Unit</button>
+        <button class="cf-pill" data-chart="ed" onclick="setChartFilter('ed','units',this)">Volume</button>
+        <button class="cf-pill" data-chart="ed" onclick="setChartFilter('ed','efficiency',this)">Efficiency</button>
+      </div>
+    </div>
+    <div class="ch"><canvas id="ch-ed-top" height="170"></canvas></div>
+  </div>
+
+  <!-- Product Breakdown -->
+  <div class="section">
+    <div class="sec-head">
+      <div>
+        <div class="sec-title">Product Breakdown</div>
+        <div class="sec-sub">MoM · per product · select metric</div>
+      </div>
+      <div class="cf-row">
+        <span class="cf-label">Metric:</span>
+        <button class="cf-pill active" data-chart="prod" onclick="setChartFilter('prod','units',this)">Volume</button>
+        <button class="cf-pill" data-chart="prod" onclick="setChartFilter('prod','cost',this)">Cost</button>
+        <button class="cf-pill" data-chart="prod" onclick="setChartFilter('prod','cpu',this)">₹/Unit</button>
+      </div>
+    </div>
+    <div class="ch"><canvas id="ch-prod-trend" height="130"></canvas></div>
+  </div>
+
+  <!-- User Summary Table -->
+  <div style="margin-top:18px;margin-bottom:8px;display:flex;align-items:center;gap:10px">
+    <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)">User Summary</span>
+    <div style="flex:1;height:1px;background:var(--border)"></div>
+  </div>
+  <div class="section">
+    <div class="sec-head">
+      <div>
+        <div class="sec-title">Editor Performance</div>
+        <div class="sec-sub">Per editor · Images · 360 · Video · efficiency · cost</div>
+      </div>
+      <div class="sec-actions">
+        <input type="text" class="search" id="us-search" placeholder="Search editor…">
+      </div>
+    </div>
+    <div class="tbl-wrap" style="max-height:480px">
+      <table id="tbl-editors">
+        <thead><tr>
+          <th>#</th>
+          <th class="sortable" data-col="editor" data-type="str">Editor<span class="sort-arrow"></span></th>
+          <th class="r sortable" data-col="imgUnits" data-type="num">Img Units<span class="sort-arrow"></span></th>
+          <th class="r sortable" data-col="s360Units" data-type="num">360 Units<span class="sort-arrow"></span></th>
+          <th class="r sortable" data-col="vidUnits" data-type="num">Vid Units<span class="sort-arrow"></span></th>
+          <th class="r sortable" data-col="units" data-type="num">Total Units<span class="sort-arrow"> ▼</span></th>
+          <th class="r sortable" data-col="efficiency" data-type="num">Efficiency<span class="sort-arrow"></span></th>
+          <th class="r sortable" data-col="costPerUnit" data-type="num">₹/Unit<span class="sort-arrow"></span></th>
+          <th class="r sortable" data-col="factorSalary" data-type="num">Total Cost<span class="sort-arrow"></span></th>
+        </tr></thead>
+        <tbody id="tb-editors"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════ ENTERPRISE VIEW ═══════════ -->
+<div id="enterprise-view" class="dash-view">
+
+  <div class="kpi-grid" id="ent-kpis"></div>
+
+  <!-- Segment Breakdown -->
+  <div class="section">
+    <div class="sec-head">
+      <div>
+        <div class="sec-title">Segment Breakdown</div>
+        <div class="sec-sub">MoM · per segment · cost share</div>
+      </div>
+      <div class="cf-row">
+        <span class="cf-label">Metric:</span>
+        <button class="cf-pill active" data-chart="seg" onclick="setChartFilter('seg','cost',this)">Cost</button>
+        <button class="cf-pill" data-chart="seg" onclick="setChartFilter('seg','units',this)">Volume</button>
+      </div>
+    </div>
+    <div class="ch"><canvas id="ch-seg-trend" height="130"></canvas></div>
+  </div>
+
+  <!-- Segment Summary -->
+  <div class="section">
+    <div class="sec-head">
+      <div>
+        <div class="sec-title">Segment Summary</div>
+        <div class="sec-sub">Across selected months · cost share · ₹/Unit</div>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table id="tbl-segments">
+        <thead><tr>
+          <th>Segment</th>
+          <th class="r sortable" data-col="units" data-type="num">Units<span class="sort-arrow"></span></th>
+          <th class="r sortable" data-col="totalCost" data-type="num">Delivery Cost<span class="sort-arrow"> ▼</span></th>
+          <th class="r sortable" data-col="costPerUnit" data-type="num">₹/Unit<span class="sort-arrow"></span></th>
+          <th class="r sortable" data-col="pct" data-type="num">Cost Share<span class="sort-arrow"></span></th>
+        </tr></thead>
+        <tbody id="tb-segments"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Top Enterprises -->
+  <div class="section">
+    <div class="sec-head">
+      <div>
+        <div class="sec-title">Top Enterprises</div>
+        <div class="sec-sub">Sorted by ₹/Unit · highest first</div>
+      </div>
+      <div class="sec-actions">
+        <input type="text" class="search" id="ent-search" placeholder="Search enterprise…">
+      </div>
+    </div>
+    <div class="tbl-wrap" style="max-height:560px">
+      <table id="tbl-enterprises">
+        <thead><tr>
+          <th>#</th>
+          <th class="sortable" data-col="enterprise" data-type="str">Enterprise<span class="sort-arrow"></span></th>
+          <th>Segment</th>
+          <th class="sortable" data-col="dealer" data-type="str">Dealer Type<span class="sort-arrow"></span></th>
+          <th class="r sortable" data-col="vins" data-type="num">VINs<span class="sort-arrow"></span></th>
+          <th class="r sortable" data-col="units" data-type="num">Units<span class="sort-arrow"></span></th>
+          <th class="r sortable" data-col="totalCost" data-type="num">Delivery Cost<span class="sort-arrow"></span></th>
+          <th class="r sortable" data-col="costPerUnit" data-type="num">₹/Unit<span class="sort-arrow"> ▼</span></th>
+        </tr></thead>
+        <tbody id="tb-enterprises"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
 </div>
 
 <script>
 'use strict';
 
 // ══════════════════════════════════════════════════════════════
-// DATA STORE
+// GLOBAL STATE
 // ══════════════════════════════════════════════════════════════
-let DATA = null;                 // full API payload
-let ENT_META = {};               // keyed by originalName.toLowerCase()
-let ENT_META_NORM = {};          // normalized → originalName key
-let CURRENT_VIEW = 'overview';
-let _charts = [];                // track Chart.js instances for destroy
+let DATA = null;
+let ENT_META = {};         // keyed by normalized lowercase name
+let CURRENT_VIEW = 'dashboard';
+const CHARTS = {};
+const CHART_FILTERS = {
+  cost: 'cost',      // cost | units | cpu
+  ed:   'costPerUnit', // costPerUnit | units | efficiency
+  prod: 'units',     // units | cost | cpu
+  seg:  'cost',      // cost | units
+};
 
 // ══════════════════════════════════════════════════════════════
 // FORMATTERS
@@ -276,65 +463,229 @@ const f = {
     if (Math.abs(v) >= 1e3) return (v / 1e3).toFixed(1) + 'K';
     return Math.round(v).toLocaleString();
   },
+  numFull: v => (+v || 0).toLocaleString(),
   pct: v => (+v || 0).toFixed(1) + '%',
   eff: v => (+v || 0).toFixed(2) + 'x',
+  email: v => (v || '').split('@')[0],
 };
 
+function segClass(seg) {
+  seg = (seg || 'unknown').toLowerCase();
+  if (seg.includes('enterprise') || seg === 'ent') return 'seg-ent';
+  if (seg.includes('mid'))    return 'seg-mid';
+  if (seg.includes('smb'))    return 'seg-smb';
+  if (seg.includes('resell')) return 'seg-res';
+  return 'seg-unk';
+}
+function segLabel(seg) {
+  seg = (seg || '').toLowerCase();
+  if (seg.includes('enterprise') || seg === 'ent') return 'Enterprise';
+  if (seg.includes('mid'))    return 'Mid';
+  if (seg.includes('smb'))    return 'SMB';
+  if (seg.includes('resell')) return 'Reseller';
+  return seg ? seg.charAt(0).toUpperCase() + seg.slice(1) : 'Unknown';
+}
+function effClass(e) {
+  if (e >= 1) return 'eff-hi';
+  if (e >= 0.8) return 'eff-md';
+  return 'eff-lo';
+}
+
 // ══════════════════════════════════════════════════════════════
-// ENT META HELPERS
+// FILTERS
 // ══════════════════════════════════════════════════════════════
-function applyEntMeta(rawMeta) {
-  ENT_META = {};
-  ENT_META_NORM = {};
-  if (!rawMeta) return;
-  // rawMeta may be keyed by lowercase already (from data.js) or by originalName
-  Object.values(rawMeta).forEach(function(e) {
-    if (!e || !e.originalName) return;
-    const origKey = e.originalName;
-    const normKey = origKey.toLowerCase().trim();
-    ENT_META[normKey]      = e;
-    ENT_META_NORM[normKey] = normKey;
+const FILTERS = {
+  month:   { all: [], selected: new Set(), labels: {} },
+  segment: { all: [], selected: new Set() },
+  product: { all: [], selected: new Set() },
+  user:    { all: [], selected: new Set() },
+};
+
+function passesFilter(key, value) {
+  const fi = FILTERS[key];
+  if (!fi || fi.selected.size === 0 || fi.selected.size === fi.all.length) return true;
+  return fi.selected.has(value);
+}
+
+let openDropdown = null;
+function toggleDropdown(key) {
+  const dd = document.getElementById('fdd-' + key);
+  const btn = document.querySelector('#fw-' + key + ' .ms-btn');
+  if (openDropdown && openDropdown !== key) {
+    document.getElementById('fdd-' + openDropdown).style.display = 'none';
+    const ob = document.querySelector('#fw-' + openDropdown + ' .ms-btn');
+    if (ob) ob.classList.remove('open');
+  }
+  const isOpen = dd.style.display !== 'none';
+  dd.style.display = isOpen ? 'none' : 'block';
+  if (btn) btn.classList.toggle('open', !isOpen);
+  openDropdown = isOpen ? null : key;
+  if (!isOpen) {
+    const inp = dd.querySelector('input');
+    if (inp) { inp.value = ''; filterItems(key, ''); inp.focus(); }
+  }
+}
+document.addEventListener('click', e => {
+  if (openDropdown && !e.target.closest('.ms-wrap')) {
+    const dd = document.getElementById('fdd-' + openDropdown);
+    if (dd) dd.style.display = 'none';
+    const ob = document.querySelector('#fw-' + openDropdown + ' .ms-btn');
+    if (ob) ob.classList.remove('open');
+    openDropdown = null;
+  }
+});
+
+function buildDropdown(key, items, labelFn) {
+  const fi = FILTERS[key];
+  fi.all = items.slice();
+  fi.selected = new Set(items);
+  renderList(key, items, labelFn);
+  updateFilterBtn(key);
+}
+
+function renderList(key, items, labelFn) {
+  const list = document.getElementById('flist-' + key);
+  if (!list) return;
+  if (!items.length) { list.innerHTML = '<div class="ms-empty">No items</div>'; return; }
+  list.innerHTML = '';
+  const fn = labelFn || FILTERS[key]._labelFn || (v => v);
+  FILTERS[key]._labelFn = fn;
+  items.forEach(v => {
+    const label = document.createElement('label');
+    label.className = 'ms-item';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = FILTERS[key].selected.has(v);
+    cb.addEventListener('change', () => toggleItem(key, v, cb.checked));
+    const span = document.createElement('span');
+    span.className = 'ms-item-label';
+    span.title = fn(v);
+    span.textContent = fn(v);
+    label.appendChild(cb); label.appendChild(span);
+    list.appendChild(label);
   });
-  // Also iterate keys in case values don't have originalName
-  Object.entries(rawMeta).forEach(function([k, v]) {
-    if (!v) return;
-    const normKey = k.toLowerCase().trim();
-    if (!ENT_META[normKey]) {
-      ENT_META[normKey] = { originalName: v.originalName || k, ...v };
-      ENT_META_NORM[normKey] = normKey;
-    }
+}
+
+function filterItems(key, query) {
+  const q = query.toLowerCase();
+  const filtered = q
+    ? FILTERS[key].all.filter(v => {
+        const lbl = (FILTERS[key]._labelFn || (x => x))(v);
+        return lbl.toLowerCase().includes(q);
+      })
+    : FILTERS[key].all;
+  renderList(key, filtered);
+}
+
+function toggleItem(key, value, checked) {
+  if (checked) FILTERS[key].selected.add(value);
+  else FILTERS[key].selected.delete(value);
+  updateFilterBtn(key);
+  renderAll();
+}
+
+function selectAll(key) {
+  FILTERS[key].all.forEach(v => FILTERS[key].selected.add(v));
+  renderList(key, FILTERS[key].all);
+  updateFilterBtn(key);
+  renderAll();
+}
+
+function deselectAll(key) {
+  FILTERS[key].selected.clear();
+  renderList(key, FILTERS[key].all);
+  updateFilterBtn(key);
+  renderAll();
+}
+
+function clearAllFilters() {
+  ['month','segment','product','user'].forEach(k => selectAll(k));
+}
+
+function updateFilterBtn(key) {
+  const fi = FILTERS[key];
+  const lbl = document.getElementById('flbl-' + key);
+  const cnt = document.getElementById('fcnt-' + key);
+  const btn = document.querySelector('#fw-' + key + ' .ms-btn');
+  if (!lbl) return;
+  const isAll = fi.selected.size === 0 || fi.selected.size === fi.all.length;
+  const names = { month: 'All Months', segment: 'All Segments', product: 'All Products', user: 'All Editors' };
+  if (isAll) {
+    lbl.textContent = names[key];
+    cnt.style.display = 'none';
+    if (btn) btn.classList.remove('has-filter');
+  } else {
+    const sel = fi.selected.size;
+    const labelFn = fi._labelFn || (x => x);
+    lbl.textContent = sel === 1 ? labelFn([...fi.selected][0]) : sel + ' selected';
+    cnt.textContent = sel;
+    cnt.style.display = 'inline';
+    if (btn) btn.classList.add('has-filter');
+  }
+  // Show/hide clear button
+  const anyActive = ['month','segment','product','user'].some(k => {
+    const ff = FILTERS[k];
+    return ff.selected.size > 0 && ff.selected.size < ff.all.length;
   });
+  document.getElementById('fb-clear-btn').style.display = anyActive ? '' : 'none';
 }
 
-function entMeta(name) {
-  if (!name) return {};
-  const k = name.toLowerCase().trim();
-  return ENT_META[k] || {};
-}
+function initFilters() {
+  if (!DATA) return;
+  // Months — store month object keys
+  const monthKeys = DATA.months.map(m => m.key);
+  FILTERS.month.labels = {};
+  DATA.months.forEach(m => FILTERS.month.labels[m.key] = m.month);
+  buildDropdown('month', monthKeys, k => FILTERS.month.labels[k] || k);
 
-function segBadge(seg) {
-  seg = (seg || 'Unknown').toLowerCase();
-  if (seg.includes('enterprise') || seg === 'ent') return '<span class="badge badge-ent">Enterprise</span>';
-  if (seg.includes('mid'))    return '<span class="badge badge-mid">Mid</span>';
-  if (seg.includes('smb'))    return '<span class="badge badge-smb">SMB</span>';
-  if (seg.includes('resell')) return '<span class="badge badge-res">Reseller</span>';
-  return '<span class="badge badge-unk">' + (seg || '—') + '</span>';
+  // Segments
+  const segs = [...new Set(DATA.months.flatMap(m => (m.segments || []).map(s => s.seg || 'Unknown')))].sort();
+  buildDropdown('segment', segs, v => segLabel(v));
+
+  // Products
+  const prods = [...new Set(DATA.months.flatMap(m => (m.products || []).map(p => p.product || 'Unknown')))].sort();
+  buildDropdown('product', prods);
+
+  // Users (editors)
+  const users = [...new Set(DATA.months.flatMap(m => (m.editors || []).map(e => e.editor)))].sort();
+  buildDropdown('user', users, v => f.email(v));
 }
 
 // ══════════════════════════════════════════════════════════════
-// FILTER HELPERS
+// FILTER LOGIC — apply filters to data
 // ══════════════════════════════════════════════════════════════
 function filteredMonths() {
   if (!DATA) return [];
-  const sel = document.getElementById('month-filter').value;
-  if (sel === 'all') return DATA.months;
-  return DATA.months.filter(m => m.key === sel);
+  return DATA.months.filter(m => passesFilter('month', m.key));
 }
 
+function filterEditors(eds) {
+  return (eds || []).filter(e =>
+    passesFilter('user', e.editor) && e.units > 0
+  );
+}
+
+function filterProducts(prods) {
+  return (prods || []).filter(p => passesFilter('product', p.product));
+}
+
+function filterEnterprises(ents) {
+  // Apply segment filter to enterprises
+  return (ents || []).filter(e => {
+    if (!passesFilter('segment', e.seg || 'Unknown')) return false;
+    return true;
+  });
+}
+
+function filterSegments(segs) {
+  return (segs || []).filter(s => passesFilter('segment', s.seg || 'Unknown'));
+}
+
+// ══════════════════════════════════════════════════════════════
+// MERGE MONTHS — combine multiple months into one summary
+// ══════════════════════════════════════════════════════════════
 function mergeMonths(months) {
-  // Merge multiple month objects into one combined object
   if (!months.length) return null;
-  if (months.length === 1) return months[0];
 
   const merged = {
     totalImages: 0, totalSKUs: 0, totalVINs: 0,
@@ -345,42 +696,61 @@ function mergeMonths(months) {
   const productMap = {}, editorMap = {}, enterpriseMap = {}, segmentMap = {};
 
   for (const m of months) {
-    merged.totalImages  += m.totalImages  || 0;
-    merged.totalSKUs    += m.totalSKUs    || 0;
-    merged.totalVINs    += m.totalVINs    || 0;
-    merged.totalTarget  += m.totalTarget  || 0;
-    merged.totalActual  += m.totalActual  || 0;
-    merged.totalCost    += m.totalCost    || 0;
-    merged.totalUnits   += m.totalUnits   || 0;
-    merged.headcount    = Math.max(merged.headcount, m.headcount || 0);
+    const fProds = filterProducts(m.products);
+    const fEds   = filterEditors(m.editors);
+    const fEnts  = filterEnterprises(m.enterprises);
+    const fSegs  = filterSegments(m.segments);
 
-    for (const p of (m.products || [])) {
-      if (!productMap[p.product]) productMap[p.product] = { ...p, totalCost: 0 };
+    // Sum totals from filtered products
+    fProds.forEach(p => {
+      merged.totalImages += p.images || 0;
+      merged.totalSKUs   += p.skus   || 0;
+      merged.totalVINs   += p.vins   || 0;
+      merged.totalTarget += p.target || 0;
+      merged.totalActual += p.actual || 0;
+      merged.totalUnits  += p.units  || 0;
+      merged.totalCost   += p.totalCost || 0;
+    });
+
+    merged.headcount = Math.max(merged.headcount, m.headcount || 0);
+
+    // Aggregate products
+    fProds.forEach(p => {
+      if (!productMap[p.product]) productMap[p.product] = { ...p };
       else {
-        productMap[p.product].images += p.images || 0;
-        productMap[p.product].skus   += p.skus   || 0;
-        productMap[p.product].vins   += p.vins   || 0;
-        productMap[p.product].units  += p.units  || 0;
-        productMap[p.product].target += p.target || 0;
-        productMap[p.product].actual += p.actual || 0;
-        productMap[p.product].rows   += p.rows   || 0;
+        productMap[p.product].images    += p.images    || 0;
+        productMap[p.product].skus      += p.skus      || 0;
+        productMap[p.product].vins      += p.vins      || 0;
+        productMap[p.product].units     += p.units     || 0;
+        productMap[p.product].target    += p.target    || 0;
+        productMap[p.product].actual    += p.actual    || 0;
+        productMap[p.product].totalCost += p.totalCost || 0;
       }
-    }
+    });
 
-    for (const e of (m.editors || [])) {
+    // Aggregate editors
+    fEds.forEach(e => {
       if (!editorMap[e.editor]) editorMap[e.editor] = { ...e };
       else {
-        editorMap[e.editor].images  += e.images  || 0;
-        editorMap[e.editor].units   += e.units   || 0;
-        editorMap[e.editor].target  += e.target  || 0;
-        editorMap[e.editor].actual  += e.actual  || 0;
-        editorMap[e.editor].factorSalary = Math.max(editorMap[e.editor].factorSalary, e.factorSalary || 0);
+        editorMap[e.editor].images       += e.images       || 0;
+        editorMap[e.editor].skus         += e.skus         || 0;
+        editorMap[e.editor].units        += e.units        || 0;
+        editorMap[e.editor].target       += e.target       || 0;
+        editorMap[e.editor].actual       += e.actual       || 0;
+        editorMap[e.editor].imgUnits     += e.imgUnits     || 0;
+        editorMap[e.editor].s360Units    += e.s360Units    || 0;
+        editorMap[e.editor].vidUnits     += e.vidUnits     || 0;
+        editorMap[e.editor].imgCost      += e.imgCost      || 0;
+        editorMap[e.editor].s360Cost     += e.s360Cost     || 0;
+        editorMap[e.editor].vidCost      += e.vidCost      || 0;
+        editorMap[e.editor].factorSalary += e.factorSalary || 0;
       }
-    }
+    });
 
-    for (const e of (m.enterprises || [])) {
-      const k = e.enterprise.toLowerCase();
-      if (!enterpriseMap[k]) enterpriseMap[k] = { ...e, totalCost: e.totalCost || 0 };
+    // Aggregate enterprises
+    fEnts.forEach(e => {
+      const k = (e.enterprise || '').toLowerCase();
+      if (!enterpriseMap[k]) enterpriseMap[k] = { ...e };
       else {
         enterpriseMap[k].images    += e.images    || 0;
         enterpriseMap[k].skus      += e.skus      || 0;
@@ -388,18 +758,18 @@ function mergeMonths(months) {
         enterpriseMap[k].units     += e.units     || 0;
         enterpriseMap[k].totalCost += e.totalCost || 0;
       }
-    }
+    });
 
-    for (const s of (m.segments || [])) {
+    // Aggregate segments
+    fSegs.forEach(s => {
       if (!segmentMap[s.seg]) segmentMap[s.seg] = { ...s };
       else {
         segmentMap[s.seg].units     += s.units     || 0;
         segmentMap[s.seg].totalCost += s.totalCost || 0;
       }
-    }
+    });
   }
 
-  // Re-compute derived
   merged.costPerUnit = merged.totalUnits > 0 ? merged.totalCost / merged.totalUnits : 0;
   merged.efficiency  = merged.totalTarget > 0 ? merged.totalTarget / (merged.totalActual || merged.totalTarget) : 0;
 
@@ -411,19 +781,20 @@ function mergeMonths(months) {
   })).sort((a, b) => b.units - a.units);
 
   // Enrich enterprises
-  merged.enterprises = Object.values(enterpriseMap).map(e => {
-    if (!e.totalCost && e.units && merged.costPerUnit) {
-      e.totalCost = Math.round(merged.costPerUnit * e.units);
-    }
-    e.costPerUnit = e.units > 0 ? e.totalCost / e.units : 0;
-    return e;
-  }).sort((a, b) => b.costPerUnit - a.costPerUnit).slice(0, 30);
+  merged.enterprises = Object.values(enterpriseMap).map(e => ({
+    ...e,
+    costPerUnit: e.units > 0 ? e.totalCost / e.units : 0,
+  })).sort((a, b) => b.costPerUnit - a.costPerUnit);
 
-  merged.products  = Object.values(productMap);
-  merged.segments  = Object.values(segmentMap).map(s => ({
+  merged.products = Object.values(productMap);
+
+  // Re-compute segment percentages based on merged total
+  const segTotalCost = Object.values(segmentMap).reduce((s, x) => s + (x.totalCost || 0), 0);
+  merged.segments = Object.values(segmentMap).map(s => ({
     ...s,
-    pct: merged.totalUnits > 0 ? Math.round(s.units / merged.totalUnits * 100) : 0,
-  }));
+    costPerUnit: s.units > 0 ? s.totalCost / s.units : 0,
+    pct: segTotalCost > 0 ? Math.round(s.totalCost / segTotalCost * 100) : 0,
+  })).sort((a, b) => b.totalCost - a.totalCost);
 
   return merged;
 }
@@ -431,630 +802,554 @@ function mergeMonths(months) {
 // ══════════════════════════════════════════════════════════════
 // CHART HELPERS
 // ══════════════════════════════════════════════════════════════
-const COLORS = ['#3b82f6','#22c55e','#f59e0b','#a855f7','#06b6d4','#ef4444','#6366f1','#14b8a6','#f97316','#ec4899'];
+const COLORS = ['#4f78ff','#22d4a0','#f5a42a','#a07cff','#38c4f0','#f0566a','#6366f1','#14b8a6','#f97316','#ec4899'];
 
-function mkChart(id, type, labels, datasets, opts) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  // Destroy existing
-  const existing = Chart.getChart(el);
-  if (existing) existing.destroy();
-
-  const defaultOpts = {
-    responsive: true, maintainAspectRatio: false,
-    plugins: {
-      legend: { labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 12 } },
-      tooltip: {
-        backgroundColor: '#1e2330', borderColor: '#2d3448', borderWidth: 1,
-        titleColor: '#e2e8f0', bodyColor: '#94a3b8', padding: 10,
-      },
+const BASE_CHART_OPTS = {
+  responsive: true, maintainAspectRatio: false,
+  interaction: { mode: 'index', intersect: false },
+  plugins: {
+    legend: { labels: { color: '#F3F4F6', font: { size: 11, family: 'Inter' }, boxWidth: 10, boxHeight: 10, padding: 12 } },
+    tooltip: {
+      backgroundColor: '#1a1a1a', borderColor: '#333', borderWidth: 1,
+      titleColor: '#fff', bodyColor: '#E6E6E6', padding: 10,
+      titleFont: { family: 'Inter', size: 12, weight: '600' },
+      bodyFont: { family: 'Inter', size: 11 },
     },
-    scales: type !== 'pie' && type !== 'doughnut' ? {
-      x: { grid: { color: 'rgba(255,255,255,.05)' }, ticks: { color: '#64748b', font: { size: 11 } } },
-      y: { grid: { color: 'rgba(255,255,255,.05)' }, ticks: { color: '#64748b', font: { size: 11 } } },
-    } : {},
-  };
-
-  new Chart(el, {
-    type,
-    data: { labels, datasets },
-    options: Object.assign({}, defaultOpts, opts || {}),
-  });
-}
-
-// ══════════════════════════════════════════════════════════════
-// SORT HELPER
-// ══════════════════════════════════════════════════════════════
-let _tableSorts = {};
-function sortTable(tblId, col, type) {
-  const tbl = document.getElementById(tblId);
-  if (!tbl) return;
-  const s = _tableSorts[tblId] || { col: null, dir: 1 };
-  if (s.col === col) s.dir *= -1; else { s.col = col; s.dir = -1; }
-  _tableSorts[tblId] = s;
-
-  const tbody = tbl.querySelector('tbody');
-  const rows  = Array.from(tbody.querySelectorAll('tr'));
-  rows.sort((a, b) => {
-    const av = a.dataset[col] || '';
-    const bv = b.dataset[col] || '';
-    if (type === 'num') return s.dir * ((+av || 0) - (+bv || 0));
-    return s.dir * av.localeCompare(bv);
-  });
-
-  // Update header indicators
-  tbl.querySelectorAll('thead th').forEach(th => {
-    th.querySelector('.sort-icon') && (th.querySelector('.sort-icon').textContent = '');
-  });
-  const th = tbl.querySelector(`thead th[data-col="${col}"]`);
-  if (th && th.querySelector('.sort-icon')) {
-    th.querySelector('.sort-icon').textContent = s.dir === -1 ? ' ▼' : ' ▲';
-  }
-
-  tbody.innerHTML = '';
-  rows.forEach(r => tbody.appendChild(r));
-}
-
-// ══════════════════════════════════════════════════════════════
-// VIEW: OVERVIEW
-// ══════════════════════════════════════════════════════════════
-function renderOverview() {
-  const months  = filteredMonths();
-  const merged  = mergeMonths(months);
-  if (!merged) { document.getElementById('page').innerHTML = '<div style="padding:40px;color:var(--muted)">No data available</div>'; return; }
-
-  const labels  = DATA.months.map(m => m.month);
-  const costs   = DATA.months.map(m => m.totalCost);
-  const units   = DATA.months.map(m => m.totalUnits);
-  const cpus    = DATA.months.map(m => m.costPerUnit);
-  const effs    = DATA.months.map(m => m.efficiency);
-
-  document.getElementById('page').innerHTML = `
-    <div style="padding:24px">
-      <div class="kpi-grid">
-        <div class="kpi blue">
-          <div class="kpi-label">Total Cost (Period)</div>
-          <div class="kpi-val">${f.inr0(merged.totalCost)}</div>
-          <div class="kpi-sub">${months.length} month${months.length !== 1 ? 's' : ''}</div>
-        </div>
-        <div class="kpi amber">
-          <div class="kpi-label">Cost / Unit</div>
-          <div class="kpi-val">${f.inr(merged.costPerUnit)}</div>
-          <div class="kpi-sub">avg across period</div>
-        </div>
-        <div class="kpi green">
-          <div class="kpi-label">Total Units</div>
-          <div class="kpi-val">${f.num(merged.totalUnits)}</div>
-          <div class="kpi-sub">${f.num(merged.totalImages)} images</div>
-        </div>
-        <div class="kpi cyan">
-          <div class="kpi-label">Total VINs</div>
-          <div class="kpi-val">${f.num(merged.totalVINs)}</div>
-          <div class="kpi-sub">unique vehicles</div>
-        </div>
-        <div class="kpi purple">
-          <div class="kpi-label">Efficiency</div>
-          <div class="kpi-val">${f.eff(merged.efficiency)}</div>
-          <div class="kpi-sub">target / actual</div>
-        </div>
-        <div class="kpi">
-          <div class="kpi-label">Headcount</div>
-          <div class="kpi-val" style="color:var(--text)">${merged.headcount}</div>
-          <div class="kpi-sub">active editors</div>
-        </div>
-      </div>
-
-      <div class="two-col">
-        <div class="card">
-          <div class="card-title">Monthly Cost Trend <span>(₹)</span></div>
-          <div class="chart-wrap" style="height:220px">
-            <canvas id="ch-cost-trend"></canvas>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-title">Cost Per Unit <span>(₹/unit)</span></div>
-          <div class="chart-wrap" style="height:220px">
-            <canvas id="ch-cpu-trend"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <div class="two-col">
-        <div class="card">
-          <div class="card-title">Units Processed <span>monthly</span></div>
-          <div class="chart-wrap" style="height:200px">
-            <canvas id="ch-units-trend"></canvas>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-title">Efficiency <span>target/actual ratio</span></div>
-          <div class="chart-wrap" style="height:200px">
-            <canvas id="ch-eff-trend"></canvas>
-          </div>
-        </div>
-      </div>
-    </div>`;
-
-  mkChart('ch-cost-trend', 'bar', labels, [{
-    label: 'Total Cost', data: costs, backgroundColor: 'rgba(59,130,246,.6)',
-    borderColor: '#3b82f6', borderWidth: 1,
-  }], { plugins: { legend: { display: false } } });
-
-  mkChart('ch-cpu-trend', 'line', labels, [{
-    label: '₹/Unit', data: cpus, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,.1)',
-    tension: 0.4, fill: true, pointBackgroundColor: '#f59e0b',
-  }], { plugins: { legend: { display: false } } });
-
-  mkChart('ch-units-trend', 'bar', labels, [{
-    label: 'Units', data: units, backgroundColor: 'rgba(34,197,94,.6)',
-    borderColor: '#22c55e', borderWidth: 1,
-  }], { plugins: { legend: { display: false } } });
-
-  mkChart('ch-eff-trend', 'line', labels, [{
-    label: 'Efficiency', data: effs, borderColor: '#a855f7', backgroundColor: 'rgba(168,85,247,.1)',
-    tension: 0.4, fill: true, pointBackgroundColor: '#a855f7',
-  }], { plugins: { legend: { display: false } } });
-}
-
-// ══════════════════════════════════════════════════════════════
-// VIEW: COSTING
-// ══════════════════════════════════════════════════════════════
-function renderCosting() {
-  const months = filteredMonths();
-  const merged = mergeMonths(months);
-  if (!merged) return;
-
-  const segs   = merged.segments || [];
-  const segLabels = segs.map(s => s.seg || 'Unknown');
-  const segCosts  = segs.map(s => s.totalCost || 0);
-  const segUnits  = segs.map(s => s.units || 0);
-
-  // Month-on-month cost table
-  const momRows = DATA.months.map((m, i) => {
-    const prev = i > 0 ? DATA.months[i - 1] : null;
-    const diff = prev ? m.totalCost - prev.totalCost : null;
-    const pct  = prev && prev.totalCost > 0 ? (diff / prev.totalCost * 100) : null;
-    return `<tr>
-      <td>${m.month}</td>
-      <td class="r">${f.inr0(m.totalCost)}</td>
-      <td class="r">${f.inr(m.costPerUnit)}</td>
-      <td class="r">${f.num(m.totalUnits)}</td>
-      <td class="r">${m.headcount || '—'}</td>
-      <td class="r">${diff !== null
-        ? `<span class="${diff >= 0 ? 'trend-up' : 'trend-down'}">${diff >= 0 ? '+' : ''}${f.inr0(diff)} (${pct !== null ? pct.toFixed(1) : '—'}%)</span>`
-        : '—'}</td>
-    </tr>`;
-  }).join('');
-
-  document.getElementById('page').innerHTML = `
-    <div style="padding:24px">
-      <div class="kpi-grid">
-        <div class="kpi blue">
-          <div class="kpi-label">Total Cost</div>
-          <div class="kpi-val">${f.inr0(merged.totalCost)}</div>
-          <div class="kpi-sub">${months.length} month(s)</div>
-        </div>
-        <div class="kpi amber">
-          <div class="kpi-label">Cost / Unit</div>
-          <div class="kpi-val">${f.inr(merged.costPerUnit)}</div>
-        </div>
-        <div class="kpi green">
-          <div class="kpi-label">Total Units</div>
-          <div class="kpi-val">${f.num(merged.totalUnits)}</div>
-        </div>
-        <div class="kpi purple">
-          <div class="kpi-label">Headcount</div>
-          <div class="kpi-val" style="color:var(--purple)">${merged.headcount}</div>
-        </div>
-      </div>
-
-      <div class="two-col">
-        <div class="card">
-          <div class="card-title">Cost by Segment</div>
-          <div class="chart-wrap" style="height:240px">
-            <canvas id="ch-seg-cost"></canvas>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-title">Units by Segment</div>
-          <div class="chart-wrap" style="height:240px">
-            <canvas id="ch-seg-units"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">Month-on-Month Summary</div>
-        <div class="tbl-wrap">
-          <table>
-            <thead><tr>
-              <th>Month</th>
-              <th class="r">Total Cost</th>
-              <th class="r">Cost/Unit</th>
-              <th class="r">Units</th>
-              <th class="r">Headcount</th>
-              <th class="r">MoM Change</th>
-            </tr></thead>
-            <tbody>${momRows}</tbody>
-          </table>
-        </div>
-      </div>
-    </div>`;
-
-  if (segCosts.some(v => v > 0)) {
-    mkChart('ch-seg-cost', 'doughnut', segLabels, [{
-      data: segCosts, backgroundColor: COLORS, borderWidth: 0,
-    }], { cutout: '60%' });
-    mkChart('ch-seg-units', 'doughnut', segLabels, [{
-      data: segUnits, backgroundColor: COLORS, borderWidth: 0,
-    }], { cutout: '60%' });
-  } else {
-    document.getElementById('ch-seg-cost').parentElement.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:20px">No segment data — enterprise_details sheet may be empty or not shared</div>';
-    document.getElementById('ch-seg-units') && (document.getElementById('ch-seg-units').parentElement.innerHTML = '');
-  }
-}
-
-// ══════════════════════════════════════════════════════════════
-// VIEW: PRODUCT
-// ══════════════════════════════════════════════════════════════
-function renderProduct() {
-  const months = filteredMonths();
-  const merged = mergeMonths(months);
-  if (!merged) return;
-
-  const prods = (merged.products || []).sort((a, b) => b.units - a.units);
-  const pLabels = prods.map(p => p.product);
-  const pUnits  = prods.map(p => p.units);
-  const pCosts  = prods.map(p => p.totalCost || 0);
-
-  const tableRows = prods.map((p, i) => `
-    <tr>
-      <td>${p.product || '—'}</td>
-      <td class="r">${f.num(p.images)}</td>
-      <td class="r">${f.num(p.skus)}</td>
-      <td class="r">${f.num(p.vins)}</td>
-      <td class="r">${f.num(p.units)}</td>
-      <td class="r">${f.eff(p.efficiency)}</td>
-      <td class="r" style="color:var(--amber)">${f.inr0(p.totalCost)}</td>
-    </tr>`).join('');
-
-  // Cross-month trend per product (top 4)
-  const top4 = prods.slice(0, 4).map(p => p.product);
-  const mLabels = DATA.months.map(m => m.month);
-  const trendDatasets = top4.map((prod, i) => ({
-    label: prod,
-    data: DATA.months.map(m => {
-      const mp = (m.products || []).find(p => p.product === prod);
-      return mp ? mp.units : 0;
-    }),
-    borderColor: COLORS[i], backgroundColor: COLORS[i] + '22',
-    tension: 0.4, fill: false, pointRadius: 3,
-  }));
-
-  document.getElementById('page').innerHTML = `
-    <div style="padding:24px">
-      <div class="two-col">
-        <div class="card">
-          <div class="card-title">Units by Product</div>
-          <div class="chart-wrap" style="height:220px">
-            <canvas id="ch-prod-units"></canvas>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-title">Cost by Product</div>
-          <div class="chart-wrap" style="height:220px">
-            <canvas id="ch-prod-cost"></canvas>
-          </div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title">Product Trend (Top 4) <span>units/month</span></div>
-        <div class="chart-wrap" style="height:220px">
-          <canvas id="ch-prod-trend"></canvas>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title">Product Breakdown</div>
-        <div class="tbl-wrap">
-          <table>
-            <thead><tr>
-              <th>Product</th>
-              <th class="r">Images</th>
-              <th class="r">SKUs</th>
-              <th class="r">VINs</th>
-              <th class="r">Billing Units</th>
-              <th class="r">Efficiency</th>
-              <th class="r">Delivery Cost</th>
-            </tr></thead>
-            <tbody>${tableRows}</tbody>
-          </table>
-        </div>
-      </div>
-    </div>`;
-
-  mkChart('ch-prod-units', 'bar', pLabels, [{
-    label: 'Units', data: pUnits, backgroundColor: COLORS,
-  }], { plugins: { legend: { display: false } }, indexAxis: 'y' });
-
-  mkChart('ch-prod-cost', 'bar', pLabels, [{
-    label: 'Cost', data: pCosts, backgroundColor: COLORS.map(c => c + 'aa'),
-    borderColor: COLORS, borderWidth: 1,
-  }], { plugins: { legend: { display: false } }, indexAxis: 'y' });
-
-  if (trendDatasets.length) {
-    mkChart('ch-prod-trend', 'line', mLabels, trendDatasets);
-  }
-}
-
-// ══════════════════════════════════════════════════════════════
-// VIEW: ENTERPRISE
-// ══════════════════════════════════════════════════════════════
-let _entSortCol = 'costPerUnit', _entSortDir = -1;
-
-function renderEnterprise() {
-  const months = filteredMonths();
-  const merged = mergeMonths(months);
-  if (!merged) return;
-
-  const ents  = merged.enterprises || [];
-
-  document.getElementById('page').innerHTML = `
-    <div style="padding:24px">
-      <div class="kpi-grid">
-        <div class="kpi blue">
-          <div class="kpi-label">Enterprises</div>
-          <div class="kpi-val">${ents.length}</div>
-        </div>
-        <div class="kpi amber">
-          <div class="kpi-label">Top ₹/Unit</div>
-          <div class="kpi-val">${ents[0] ? f.inr(ents[0].costPerUnit) : '—'}</div>
-          <div class="kpi-sub">${ents[0] ? ents[0].enterprise : ''}</div>
-        </div>
-        <div class="kpi green">
-          <div class="kpi-label">Total Units</div>
-          <div class="kpi-val">${f.num(ents.reduce((s, e) => s + e.units, 0))}</div>
-        </div>
-        <div class="kpi cyan">
-          <div class="kpi-label">Total Delivery Cost</div>
-          <div class="kpi-val">${f.inr0(ents.reduce((s, e) => s + (e.totalCost || 0), 0))}</div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">Top Enterprises <span>sorted by ₹/Unit</span></div>
-        <div class="tbl-wrap">
-          <table id="ent-table">
-            <thead><tr>
-              <th data-col="enterprise">Enterprise <span class="sort-icon"></span></th>
-              <th data-col="seg">Segment <span class="sort-icon"></span></th>
-              <th data-col="dealer">Dealer Type <span class="sort-icon"></span></th>
-              <th class="r" data-col="vins">VINs <span class="sort-icon"></span></th>
-              <th class="r" data-col="units">Units <span class="sort-icon"></span></th>
-              <th class="r" data-col="totalCost">Delivery Cost <span class="sort-icon"></span></th>
-              <th class="r" data-col="costPerUnit">₹/Unit <span class="sort-icon"> ▼</span></th>
-              <th class="r" data-col="efficiency">Efficiency <span class="sort-icon"></span></th>
-            </tr></thead>
-            <tbody id="ent-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>`;
-
-  // Wire header sort
-  document.querySelectorAll('#ent-table thead th[data-col]').forEach(th => {
-    th.style.cursor = 'pointer';
-    th.addEventListener('click', () => {
-      const col = th.dataset.col;
-      const numCols = new Set(['vins','units','totalCost','costPerUnit','efficiency']);
-      sortTable('ent-table', col, numCols.has(col) ? 'num' : 'str');
-    });
-  });
-
-  const tbody = document.getElementById('ent-tbody');
-  tbody.innerHTML = ents.map(e => `
-    <tr
-      data-enterprise="${e.enterprise}"
-      data-seg="${e.seg || ''}"
-      data-dealer="${e.dealer || ''}"
-      data-vins="${e.vins || 0}"
-      data-units="${e.units || 0}"
-      data-totalcost="${e.totalCost || 0}"
-      data-costperunit="${e.costPerUnit || 0}"
-      data-efficiency="${e.efficiency || 0}"
-    >
-      <td>${e.enterprise || '—'}</td>
-      <td>${segBadge(e.seg)}</td>
-      <td style="color:var(--muted)">${e.dealer || '—'}</td>
-      <td class="r">${f.num(e.vins)}</td>
-      <td class="r">${f.num(e.units)}</td>
-      <td class="r" style="color:var(--blue)">${f.inr0(e.totalCost || 0)}</td>
-      <td class="r" style="color:var(--amber)">${f.inr(e.costPerUnit)}</td>
-      <td class="r">${f.eff(e.efficiency)}</td>
-    </tr>`).join('');
-}
-
-// ══════════════════════════════════════════════════════════════
-// VIEW: QC EDITORS
-// ══════════════════════════════════════════════════════════════
-function renderEditor() {
-  const months = filteredMonths();
-  const merged = mergeMonths(months);
-  if (!merged) return;
-
-  const eds = (merged.editors || []).filter(e => e.units > 0).slice(0, 50);
-
-  const topLabel = eds.slice(0, 10).map(e => e.editor.split('@')[0]);
-  const topUnits = eds.slice(0, 10).map(e => e.units);
-  const topCpu   = eds.slice(0, 10).map(e => e.costPerUnit);
-
-  document.getElementById('page').innerHTML = `
-    <div style="padding:24px">
-      <div class="kpi-grid">
-        <div class="kpi blue">
-          <div class="kpi-label">Active Editors</div>
-          <div class="kpi-val">${eds.length}</div>
-        </div>
-        <div class="kpi amber">
-          <div class="kpi-label">Avg Cost/Unit</div>
-          <div class="kpi-val">${f.inr(merged.costPerUnit)}</div>
-        </div>
-        <div class="kpi green">
-          <div class="kpi-label">Total Salary Cost</div>
-          <div class="kpi-val">${f.inr0(merged.totalCost)}</div>
-        </div>
-        <div class="kpi purple">
-          <div class="kpi-label">Efficiency</div>
-          <div class="kpi-val" style="color:var(--purple)">${f.eff(merged.efficiency)}</div>
-        </div>
-      </div>
-
-      <div class="two-col">
-        <div class="card">
-          <div class="card-title">Top 10 by Units</div>
-          <div class="chart-wrap" style="height:220px">
-            <canvas id="ch-ed-units"></canvas>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-title">Top 10 by ₹/Unit (Cost)</div>
-          <div class="chart-wrap" style="height:220px">
-            <canvas id="ch-ed-cpu"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">Editor Breakdown</div>
-        <div class="tbl-wrap">
-          <table id="ed-table">
-            <thead><tr>
-              <th data-col="editor">Editor <span class="sort-icon"></span></th>
-              <th class="r" data-col="images">Images <span class="sort-icon"></span></th>
-              <th class="r" data-col="skus">SKUs <span class="sort-icon"></span></th>
-              <th class="r" data-col="units">Units <span class="sort-icon"> ▼</span></th>
-              <th class="r" data-col="efficiency">Efficiency <span class="sort-icon"></span></th>
-              <th class="r" data-col="factorSalary">Salary <span class="sort-icon"></span></th>
-              <th class="r" data-col="costPerUnit">₹/Unit <span class="sort-icon"></span></th>
-            </tr></thead>
-            <tbody id="ed-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>`;
-
-  // Wire sort
-  document.querySelectorAll('#ed-table thead th[data-col]').forEach(th => {
-    th.style.cursor = 'pointer';
-    th.addEventListener('click', () => {
-      const col = th.dataset.col;
-      const numCols = new Set(['images','skus','units','efficiency','factorSalary','costPerUnit']);
-      sortTable('ed-table', col, numCols.has(col) ? 'num' : 'str');
-    });
-  });
-
-  const tbody = document.getElementById('ed-tbody');
-  tbody.innerHTML = eds.map(e => `
-    <tr
-      data-editor="${e.editor}"
-      data-images="${e.images || 0}"
-      data-skus="${e.skus || 0}"
-      data-units="${e.units || 0}"
-      data-efficiency="${e.efficiency || 0}"
-      data-factorSalary="${e.factorSalary || 0}"
-      data-costPerUnit="${e.costPerUnit || 0}"
-    >
-      <td style="color:var(--blue)">${e.editor}</td>
-      <td class="r">${f.num(e.images)}</td>
-      <td class="r">${f.num(e.skus)}</td>
-      <td class="r">${f.num(e.units)}</td>
-      <td class="r">${f.eff(e.efficiency)}</td>
-      <td class="r" style="color:var(--green)">${e.factorSalary ? f.inr0(e.factorSalary) : '—'}</td>
-      <td class="r" style="color:var(--amber)">${f.inr(e.costPerUnit)}</td>
-    </tr>`).join('');
-
-  mkChart('ch-ed-units', 'bar', topLabel, [{
-    label: 'Units', data: topUnits, backgroundColor: 'rgba(59,130,246,.7)',
-    borderColor: '#3b82f6', borderWidth: 1,
-  }], { plugins: { legend: { display: false } }, indexAxis: 'y' });
-
-  mkChart('ch-ed-cpu', 'bar', topLabel, [{
-    label: '₹/Unit', data: topCpu, backgroundColor: 'rgba(245,158,11,.7)',
-    borderColor: '#f59e0b', borderWidth: 1,
-  }], { plugins: { legend: { display: false } }, indexAxis: 'y' });
-}
-
-// ══════════════════════════════════════════════════════════════
-// ROUTING
-// ══════════════════════════════════════════════════════════════
-const VIEWS = {
-  overview:   { title: 'Overview',    render: renderOverview },
-  costing:    { title: 'Costing',     render: renderCosting },
-  product:    { title: 'Product',     render: renderProduct },
-  enterprise: { title: 'Enterprise',  render: renderEnterprise },
-  editor:     { title: 'QC Editors',  render: renderEditor },
+  },
+  scales: {
+    x: { grid: { color: 'rgba(255,255,255,.04)', drawBorder: false }, ticks: { color: '#A0A0A0', font: { size: 10, family: 'Inter' } } },
+    y: { grid: { color: 'rgba(255,255,255,.04)', drawBorder: false }, ticks: { color: '#A0A0A0', font: { size: 10, family: 'JetBrains Mono' } } },
+  },
 };
 
-function switchView(view) {
-  CURRENT_VIEW = view;
-  document.querySelectorAll('.sb-item').forEach(el => el.classList.toggle('active', el.dataset.view === view));
-  document.getElementById('page-title').textContent = VIEWS[view]?.title || view;
-  document.getElementById('page').innerHTML = '';
-  if (DATA) VIEWS[view]?.render();
-}
-
-function onFilterChange() {
-  if (DATA) VIEWS[CURRENT_VIEW]?.render();
-}
-
-// ══════════════════════════════════════════════════════════════
-// LOAD DATA
-// ══════════════════════════════════════════════════════════════
-async function loadData(force) {
-  document.getElementById('loader').style.display = 'flex';
-  document.getElementById('error-box').style.display = 'none';
-  document.getElementById('app').style.display = 'none';
-
-  try {
-    const url = '/api/data' + (force ? '?t=' + Date.now() : '');
-    const res = await fetch(url);
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error((err.error || res.statusText) + '\nTried: ' + url);
-    }
-
-    DATA = await res.json();
-
-    // Apply enterprise meta (MUST be defined before using)
-    applyEntMeta(DATA.enterpriseMeta || {});
-
-    // Populate month filter
-    const sel = document.getElementById('month-filter');
-    sel.innerHTML = '<option value="all">All Months</option>';
-    (DATA.months || []).forEach(m => {
-      const opt = document.createElement('option');
-      opt.value = m.key; opt.textContent = m.month;
-      sel.appendChild(opt);
+function mkChart(id, cfg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (CHARTS[id]) { CHARTS[id].destroy(); delete CHARTS[id]; }
+  const opts = JSON.parse(JSON.stringify(BASE_CHART_OPTS));
+  // Deep merge custom options
+  if (cfg.options) {
+    Object.keys(cfg.options).forEach(k => {
+      opts[k] = cfg.options[k] && typeof cfg.options[k] === 'object' && !Array.isArray(cfg.options[k])
+        ? Object.assign({}, opts[k] || {}, cfg.options[k])
+        : cfg.options[k];
     });
+  }
+  CHARTS[id] = new Chart(el, { type: cfg.type, data: cfg.data, options: opts });
+}
 
-    // Update footer
-    document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+// ══════════════════════════════════════════════════════════════
+// CHART FILTER HANDLER
+// ══════════════════════════════════════════════════════════════
+function setChartFilter(chart, value, btnEl) {
+  CHART_FILTERS[chart] = value;
+  document.querySelectorAll(`.cf-pill[data-chart="${chart}"]`).forEach(b => b.classList.remove('active'));
+  btnEl.classList.add('active');
+  renderAll();
+}
 
-    document.getElementById('loader').style.display = 'none';
-    document.getElementById('app').style.display = 'flex';
+// ══════════════════════════════════════════════════════════════
+// KPI RENDERING
+// ══════════════════════════════════════════════════════════════
+function renderKpis(targetId, merged, months) {
+  const wrap = document.getElementById(targetId);
+  if (!wrap) return;
 
-    VIEWS[CURRENT_VIEW]?.render();
-  } catch (err) {
-    console.error('[dashboard] loadData error:', err);
-    document.getElementById('loader').style.display = 'none';
-    const box = document.getElementById('error-box');
-    box.style.display = 'block';
-    document.getElementById('error-msg').textContent =
-      err.message + '\n\nCheck Vercel env vars and function logs.';
+  const isEntView = targetId === 'ent-kpis';
+
+  const cards = isEntView ? [
+    { label: 'Total Cost',        value: f.inr0(merged.totalCost),     accent: 'blue',
+      sub: months.length + ' month' + (months.length !== 1 ? 's' : '') },
+    { label: 'Total Units',       value: f.num(merged.totalUnits),     accent: 'green',
+      sub: f.numFull(merged.totalImages) + ' images' },
+    { label: 'Cost / Unit',       value: f.inr(merged.costPerUnit),    accent: 'amber',
+      sub: 'avg across period' },
+    { label: 'Enterprises',       value: (merged.enterprises || []).length, accent: 'cyan',
+      sub: 'with activity' },
+    { label: 'Segments',          value: (merged.segments || []).length, accent: 'purple',
+      sub: 'tracked' },
+  ] : [
+    { label: 'Total Cost',        value: f.inr0(merged.totalCost),     accent: 'blue',
+      sub: months.length + ' month' + (months.length !== 1 ? 's' : '') },
+    { label: 'Cost / Unit',       value: f.inr(merged.costPerUnit),    accent: 'amber',
+      sub: 'avg across period' },
+    { label: 'Total Units',       value: f.num(merged.totalUnits),     accent: 'green',
+      sub: f.numFull(merged.totalImages) + ' images' },
+    { label: 'Total VINs',        value: f.num(merged.totalVINs),      accent: 'cyan',
+      sub: 'unique vehicles' },
+    { label: 'Efficiency',        value: f.eff(merged.efficiency),     accent: 'purple',
+      sub: 'target / actual' },
+    { label: 'Headcount',         value: merged.headcount || 0,        accent: 'red',
+      sub: 'active editors' },
+  ];
+
+  wrap.innerHTML = cards.map(c => `
+    <div class="kpi">
+      <div class="kpi-accent" style="background:var(--${c.accent})"></div>
+      <div class="kpi-label">${c.label}</div>
+      <div class="kpi-value">${c.value}</div>
+      <div class="kpi-sub">${c.sub}</div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+// CHART: Cost Trend
+// ══════════════════════════════════════════════════════════════
+function renderCostTrend() {
+  const months  = filteredMonths();
+  if (!months.length) return;
+  const metric = CHART_FILTERS.cost;
+  const labels = months.map(m => m.month);
+
+  let data, label, color, type;
+  if (metric === 'cost') {
+    data = months.map(m => m.totalCost || 0);
+    label = 'Total Cost (₹)'; color = '#4f78ff'; type = 'bar';
+  } else if (metric === 'units') {
+    data = months.map(m => m.totalUnits || 0);
+    label = 'Units'; color = '#22d4a0'; type = 'bar';
+  } else {
+    data = months.map(m => m.costPerUnit || 0);
+    label = '₹ / Unit'; color = '#f5a42a'; type = 'line';
+  }
+
+  // Always show all 3 series — make selected prominent
+  const datasets = [
+    {
+      label: 'Total Cost',
+      data: months.map(m => m.totalCost || 0),
+      backgroundColor: metric === 'cost' ? 'rgba(79,120,255,.7)' : 'rgba(79,120,255,.1)',
+      borderColor: '#4f78ff',
+      borderWidth: 1.5,
+      borderRadius: 4,
+      yAxisID: 'y',
+      type: 'bar',
+      hidden: metric !== 'cost',
+    },
+    {
+      label: 'Units',
+      data: months.map(m => m.totalUnits || 0),
+      backgroundColor: 'rgba(34,212,160,.7)',
+      borderColor: '#22d4a0',
+      borderWidth: 1.5,
+      borderRadius: 4,
+      yAxisID: 'y',
+      type: 'bar',
+      hidden: metric !== 'units',
+    },
+    {
+      label: '₹ / Unit',
+      data: months.map(m => m.costPerUnit || 0),
+      borderColor: '#f5a42a',
+      backgroundColor: 'rgba(245,164,42,.15)',
+      borderWidth: 2,
+      tension: 0.4,
+      pointBackgroundColor: '#f5a42a',
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      fill: metric === 'cpu',
+      yAxisID: 'y',
+      type: 'line',
+      hidden: metric !== 'cpu',
+    },
+  ];
+
+  mkChart('ch-cost-trend', { type: 'bar', data: { labels, datasets } });
+}
+
+// ══════════════════════════════════════════════════════════════
+// CHART: Top 15 Editors
+// ══════════════════════════════════════════════════════════════
+function renderEditorChart() {
+  const merged = mergeMonths(filteredMonths());
+  if (!merged) return;
+  const metric = CHART_FILTERS.ed;
+  const sub = document.getElementById('ed-chart-sub');
+
+  let eds = [...(merged.editors || [])].filter(e => e.units > 0);
+  if (metric === 'costPerUnit') {
+    eds.sort((a, b) => b.costPerUnit - a.costPerUnit);
+    sub.textContent = 'Sorted by ₹/Unit · highest first';
+  } else if (metric === 'units') {
+    eds.sort((a, b) => b.units - a.units);
+    sub.textContent = 'Sorted by volume · highest first';
+  } else {
+    eds.sort((a, b) => b.efficiency - a.efficiency);
+    sub.textContent = 'Sorted by efficiency · highest first';
+  }
+  eds = eds.slice(0, 15);
+
+  const labels = eds.map(e => f.email(e.editor));
+  const data   = eds.map(e => e[metric] || 0);
+  const colors = metric === 'costPerUnit' ? '#f5a42a' :
+                 metric === 'units' ? '#4f78ff' : '#22d4a0';
+
+  mkChart('ch-ed-top', {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: metric === 'costPerUnit' ? '₹ / Unit' : metric === 'units' ? 'Units' : 'Efficiency',
+        data,
+        backgroundColor: colors + 'b3',
+        borderColor: colors,
+        borderWidth: 1.5,
+        borderRadius: 4,
+      }],
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+    },
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// CHART: Product Breakdown
+// ══════════════════════════════════════════════════════════════
+function renderProductTrend() {
+  const months = filteredMonths();
+  if (!months.length) return;
+  const metric = CHART_FILTERS.prod;
+
+  // Collect all products across months (filtered)
+  const allProducts = [...new Set(months.flatMap(m =>
+    (m.products || []).filter(p => passesFilter('product', p.product)).map(p => p.product)
+  ))].slice(0, 6);
+
+  const labels = months.map(m => m.month);
+  const datasets = allProducts.map((prod, i) => {
+    const data = months.map(m => {
+      const p = (m.products || []).find(x => x.product === prod);
+      if (!p) return 0;
+      if (metric === 'units') return p.units || 0;
+      if (metric === 'cost')  return p.totalCost || 0;
+      return p.costPerUnit || 0;
+    });
+    return {
+      label: prod,
+      data,
+      borderColor: COLORS[i],
+      backgroundColor: COLORS[i] + '22',
+      borderWidth: 2,
+      tension: 0.35,
+      pointRadius: 3,
+      pointHoverRadius: 5,
+      fill: false,
+    };
+  });
+
+  mkChart('ch-prod-trend', { type: 'line', data: { labels, datasets } });
+}
+
+// ══════════════════════════════════════════════════════════════
+// CHART: Segment Breakdown
+// ══════════════════════════════════════════════════════════════
+function renderSegmentChart() {
+  const months = filteredMonths();
+  if (!months.length) return;
+  const metric = CHART_FILTERS.seg;
+
+  const allSegs = [...new Set(months.flatMap(m =>
+    (m.segments || []).filter(s => passesFilter('segment', s.seg)).map(s => s.seg || 'Unknown')
+  ))];
+
+  const labels = months.map(m => m.month);
+  const datasets = allSegs.map((seg, i) => {
+    const data = months.map(m => {
+      const s = (m.segments || []).find(x => (x.seg || 'Unknown') === seg);
+      if (!s) return 0;
+      return metric === 'units' ? (s.units || 0) : (s.totalCost || 0);
+    });
+    return {
+      label: segLabel(seg),
+      data,
+      backgroundColor: COLORS[i] + 'b3',
+      borderColor: COLORS[i],
+      borderWidth: 1.5,
+      borderRadius: 4,
+    };
+  });
+
+  mkChart('ch-seg-trend', {
+    type: 'bar',
+    data: { labels, datasets },
+    options: { scales: { x: { stacked: true }, y: { stacked: true } } },
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// TABLES
+// ══════════════════════════════════════════════════════════════
+const _tableSorts = {
+  'tbl-editors':      { col: 'units', dir: -1 },
+  'tbl-enterprises':  { col: 'costPerUnit', dir: -1 },
+  'tbl-segments':     { col: 'totalCost', dir: -1 },
+};
+let _editorRows = [], _entRows = [], _segRows = [];
+
+function renderEditorTable() {
+  const merged = mergeMonths(filteredMonths());
+  if (!merged) return;
+  _editorRows = (merged.editors || []).filter(e => e.units > 0);
+  const search = (document.getElementById('us-search')?.value || '').toLowerCase();
+  let rows = _editorRows;
+  if (search) rows = rows.filter(r => r.editor.toLowerCase().includes(search));
+  drawEditorRows(rows);
+}
+
+function drawEditorRows(rows) {
+  const s = _tableSorts['tbl-editors'];
+  rows = [...rows].sort((a, b) => {
+    const av = a[s.col] || 0, bv = b[s.col] || 0;
+    if (typeof av === 'string') return s.dir * av.localeCompare(bv);
+    return s.dir * (av - bv);
+  });
+
+  const tbody = document.getElementById('tb-editors');
+  tbody.innerHTML = rows.map((e, i) => `
+    <tr>
+      <td class="rank-num">${i + 1}</td>
+      <td>${e.editor}</td>
+      <td class="r">${f.num(e.imgUnits || 0)}</td>
+      <td class="r">${f.num(e.s360Units || 0)}</td>
+      <td class="r">${f.num(e.vidUnits || 0)}</td>
+      <td class="r" style="color:var(--text);font-weight:600">${f.num(e.units)}</td>
+      <td class="r ${effClass(e.efficiency)}">${f.eff(e.efficiency)}</td>
+      <td class="r" style="color:var(--amber)">${f.inr(e.costPerUnit)}</td>
+      <td class="r" style="color:var(--green)">${e.factorSalary ? f.inr0(e.factorSalary) : '—'}</td>
+    </tr>`).join('');
+
+  updateSortArrows('tbl-editors');
+}
+
+function renderEnterpriseTable() {
+  const merged = mergeMonths(filteredMonths());
+  if (!merged) return;
+  _entRows = merged.enterprises || [];
+  const search = (document.getElementById('ent-search')?.value || '').toLowerCase();
+  let rows = _entRows;
+  if (search) rows = rows.filter(r => (r.enterprise || '').toLowerCase().includes(search));
+  drawEnterpriseRows(rows);
+}
+
+function drawEnterpriseRows(rows) {
+  const s = _tableSorts['tbl-enterprises'];
+  rows = [...rows].sort((a, b) => {
+    const av = a[s.col] !== undefined ? a[s.col] : 0;
+    const bv = b[s.col] !== undefined ? b[s.col] : 0;
+    if (typeof av === 'string') return s.dir * av.localeCompare(bv);
+    return s.dir * ((+av || 0) - (+bv || 0));
+  });
+  // Limit to top 50 for performance
+  rows = rows.slice(0, 50);
+
+  const tbody = document.getElementById('tb-enterprises');
+  tbody.innerHTML = rows.map((e, i) => `
+    <tr>
+      <td class="rank-num">${i + 1}</td>
+      <td style="color:var(--text);font-weight:500">${e.enterprise || '—'}</td>
+      <td><span class="seg-badge ${segClass(e.seg)}">${segLabel(e.seg)}</span></td>
+      <td style="color:var(--muted)">${e.dealer || '—'}</td>
+      <td class="r">${f.num(e.vins || 0)}</td>
+      <td class="r">${f.num(e.units || 0)}</td>
+      <td class="r" style="color:var(--blue)">${f.inr0(e.totalCost || 0)}</td>
+      <td class="r" style="color:var(--amber);font-weight:600">${f.inr(e.costPerUnit)}</td>
+    </tr>`).join('');
+
+  updateSortArrows('tbl-enterprises');
+}
+
+function renderSegmentTable() {
+  const merged = mergeMonths(filteredMonths());
+  if (!merged) return;
+  _segRows = merged.segments || [];
+  drawSegmentRows(_segRows);
+}
+
+function drawSegmentRows(rows) {
+  const s = _tableSorts['tbl-segments'];
+  rows = [...rows].sort((a, b) => {
+    const av = a[s.col] !== undefined ? a[s.col] : 0;
+    const bv = b[s.col] !== undefined ? b[s.col] : 0;
+    if (typeof av === 'string') return s.dir * av.localeCompare(bv);
+    return s.dir * ((+av || 0) - (+bv || 0));
+  });
+
+  const tbody = document.getElementById('tb-segments');
+  tbody.innerHTML = rows.map(sg => `
+    <tr>
+      <td><span class="seg-badge ${segClass(sg.seg)}">${segLabel(sg.seg)}</span></td>
+      <td class="r">${f.num(sg.units || 0)}</td>
+      <td class="r" style="color:var(--blue)">${f.inr0(sg.totalCost || 0)}</td>
+      <td class="r" style="color:var(--amber)">${f.inr(sg.costPerUnit || 0)}</td>
+      <td class="r" style="color:var(--green)">${f.pct(sg.pct || 0)}</td>
+    </tr>`).join('');
+
+  updateSortArrows('tbl-segments');
+}
+
+// ══════════════════════════════════════════════════════════════
+// SORTING
+// ══════════════════════════════════════════════════════════════
+function updateSortArrows(tblId) {
+  const s = _tableSorts[tblId];
+  const tbl = document.getElementById(tblId);
+  if (!tbl) return;
+  tbl.querySelectorAll('thead th.sortable').forEach(th => {
+    const arrow = th.querySelector('.sort-arrow');
+    if (!arrow) return;
+    arrow.textContent = th.dataset.col === s.col ? (s.dir === -1 ? ' ▼' : ' ▲') : '';
+  });
+}
+
+function wireSortableHeaders() {
+  document.querySelectorAll('table thead th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const tbl = th.closest('table');
+      const tblId = tbl.id;
+      const col = th.dataset.col;
+      const s = _tableSorts[tblId];
+      if (!s) return;
+      if (s.col === col) s.dir *= -1;
+      else { s.col = col; s.dir = -1; }
+      if (tblId === 'tbl-editors')        renderEditorTable();
+      else if (tblId === 'tbl-enterprises') renderEnterpriseTable();
+      else if (tblId === 'tbl-segments')    renderSegmentTable();
+    });
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDER ALL
+// ══════════════════════════════════════════════════════════════
+function renderAll() {
+  if (!DATA) return;
+  const months = filteredMonths();
+  const merged = mergeMonths(months);
+  if (!merged) return;
+
+  if (CURRENT_VIEW === 'dashboard') {
+    renderKpis('dash-kpis', merged, months);
+    renderCostTrend();
+    renderEditorChart();
+    renderProductTrend();
+    renderEditorTable();
+  } else {
+    renderKpis('ent-kpis', merged, months);
+    renderSegmentChart();
+    renderSegmentTable();
+    renderEnterpriseTable();
   }
 }
 
-// ── Boot ──
-loadData(false);
+// ══════════════════════════════════════════════════════════════
+// VIEW SWITCHING
+// ══════════════════════════════════════════════════════════════
+function setView(view) {
+  CURRENT_VIEW = view;
+  document.querySelectorAll('.dash-view').forEach(v => v.classList.remove('active'));
+  document.getElementById(view + '-view').classList.add('active');
+  document.getElementById('vb-dashboard').classList.toggle('active', view === 'dashboard');
+  document.getElementById('vb-enterprise').classList.toggle('active', view === 'enterprise');
+  renderAll();
+}
+
+// ══════════════════════════════════════════════════════════════
+// ENT META
+// ══════════════════════════════════════════════════════════════
+function applyEntMeta(rawMeta) {
+  ENT_META = {};
+  if (!rawMeta) return;
+  Object.entries(rawMeta).forEach(([k, v]) => {
+    if (!v) return;
+    const normKey = (v.originalName || k).toLowerCase().trim();
+    ENT_META[normKey] = v;
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// DATA FETCH
+// ══════════════════════════════════════════════════════════════
+const API_URL = '/api/data';
+
+async function fetchData() {
+  overlayShow('Connecting to Google Sheets…');
+  try {
+    const res = await fetch(API_URL);
+    if (!res.ok) {
+      const t = await res.text();
+      throw new Error('HTTP ' + res.status + ' — ' + t.slice(0, 300));
+    }
+    const json = await res.json();
+    if (json.error) throw new Error(json.error);
+
+    DATA = json;
+    applyEntMeta(json.enterpriseMeta || {});
+
+    overlayHide();
+    document.getElementById('status-text').textContent = DATA.months.length + ' months';
+
+    if (DATA.months.length > 0) {
+      const first = DATA.months[0].month.replace('-26', '');
+      const last  = DATA.months[DATA.months.length - 1].month.replace('-26', '');
+      const yr    = '20' + DATA.months[0].month.split('-')[1];
+      document.getElementById('tb-range').textContent = first + ' – ' + last + ' ' + yr;
+    }
+    document.getElementById('fetched-at').textContent = 'as of ' +
+      new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+    initFilters();
+    wireSortableHeaders();
+    wireSearchInputs();
+    renderAll();
+  } catch (err) {
+    console.error('[dash]', err);
+    overlayError(err.message);
+  }
+}
+
+async function refreshData() {
+  const btn = document.getElementById('refresh-btn');
+  btn.classList.add('spinning');
+  await fetchData();
+  btn.classList.remove('spinning');
+}
+
+function wireSearchInputs() {
+  const usSearch = document.getElementById('us-search');
+  if (usSearch) usSearch.addEventListener('input', renderEditorTable);
+  const entSearch = document.getElementById('ent-search');
+  if (entSearch) entSearch.addEventListener('input', renderEnterpriseTable);
+}
+
+function overlayShow(msg) {
+  const el = document.getElementById('overlay');
+  el.style.display = 'flex';
+  el.innerHTML = '<div class="spinner"></div><div class="overlay-msg">' + msg + '</div>';
+}
+
+function overlayHide() {
+  document.getElementById('overlay').style.display = 'none';
+}
+
+function overlayError(msg) {
+  document.getElementById('overlay').innerHTML =
+    '<div class="err-box">' +
+      '<h3>Failed to load data</h3>' +
+      '<p>' + msg + '</p>' +
+      '<pre>Tried: ' + API_URL + '\n\n' + msg + '</pre>' +
+      '<p style="margin-top:10px;font-size:10px;line-height:1.6">' +
+        '1. Check GOOGLE_SERVICE_ACCOUNT_EMAIL + GOOGLE_PRIVATE_KEY in Vercel<br>' +
+        '2. Share sheets with service account (Viewer)<br>' +
+        '3. Redeploy after env var changes' +
+      '</p>' +
+      '<button onclick="location.reload()">Retry</button>' +
+    '</div>';
+}
+
+// ── BOOT ──
+fetchData();
 </script>
 </body>
 </html>
