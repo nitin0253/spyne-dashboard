@@ -100,6 +100,21 @@ function parseEnterpriseMeta(csvText) {
   });
   return map;
 }
+// Build normalized lookup index from enterpriseMeta map
+function buildMetaIndex(metaMap) {
+  const index = {};
+  Object.entries(metaMap).forEach(([name, val]) => {
+    index[name.toLowerCase().trim()] = { originalKey: name, ...val };
+  });
+  return index;
+}
+
+// Lookup enterprise meta by output enterprise name (normalized match)
+function lookupMeta(metaIndex, outputName) {
+  if (!outputName) return null;
+  return metaIndex[outputName.toLowerCase().trim()] || null;
+}
+
 // ╔══════════════════════════════════════════════════════════════════╗
 // ║  ADD A NEW MONTH — edit ONLY this array, nothing else needed    ║
 // ║                                                                  ║
