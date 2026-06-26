@@ -14,7 +14,7 @@ function fetchLiveAccountsCSV() {
       if (redirects > 3) return resolve({});
       const req = https.get(url, {
         timeout: 20000,
-        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'text/csv,*/*'
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'text/csv,*/*' }
       }, (res) => {
         if (res.statusCode === 301 || res.statusCode === 302) {
           return doGet(res.headers.location, redirects + 1);
