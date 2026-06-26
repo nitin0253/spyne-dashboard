@@ -535,6 +535,46 @@ function entMeta(name){
   const origKey=ENT_META_NORM[norm];
   return origKey?ENT_META[origKey]:{};
 }
+
+// Populate ENT_META + ENT_META_NORM from the enterpriseMeta payload returned
+// by /api/data or /api/meta. Also rebuilds the CS POC and OB POC dropdowns
+// and triggers a re-render so any UI that depended on the late-arriving meta
+// (POC table, % Cost/MRR, segment fallbacks, etc.) refreshes.
+function applyEntMeta(rawMeta){
+  ENT_META={};
+  ENT_META_NORM={};
+  if(!rawMeta||typeof rawMeta!=='object')return;
+
+  // rawMeta is keyed by enterprise name (originalName). Each value has:
+  //   { segment, csPoc, obPoc, poc, liveArr, contractedArr, rooftopCount, activeRooftops }
+  Object.entries(rawMeta).forEach(function(kv){
+    var name=kv[0],meta=kv[1];
+    if(!name||!meta)return;
+    ENT_META[name]=meta;
+    ENT_META_NORM[name.toLowerCase().trim()]=name;
+  });
+
+  // Build CS POC + OB POC filter dropdowns (these were declared in HTML but
+  // never populated — applyEntMeta is what fills them once meta is available).
+  var csPocs=new Set(),obPocs=new Set();
+  Object.values(ENT_META).forEach(function(m){
+    if(m.csPoc)csPocs.add(m.csPoc);
+    if(m.obPoc)obPocs.add(m.obPoc);
+  });
+  if(typeof buildDropdown==='function'){
+    if(FILTERS&&FILTERS.cspoc)buildDropdown('cspoc',[].concat([...csPocs]).sort());
+    if(FILTERS&&FILTERS.obpoc)buildDropdown('obpoc',[].concat([...obPocs]).sort());
+  }
+
+  console.log('[applyEntMeta] populated',Object.keys(ENT_META).length,'enterprises,',
+              csPocs.size,'CS POCs,',obPocs.size,'OB POCs');
+
+  // Re-render so any view using ENT_META (POC chart, enterprise table, etc.)
+  // picks up the new data. Guard against being called before DATA is loaded.
+  if(DATA&&typeof renderAll==='function'){
+    try{renderAll();}catch(e){console.warn('[applyEntMeta] renderAll failed:',e.message);}
+  }
+}
 let CURRENT_VIEW='dashboard';
 
 function setDashboardView(view){
