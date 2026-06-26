@@ -1,34 +1,34 @@
 // api/meta.js — Vercel Serverless Function (CommonJS)
-// Proxies the Metabase enterprise CSV to avoid CORS issues in the browser
+// Fetches and caches the Live Accounts Google Sheet CSV
+// Replaces Metabase entirely.
 
 const https = require('https');
 
-const METABASE_CSV_URL = 'https://metabase.spyne.ai/public/question/84265073-fe7b-4ee1-81d7-5eb37a7e9b2f.csv';
+const LIVE_ACCOUNTS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTS0ExA81qlU0Z2lRs9OobIbmQmLiCX4OGlTJ7Hi-Y4I4X1ovP4q_SG6cSyVtWJG_LYqwOJtNqGEdnC/pub?output=csv';
+const CACHE_TTL_MS = 30 * 60 * 1000; // 30 min in-memory cache
+
+let _cache = null;
+let _cacheTime = 0;
+let _inflight = null;
 
 function fetchCSV() {
   return new Promise((resolve, reject) => {
-    const req = https.get(METABASE_CSV_URL, {
-      timeout: 15000,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; SpyneDashboard/1.0)',
-        'Accept': 'text/csv,text/plain,*/*',
-      }
-    }, (res) => {
-      if (res.statusCode === 301 || res.statusCode === 302) {
-        // Follow redirect
-        https.get(res.headers.location, { timeout: 15000 }, (res2) => {
-          let data = '';
-          res2.on('data', chunk => { data += chunk; });
-          res2.on('end', () => resolve(data));
-        }).on('error', reject);
-        return;
-      }
-      let data = '';
-      res.on('data', chunk => { data += chunk; });
-      res.on('end', () => resolve(data));
-    });
-    req.on('error', reject);
-    req.on('timeout', () => { req.destroy(); reject(new Error('timeout')); });
+    function doGet(url, redirects) {
+      if (redirects > 3) return reject(new Error('too many redirects'));
+      const req = https.get(url, {
+        timeout: 20000,
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'text/csv,*/*' }
+      }, (res) => {
+        if (res.statusCode === 301 || res.statusCode === 302) return doGet(res.headers.location, redirects + 1);
+        if (res.statusCode !== 200) return reject(new Error('HTTP ' + res.statusCode));
+        let data = '';
+        res.on('data', chunk => { data += chunk; });
+        res.on('end', () => resolve(data));
+      });
+      req.on('error', reject);
+      req.on('timeout', () => { req.destroy(); reject(new Error('timeout')); });
+    }
+    doGet(LIVE_ACCOUNTS_CSV, 0);
   });
 }
 
@@ -36,11 +36,11 @@ function parseLine(line) {
   const cols = []; let cur = '', inQ = false;
   for (let i = 0; i < line.length; i++) {
     const c = line[i];
-    if (c === '"' && !inQ)                    { inQ = true; }
+    if (c === '"' && !inQ)                         { inQ = true; }
     else if (c === '"' && inQ && line[i+1] === '"') { cur += '"'; i++; }
-    else if (c === '"' && inQ)                { inQ = false; }
-    else if (c === ',' && !inQ)               { cols.push(cur); cur = ''; }
-    else                                       { cur += c; }
+    else if (c === '"' && inQ)                     { inQ = false; }
+    else if (c === ',' && !inQ)                    { cols.push(cur); cur = ''; }
+    else                                            { cur += c; }
   }
   cols.push(cur);
   return cols;
@@ -52,77 +52,105 @@ function parseCSV(text) {
   if (lines.length < 2) return map;
 
   const headers = parseLine(lines[0]);
-  const idx = {
-    name:          headers.findIndex(h => /enterprise name/i.test(h)),
-    seg:           headers.findIndex(h => /customer segment/i.test(h)),
-    csPoc:         headers.findIndex(h => /cs poc/i.test(h)),
-    obPoc:         headers.findIndex(h => /ob poc/i.test(h)),
-    liveArr:       headers.findIndex(h => /live arr/i.test(h)),
-    contractedArr: headers.findIndex(h => /contracted arr/i.test(h)),
-    stage:         headers.findIndex(h => /^stage$/i.test(h)),
-  };
+  console.log('[meta] headers:', headers.slice(0, 10));
 
-  console.log('[meta] CSV headers:', headers.slice(0, 12));
-  console.log('[meta] Column indices:', idx);
+  const idx = {
+    id:      headers.findIndex(h => /enterprise id/i.test(h)),
+    name:    headers.findIndex(h => /enterprise name/i.test(h)),
+    stage:   headers.findIndex(h => /^stage$/i.test(h.trim())),
+    liveArr: headers.findIndex(h => /live arr/i.test(h)),
+    csPoc:   headers.findIndex(h => /csm name_new/i.test(h) || /cs name/i.test(h)),
+    seg:     headers.findIndex(h => /customer segment/i.test(h)),
+    rag:     headers.findIndex(h => /overall rag/i.test(h)),
+  };
+  console.log('[meta] idx:', idx);
 
   lines.slice(1).forEach(line => {
     if (!line.trim()) return;
-    const cols = parseLine(line);
-    const name = (cols[idx.name] || '').trim();
-    if (!name) return;
-    const seg          = (cols[idx.seg]           || '').trim();
-    const csPoc        = (cols[idx.csPoc]         || '').trim();
-    const obPoc        = (cols[idx.obPoc]         || '').trim();
-    const liveArr      = (cols[idx.liveArr]       || '').trim();
-    const stage        = (cols[idx.stage]         || '').trim();
-    const contractedRaw= (cols[idx.contractedArr] || '').trim();
-    const contractedVal= parseFloat(contractedRaw.replace(/[^0-9.]/g, '')) || 0;
-    const isActive     = /live|onboarding/i.test(stage);
+    const cols    = parseLine(line);
+    const rawName = (cols[idx.name] || '').trim();
+    if (!rawName) return;
 
-    if (!map[name]) {
-      map[name] = {
-        segment: seg, csPoc, obPoc, liveArr,
-        contractedArr:  isActive ? contractedVal : 0,
+    const stage       = (cols[idx.stage]   || '').trim();
+    const liveArrRaw  = (cols[idx.liveArr] || '').trim();
+    const liveArrVal  = parseFloat(liveArrRaw.replace(/[^0-9.]/g, '')) || 0;
+    const csPoc       = (cols[idx.csPoc]   || '').trim();
+    const seg         = (cols[idx.seg]     || '').trim();
+    const rag         = (cols[idx.rag]     || '').trim();
+    const entId       = (cols[idx.id]      || '').trim();
+
+    if (!map[rawName]) {
+      map[rawName] = {
+        originalName:   rawName,
+        enterpriseId:   entId,
+        segment:        seg,
+        csPoc:          csPoc,
+        obPoc:          '',
+        stage:          stage,
+        rag:            rag,
+        liveArr:        String(liveArrVal),
+        contractedArr:  liveArrVal,   // Live ARR = yearly ARR for this account
         rooftopCount:   1,
-        activeRooftops: isActive ? 1 : 0,
+        activeRooftops: /live|onboarding/i.test(stage) ? 1 : 0,
       };
     } else {
-      if (!map[name].segment && seg)    map[name].segment = seg;
-      if (!map[name].csPoc   && csPoc)  map[name].csPoc   = csPoc;
-      if (!map[name].obPoc   && obPoc)  map[name].obPoc   = obPoc;
-      if (!map[name].liveArr && liveArr)map[name].liveArr = liveArr;
-      if (isActive) {
-        map[name].contractedArr  = (map[name].contractedArr  || 0) + contractedVal;
-        map[name].activeRooftops = (map[name].activeRooftops || 0) + 1;
-      }
-      map[name].rooftopCount = (map[name].rooftopCount || 0) + 1;
+      if (!map[rawName].segment  && seg)   map[rawName].segment  = seg;
+      if (!map[rawName].csPoc    && csPoc) map[rawName].csPoc    = csPoc;
+      if (!map[rawName].stage    && stage) map[rawName].stage    = stage;
+      if (!map[rawName].rag      && rag)   map[rawName].rag      = rag;
+      if (!map[rawName].enterpriseId && entId) map[rawName].enterpriseId = entId;
+      map[rawName].contractedArr  = (map[rawName].contractedArr  || 0) + liveArrVal;
+      map[rawName].liveArr        = String(map[rawName].contractedArr);
+      map[rawName].rooftopCount   = (map[rawName].rooftopCount   || 0) + 1;
+      if (/live|onboarding/i.test(stage)) map[rawName].activeRooftops = (map[rawName].activeRooftops || 0) + 1;
     }
   });
 
-  // Build unified POC
-  Object.values(map).forEach(e => {
-    e.poc = (e.csPoc && e.csPoc !== '') ? e.csPoc : (e.obPoc || '');
-  });
-
+  Object.values(map).forEach(e => { e.poc = e.csPoc || ''; });
   return map;
+}
+
+async function getWithCache() {
+  const now = Date.now();
+  if (_cache && (now - _cacheTime) < CACHE_TTL_MS) {
+    console.log('[meta] cache hit, age:', Math.round((now - _cacheTime) / 1000) + 's');
+    return _cache;
+  }
+  if (_inflight) {
+    console.log('[meta] waiting for in-flight fetch');
+    return _inflight;
+  }
+  console.log('[meta] fetching Live Accounts sheet…');
+  _inflight = fetchCSV()
+    .then(csvText => {
+      const enterpriseMeta = parseCSV(csvText);
+      const count = Object.keys(enterpriseMeta).length;
+      console.log('[meta] parsed', count, 'enterprises');
+      _cache = { enterpriseMeta, count, fetchedAt: new Date().toISOString() };
+      _cacheTime = Date.now();
+      _inflight = null;
+      return _cache;
+    })
+    .catch(err => {
+      console.error('[meta] fetch failed:', err.message);
+      _inflight = null;
+      if (_cache) { console.log('[meta] returning stale cache'); return _cache; }
+      return { enterpriseMeta: {}, count: 0, fetchedAt: new Date().toISOString(), error: err.message };
+    });
+  return _inflight;
 }
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=300'); // cache 1hr
-
+  res.setHeader('Cache-Control', 's-maxage=1800, stale-while-revalidate=900'); // 30min CDN cache
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET')     return res.status(405).json({ error: 'Method not allowed' });
-
   try {
-    const csvText = await fetchCSV();
-    const enterpriseMeta = parseCSV(csvText);
-    const count = Object.keys(enterpriseMeta).length;
-    console.log('[meta] Parsed', count, 'enterprises');
-    res.status(200).json({ enterpriseMeta, count, fetchedAt: new Date().toISOString() });
+    const result = await getWithCache();
+    res.status(200).json(result);
   } catch (err) {
-    console.error('[meta] error:', err.message);
+    console.error('[meta] handler error:', err.message);
     res.status(500).json({ error: err.message, enterpriseMeta: {} });
   }
 };
