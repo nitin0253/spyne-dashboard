@@ -129,12 +129,13 @@ async function getWithCache() {
     console.log('[meta] waiting for in-flight fetch');
     return _inflight;
   }
-  console.log('[meta] fetching Live Accounts sheet…');
+  console.log('[meta] fetching Live Accounts sheet from:', LIVE_ACCOUNTS_CSV.slice(0,80));
   _inflight = fetchCSV()
     .then(csvText => {
+      console.log('[meta] CSV received, length:', csvText.length, 'first 200:', csvText.slice(0,200));
       const enterpriseMeta = parseCSV(csvText);
       const count = Object.keys(enterpriseMeta).length;
-      console.log('[meta] parsed', count, 'enterprises');
+      console.log('[meta] parsed', count, 'enterprises, sample keys:', Object.keys(enterpriseMeta).slice(0,3));
       _cache = { enterpriseMeta, count, fetchedAt: new Date().toISOString() };
       _cacheTime = Date.now();
       _inflight = null;
@@ -152,10 +153,25 @@ async function getWithCache() {
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Cache-Control', 's-maxage=1800, stale-while-revalidate=900'); // 30min CDN cache
+  res.setHeader('Cache-Control', 's-maxage=1800, stale-while-revalidate=900');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET')     return res.status(405).json({ error: 'Method not allowed' });
+
+  // ?raw=1 returns first 500 chars of CSV for debugging
+  if (req.url && req.url.includes('raw=1')) {
+    try {
+      const csv = await fetchCSV();
+      return res.status(200).json({ length: csv.length, preview: csv.slice(0, 500) });
+    } catch(e) {
+      return res.status(500).json({ error: e.message });
+    }
+  }
+
   try {
+    // Force fresh fetch if cache is empty
+    if (!_cache) {
+      console.log('[meta] cold start, fetching immediately...');
+    }
     const result = await getWithCache();
     res.status(200).json(result);
   } catch (err) {
