@@ -452,12 +452,6 @@ select.sel:focus{border-color:var(--blue)}
     <div class="sec-head">
       <div><div class="sec-title">POC — Contracted ARR vs Delivery Cost</div>
       <div class="sec-sub">CS POC (OB POC where CS unavailable) · MRR × filtered months · Cost in INR · Live &amp; Onboarding · % Cost/MRR</div></div>
-      <div class="cf-row">
-        <span class="cf-label">Metric:</span>
-        <button class="cf-pill active" data-chart="poc" onclick="setPocMetric('arr',this)">ARR (USD)</button>
-        <button class="cf-pill" data-chart="poc" onclick="setPocMetric('cost',this)">Delivery Cost</button>
-        <button class="cf-pill" data-chart="poc" onclick="setPocMetric('both',this)">Both</button>
-      </div>
     </div>
     <div class="ch" style="cursor:pointer"><canvas id="ch-poc-arr" height="110"></canvas></div>
   </div>
@@ -1548,7 +1542,7 @@ document.addEventListener('DOMContentLoaded',bindEditorSearch);
 
 // ── FETCH ─────────────────────────────────────────────────────────────────────
 // ── POC ARR vs DELIVERY COST CHART ───────────────────────────────────────────
-let POC_METRIC = 'arr'; // 'arr' | 'cost' | 'both'
+let POC_METRIC = 'both'; // locked to 'both' — toggle removed from UI
 
 function setPocMetric(metric, btn) {
   POC_METRIC = metric;
