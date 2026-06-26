@@ -117,11 +117,13 @@ function parseLiveAccounts(csvText) {
   });
 
   // Unified POC — only csPoc from this sheet
-  Object.values(map).forEach(e => { e.poc = e.csPoc || ''; });
-
-  // Return as name-keyed map (both normalized and original)
   const result = {};
-  Object.values(map).forEach(e => { result[e.originalName] = e; });
+  Object.values(map).forEach(e => {
+    e.poc = e.csPoc || '';
+    result[e.originalName] = e;
+    const normKey = e.originalName.toLowerCase().trim();
+    if (normKey !== e.originalName) result[normKey] = e;
+  });
   return result;
 }
 
