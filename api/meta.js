@@ -9,6 +9,7 @@ const CACHE_TTL_MS = 30 * 60 * 1000; // 30 min in-memory cache
 
 let _cache = null;
 let _cacheTime = 0;
+let _inflight = null;
 
 function fetchCSV() {
   return new Promise((resolve, reject) => {
