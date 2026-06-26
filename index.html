@@ -330,7 +330,7 @@ select.sel:focus{border-color:var(--blue)}
       <svg class="ms-caret" width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
     </div>
     <div class="ms-dropdown" id="fdd-obpoc" style="display:none">
-      <div class="ms-search"><input type="text" placeholder="Search OB POC…" oninput="filterItems('obpoc',this.value)"></div>
+      <div class="ms-search"><input type="text" placeholder="Search OB POC…" disabled style="opacity:.4" oninput="filterItems('obpoc',this.value)"></div>
       <div class="ms-actions">
         <button class="ms-act sel-all" onclick="selectAll('obpoc')">Select All</button>
         <button class="ms-act desel-all" onclick="deselectAll('obpoc')">Deselect All</button>
@@ -450,7 +450,7 @@ select.sel:focus{border-color:var(--blue)}
   <div class="section" style="margin-bottom:12px">
     <div class="sec-head">
       <div><div class="sec-title">POC — Contracted ARR vs Delivery Cost</div>
-      <div class="sec-sub">CS POC (OB POC where CS unavailable) · MRR × filtered months · Cost in INR · Live &amp; Onboarding · % Cost/MRR</div></div>
+      <div class="sec-sub">CS POC (from Live Accounts sheet) · MRR × filtered months · Cost in INR · Live accounts · % Cost/MRR</div></div>
       <div class="cf-row">
         <span class="cf-label">Metric:</span>
         <button class="cf-pill active" data-chart="poc" onclick="setPocMetric('arr',this)">ARR (USD)</button>
@@ -998,7 +998,7 @@ function showEnterpriseDetail(name,e){
   inner.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">'
     +'<div><div style="font-weight:700;font-size:16px;color:var(--text)">'+name+'</div>'
     +'<div style="margin-top:4px;display:flex;gap:8px;align-items:center">'
-    +(seg?'<span class="seg" style="background:'+sc(seg)+'22;color:'+sc(seg)+'">'+seg+'</span>':'')
+    +(seg?'<span class="seg" style="background:'+sc(seg)+'22;color:'+sc(seg)+'">'+seg+'</span>':'')+ragBadgeHtml
     +(arrVal?'<span style="font-size:11px;color:var(--green);font-weight:600">Live ARR: ₹'+arrVal.toLocaleString('en-IN')+'</span>':'')
     +'</div></div><span id="_modal_close_ent"></span></div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">'
@@ -1386,10 +1386,13 @@ function renderEntTable(){
     var rawArr=e.liveArr||meta.liveArr||'';
     var arr=rawArr?'₹'+Number(rawArr.replace(/[^0-9.]/g,'')).toLocaleString('en-IN'):'—';
     var segBadge=seg?'<span class="seg" style="background:'+sc(seg)+'22;color:'+sc(seg)+';font-size:9px">'+seg+'</span>':'—';
+    var rag=meta.rag||'';
+    var ragColor=rag==='Green'?'#22d4a0':rag==='Amber'?'#f5a42a':rag==='Red'?'#f0566a':rag.includes('Churn')?'#a07cff':'#666';
+    var ragBadge=rag?'<span style="font-size:8px;padding:1px 5px;border-radius:3px;background:'+ragColor+'22;color:'+ragColor+';margin-left:4px">'+rag+'</span>':'';
     return'<tr style="cursor:pointer" onclick="_showEnt('+i+')">'+
       '<td class="rank-num">'+(i+1)+'</td>'+
       '<td class="bright" style="max-width:140px;overflow:hidden;text-overflow:ellipsis" title="'+e.name+'">'+e.name+'</td>'+
-      '<td>'+segBadge+'</td>'+
+      '<td>'+segBadge+ragBadge+'</td>'+
       '<td style="font-size:11px;color:var(--sub);max-width:120px;overflow:hidden;text-overflow:ellipsis" title="'+cs+'">'+cs+'</td>'+
       '<td style="font-size:11px;color:var(--sub);max-width:120px;overflow:hidden;text-overflow:ellipsis" title="'+ob+'">'+ob+'</td>'+
       '<td class="r" style="font-size:11px;color:var(--green)">'+arr+'</td>'+
@@ -1877,37 +1880,36 @@ function showPocDetail(pocRow, months) {
 
 async function fetchMetabaseFallback(){
   try{
-    // Skip if already populated from backend response
+    // Skip if already populated (>50 accounts) from backend response
     if(Object.keys(ENT_META).length>50){
-      console.log('[meta] ENT_META already loaded ('+Object.keys(ENT_META).length+'), skipping /api/meta');
+      console.log('[meta] ENT_META already loaded ('+Object.keys(ENT_META).length+'), skipping');
       return;
     }
-    console.log('[meta] fetching /api/meta…');
+    console.log('[meta] fetching /api/meta (Live Accounts sheet)…');
     const res=await fetch('/api/meta');
-    if(!res.ok){console.warn('[meta] HTTP error',res.status,await res.text().catch(()=>''));return;}
+    if(!res.ok){console.warn('[meta] HTTP error',res.status);return;}
     const json=await res.json();
     if(!json.enterpriseMeta||!Object.keys(json.enterpriseMeta).length){
       console.warn('[meta] empty response');return;
     }
     ENT_META=json.enterpriseMeta;
     if(DATA)DATA.enterpriseMeta=json.enterpriseMeta;
-    const csSet=new Set(),obSet=new Set();
+    // Build CS POC dropdown — Live Accounts sheet only has csPoc
+    const csSet=new Set();
     Object.values(json.enterpriseMeta).forEach(function(m){
       if(m.csPoc)csSet.add(m.csPoc);
-      if(m.obPoc)obSet.add(m.obPoc);
     });
     buildDropdown('cspoc',[...csSet].sort());
-    buildDropdown('obpoc',[...obSet].sort());
-    console.log('[meta] loaded',json.count,'enterprises from /api/meta');
+    buildDropdown('obpoc',[]); // no OB POC in this sheet
+    console.log('[meta] loaded',json.count,'enterprises from Live Accounts sheet');
     const months=filteredMonths();
     if(months.length){
       renderTables(months);
-      // Always re-render POC chart — ENT_META is now populated
       renderKPIs(months);
-      if(CURRENT_VIEW==='enterprise') renderPocChart(months);
+      if(CURRENT_VIEW==='enterprise')renderPocChart(months);
     }
   }catch(e){
-    console.warn('[meta] /api/meta failed:',e.message);
+    console.warn('[meta] fetch failed:',e.message);
   }
 }
 
@@ -1942,8 +1944,7 @@ async function fetchData(){
       document.getElementById('tb-range').textContent=first+' – '+last+' '+yr;
     }
     initFilters();renderAll();
-    // Always fetch fresh Metabase data from /api/meta proxy
-    // (backend may have timed out on the 4s deadline — /api/meta has 30s)
+    // Always fetch Live Accounts sheet data from /api/meta
     fetchMetabaseFallback();
   }catch(err){
     console.error('[dash]',err);
