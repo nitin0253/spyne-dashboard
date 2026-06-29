@@ -156,7 +156,7 @@ const isImage = p => /image/i.test(p);
 const is360   = p => /360|spin/i.test(p);
 const isVideo = p => /video/i.test(p);
 const billingUnits = row => isImage(row.product) ? row.images : row.skus;
-const isVinProduct = p => isImage(p);
+const isVinProduct = () => true;  // All SKUs represent unique vehicles
 
 // ── Google auth ───────────────────────────────────────────────────────────────
 function getSheetsClient() {
@@ -281,7 +281,7 @@ function groupSum(rows, keyFn) {
     acc[k].images     += r.images;
     acc[k].skus       += r.skus;
     acc[k].units      += billingUnits(r);
-    acc[k].vins       += isVinProduct(r.product) ? r.skus : 0;
+    acc[k].vins       += r.skus;   // Every SKU represents one vehicle (VIN) across all product types
     acc[k].actualMins += r.actualMins;
     acc[k].sumTarget  += r.sumTarget;
     acc[k].rows++;
@@ -493,6 +493,7 @@ function computeMonth(config, outputRows, factorRows, enterpriseRows, removedRow
       csPoc:   meta?.csPoc   || '',
       obPoc:   meta?.obPoc   || '',
       liveArr: meta?.liveArr || '',
+      contractedArr: meta?.contractedArr || 0,
     };
   }).sort((a, b) => b.units - a.units);
 
