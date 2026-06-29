@@ -477,15 +477,15 @@ select.sel:focus{border-color:var(--blue)}
 
   <div class="section" style="margin-bottom:12px">
     <div class="sec-head">
-      <div><div class="sec-title">Segment Summary</div><div class="sec-sub">Filtered months · VINs · Units · ARR · ₹/Unit · Cost %</div></div>
+      <div><div class="sec-title">Segment Summary</div><div class="sec-sub" id="seg-summary-sub">Filtered months · VINs · Units · ARR · ₹/Unit · Cost %</div></div>
     </div>
     <div class="tbl-wrap"><table>
-      <thead><tr>
+      <thead id="seg-summary-thead"><tr>
         <th>Segment</th>
         <th class="r" onclick="cycleSortSeg('vins')" style="cursor:pointer">VINs<span id="ss-vins" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
         <th class="r" onclick="cycleSortSeg('units')" style="cursor:pointer">Units<span id="ss-units" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-        <th class="r" onclick="cycleSortSeg('liveArrUSD')" style="cursor:pointer">Live ARR (USD)<span id="ss-liveArrUSD" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-        <th class="r" onclick="cycleSortSeg('contractedArrMonthly')" style="cursor:pointer">Contracted / mo (USD)<span id="ss-contractedArrMonthly" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortSeg('liveArrUSD')" style="cursor:pointer">Live MRR (USD)<span id="ss-liveArrUSD" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortSeg('contractedArrMonthly')" style="cursor:pointer" id="seg-contracted-hdr">Contracted MRR (USD)<span id="ss-contractedArrMonthly" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
         <th class="r" onclick="cycleSortSeg('arrShare')" style="cursor:pointer">ARR Share %<span id="ss-arrShare" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
         <th class="r" onclick="cycleSortSeg('costPerUnit')" style="cursor:pointer">₹/Unit<span id="ss-costPerUnit" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
         <th class="r" onclick="cycleSortSeg('costShare')" style="cursor:pointer">Cost %<span id="ss-costShare" style="font-size:9px;color:var(--blue);margin-left:2px"> ▼</span></th>
@@ -981,9 +981,17 @@ window.cycleSortSeg=mkSorter('ss',['vins','units','liveArrUSD','contractedArrMon
 function renderSegTable(){
   const rows=applySortArr(_segData,_segSort.col,_segSort.dir);
   const el=document.getElementById('sg-summary-tbl');if(!el)return;
+  const numMonths=(rows[0]&&rows[0].numMonths)||1;
+  // Update header labels with numMonths context
+  var liveHdr=document.querySelector('th[onclick*="liveArrUSD"]');
+  if(liveHdr)liveHdr.childNodes[0].textContent=numMonths===1?'Live MRR (USD)':'Live MRR \u00d7'+numMonths+' (USD)';
+  var ctrHdr=document.getElementById('seg-contracted-hdr');
+  if(ctrHdr)ctrHdr.childNodes[0].textContent=numMonths===1?'Contracted MRR (USD)':'Contracted MRR \u00d7'+numMonths+' (USD)';
+  var sub=document.getElementById('seg-summary-sub');
+  if(sub)sub.textContent=(numMonths===1?'1 month':numMonths+' months')+' \u00b7 VINs \u00b7 Units \u00b7 MRR (scaled by months) \u00b7 \u20b9/Unit \u00b7 Cost %';
   function fmtUSD(v){v=+v||0;return v>=1e6?'$'+(v/1e6).toFixed(2)+'M':v>=1e3?'$'+(v/1e3).toFixed(1)+'K':v>0?'$'+Math.round(v):'—';}
-  el.innerHTML=rows.map(function(s){
-    return'<tr>'+
+  el.innerHTML=rows.map(function(s,i){
+    return'<tr style="cursor:pointer" onclick="showSegmentDetail('+i+')" title="Click for account breakdown">'+
       '<td class="bright"><span class="seg" style="background:'+sc(s.name)+'22;color:'+sc(s.name)+'">'+s.name+'</span></td>'+
       '<td class="r" style="color:var(--purple)">'+f.num(s.vins)+'</td>'+
       '<td class="r">'+f.num(s.units)+'</td>'+
@@ -994,6 +1002,7 @@ function renderSegTable(){
       '<td class="r" style="font-weight:600">'+f.pct(s.costShare)+'</td>'+
       '</tr>';
   }).join('');
+  window._segList=rows;
 }
 let _prodData=[],_prodSort={col:'units',dir:-1};
 window.cycleSortProd=mkSorter('sp',['units','efficiency','costPerUnit','costSharePct'],function(col,dir){_prodSort={col,dir};renderProdTable();});
@@ -1035,6 +1044,149 @@ function renderAll(){
 
 window._entList=window._entList||[];
 function _showEnt(i){var item=window._entList[i];if(item)showEnterpriseDetail(item.name,item);}
+function showSegmentDetail(idx){
+  var seg=window._segList&&window._segList[idx];
+  if(!seg)return;
+  var months=filteredMonths();
+  var numMonths=months.length||1;
+  var segName=seg.name;
+
+  // Collect all enterprises in this segment active in the filtered months
+  var entMap={};
+  months.forEach(function(m){
+    (m.enterpriseBreakdown||[]).forEach(function(e){
+      if(!e.units)return;
+      if((e.segment||'Unknown')!==segName)return;
+      var n=e.name;
+      if(!entMap[n])entMap[n]={name:n,vins:0,units:0,actualMins:0,sumTarget:0,totalCost:0,costPerUnit_sum:0};
+      entMap[n].vins+=e.vins||0;
+      entMap[n].units+=e.units||0;
+      entMap[n].actualMins+=e.actualMins||0;
+      entMap[n].sumTarget+=e.sumTarget||0;
+      entMap[n].totalCost+=Math.round((e.costPerUnit||0)*(e.units||0));
+      entMap[n].costPerUnit_sum+=(e.costPerUnit||0)*(e.units||0);
+    });
+  });
+
+  // Enrich with ENT_META ARR
+  var accounts=Object.values(entMap).map(function(e){
+    var meta=entMeta(e.name);
+    var annualContracted=meta.contractedArr||0;
+    var liveAnnual=parseFloat(String(meta.liveArr||'0').replace(/[^0-9.]/g,''))||0;
+    return{
+      name:       e.name,
+      segment:    meta.segment||segName,
+      csPoc:      meta.csPoc||e.csPoc||'—',
+      vins:       e.vins,
+      units:      e.units,
+      efficiency: e.actualMins>0?+((e.sumTarget/e.actualMins)*100).toFixed(2):0,
+      costPerUnit:e.units>0?+(e.costPerUnit_sum/e.units).toFixed(2):0,
+      totalCost:  e.totalCost,
+      // MRR × numMonths
+      liveMRR:    Math.round((liveAnnual/12)*numMonths),
+      contractedMRR: Math.round((annualContracted/12)*numMonths),
+    };
+  }).sort(function(a,b){return b.totalCost-a.totalCost;});
+
+  // Summary totals
+  var totalVins=accounts.reduce(function(s,e){return s+e.vins;},0);
+  var totalUnits=accounts.reduce(function(s,e){return s+e.units;},0);
+  var totalCost=accounts.reduce(function(s,e){return s+e.totalCost;},0);
+  var totalLive=accounts.reduce(function(s,e){return s+e.liveMRR;},0);
+  var totalContracted=accounts.reduce(function(s,e){return s+e.contractedMRR;},0);
+
+  function fmtUSD(v){v=+v||0;return v>=1e6?'$'+(v/1e6).toFixed(2)+'M':v>=1e3?'$'+(v/1e3).toFixed(1)+'K':v>0?'$'+Math.round(v):'—';}
+  function fmtInr(v){v=+v||0;if(v>=1e7)return'₹'+(v/1e7).toFixed(2)+'Cr';if(v>=1e5)return'₹'+(v/1e5).toFixed(1)+'L';if(v>=1e3)return'₹'+(v/1e3).toFixed(0)+'K';return'₹'+v;}
+
+  // Modal sort state
+  var msort={col:'totalCost',dir:-1};
+
+  function sortedRows(){
+    return[...accounts].sort(function(a,b){
+      var av=a[msort.col]!=null?a[msort.col]:0;
+      var bv=b[msort.col]!=null?b[msort.col]:0;
+      return typeof av==='string'?av.localeCompare(bv)*msort.dir:(av-bv)*msort.dir;
+    });
+  }
+
+  function arrowFor(col){return msort.col===col?(msort.dir===-1?' ▼':' ▲'):''; }
+
+  function buildHead(){
+    function th(col,label,cls){
+      return'<th class="r seg-modal-th'+(cls?' '+cls:'')+'" data-col="'+col+'" style="cursor:pointer">'+label+'<span style="font-size:9px;color:var(--blue);margin-left:2px">'+arrowFor(col)+'</span></th>';
+    }
+    return'<thead><tr>'+
+      '<th class="seg-modal-th" data-col="name" style="cursor:pointer">Account<span style="font-size:9px;color:var(--blue);margin-left:2px">'+arrowFor('name')+'</span></th>'+
+      '<th class="seg-modal-th" data-col="csPoc" style="cursor:pointer">CS POC<span style="font-size:9px;color:var(--blue);margin-left:2px">'+arrowFor('csPoc')+'</span></th>'+
+      th('vins','VINs')+th('units','Units')+
+      th('liveMRR','Live MRR')+
+      th('contractedMRR','Contracted MRR')+
+      th('totalCost','Delivery Cost')+
+      th('costPerUnit','₹/Unit')+
+      '</tr></thead>';
+  }
+
+  function buildRows(){
+    return sortedRows().map(function(e,i){
+      return'<tr>'+
+        '<td class="bright" style="max-width:160px;overflow:hidden;text-overflow:ellipsis" title="'+e.name+'">'+e.name+'</td>'+
+        '<td style="font-size:11px;color:var(--sub)">'+e.csPoc+'</td>'+
+        '<td class="r" style="color:var(--purple)">'+f.num(e.vins)+'</td>'+
+        '<td class="r">'+f.num(e.units)+'</td>'+
+        '<td class="r" style="color:#22d4a0">'+fmtUSD(e.liveMRR)+'</td>'+
+        '<td class="r" style="color:#38c4f0">'+fmtUSD(e.contractedMRR)+'</td>'+
+        '<td class="r" style="color:var(--blue)">'+fmtInr(e.totalCost)+'</td>'+
+        '<td class="r" style="color:var(--amber)">'+f.inr(e.costPerUnit)+'</td>'+
+        '</tr>';
+    }).join('');
+  }
+
+  var modal=document.createElement('div');
+  modal.style.cssText='position:fixed;inset:0;background:rgba(10,10,10,.9);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
+
+  var inner=document.createElement('div');
+  inner.style.cssText='background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:960px;max-width:96vw;max-height:88vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.7)';
+
+  var moLabel=numMonths===1?'1 month':numMonths+' months';
+  inner.innerHTML=
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px">'+
+      '<div>'+
+        '<div style="font-weight:700;font-size:16px;color:var(--text)">'+
+          '<span class="seg" style="background:'+sc(segName)+'22;color:'+sc(segName)+';margin-right:8px">'+segName+'</span>Segment — Account Breakdown'+
+        '</div>'+
+        '<div style="font-size:11px;color:var(--muted);margin-top:4px">'+moLabel+' · '+accounts.length+' accounts · click column headers to sort</div>'+
+      '</div>'+
+      '<button id="seg-modal-close" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;line-height:1">✕</button>'+
+    '</div>'+
+    '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px">'+
+      kpi('Accounts',accounts.length,'in this segment',null,'var(--blue)')+
+      kpi('VINs',f.num(totalVins),'unique vehicles',null,'var(--purple)')+
+      kpi('Units',f.num(totalUnits),moLabel,null,'var(--green)')+
+      kpi('Live MRR',fmtUSD(totalLive),'×'+numMonths+' mo (USD)',null,'#22d4a0')+
+      kpi('Delivery Cost',fmtInr(totalCost),moLabel,null,'var(--blue)')+
+    '</div>'+
+    '<div class="tbl-wrap" id="seg-modal-tbl-wrap">'+
+      '<table id="seg-modal-tbl">'+buildHead()+'<tbody id="seg-modal-tbody">'+buildRows()+'</tbody></table>'+
+    '</div>';
+
+  modal.appendChild(inner);
+  inner.querySelector('#seg-modal-close').onclick=function(){modal.remove();};
+  modal.addEventListener('click',function(e){if(e.target===modal)modal.remove();});
+
+  // Sort on header click
+  inner.addEventListener('click',function(e){
+    var th=e.target.closest('.seg-modal-th');
+    if(!th)return;
+    var col=th.dataset.col;
+    if(!col)return;
+    if(msort.col===col)msort.dir*=-1; else{msort.col=col;msort.dir=-1;}
+    inner.querySelector('#seg-modal-tbl thead').outerHTML=buildHead();
+    inner.querySelector('#seg-modal-tbody').innerHTML=buildRows();
+  });
+
+  document.body.appendChild(modal);
+}
+
 function showEnterpriseDetail(name,e){
   const meta=entMeta(name);
   const seg=e.segment||meta.segment||'';
@@ -1510,6 +1662,7 @@ function renderEntTable(){
 
 // Aggregate segment/enterprise data across multiple months
 function aggregateSegments(months){
+  const numMonths=months.length||1;
   const acc={};
   months.forEach(function(m){
     filterBreakdown(m.segmentBreakdown,'segment').forEach(function(sg){
@@ -1524,8 +1677,7 @@ function aggregateSegments(months){
     });
   });
 
-  // Build map of active enterprises → their segment (from filtered months)
-  // Use a deduped set via plain object keyed by enterprise name
+  // Build deduplicated map: enterprise name → segment, from filtered months only
   const activeEntSegs={};
   months.forEach(function(m){
     (m.enterpriseBreakdown||[]).forEach(function(e){
@@ -1534,21 +1686,23 @@ function aggregateSegments(months){
     });
   });
 
-  // Aggregate ARR from ENT_META for active enterprises, bucketed by segment
+  // Sum ARR from ENT_META per segment, then multiply by numMonths
   Object.entries(activeEntSegs).forEach(function(kv){
     var entName=kv[0],seg=kv[1];
     if(!acc[seg])return;
     var meta=entMeta(entName);
     var liveRaw=parseFloat(String(meta.liveArr||'0').replace(/[^0-9.]/g,''))||0;
-    acc[seg].liveArrUSD+= liveRaw;
+    acc[seg].liveArrUSD+=liveRaw;
     acc[seg].contractedArrAnnual+=(meta.contractedArr||0);
   });
 
   const rows=Object.values(acc).map(function(s){
     s.efficiency=s.actualMins>0?+((s.sumTarget/s.actualMins)*100).toFixed(2):0;
     s.costPerUnit=s.units>0?+(s.costPerUnit_sum/s.units).toFixed(2):0;
-    // Contracted ARR monthly = annual / 12
-    s.contractedArrMonthly=Math.round((s.contractedArrAnnual||0)/12);
+    // Scale by numMonths: Live ARR/12 × N, Contracted ARR/12 × N
+    s.liveArrUSD=Math.round((s.liveArrUSD/12)*numMonths);
+    s.contractedArrMonthly=Math.round(((s.contractedArrAnnual||0)/12)*numMonths);
+    s.numMonths=numMonths;
     return s;
   });
   const totalWeightedCost=rows.reduce(function(t,s){return t+(s.costPerUnit||0)*(s.units||0);},0)||1;
