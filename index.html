@@ -496,16 +496,21 @@ select.sel:focus{border-color:var(--blue)}
   <div class="section" style="margin-bottom:12px">
     <div class="sec-head">
       <div class="sec-title">Top Enterprises</div>
-      <div style="font-size:10px;color:var(--muted)">Click any row for details</div>
+      <div style="font-size:10px;color:var(--muted)">Click any row for details · click column headers to sort</div>
     </div>
     <div class="tbl-wrap" style="max-height:460px;overflow-y:auto"><table>
       <thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr>
-        <th>#</th><th>Enterprise</th><th>Segment</th><th>CS POC</th><th>OB POC</th>
-        <th class="r">Live ARR</th>
-        <th class="r" onclick="cycleSortEnt('vins')" style="cursor:pointer">VINs<span id="se-vins" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-        <th class="r" onclick="cycleSortEnt('units')" style="cursor:pointer">Units<span id="se-units" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-        <th class="r" onclick="cycleSortEnt('totalCost')" style="cursor:pointer">Delivery Cost<span id="se-totalCost" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-        <th class="r" onclick="cycleSortEnt('costPerUnit')" style="cursor:pointer">₹/Unit<span id="se-costPerUnit" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th>#</th>
+        <th class="sortable-ent" data-col="enterprise" style="cursor:pointer">Enterprise<span id="se-enterprise" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="sortable-ent" data-col="segment" style="cursor:pointer">Segment<span id="se-segment" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="sortable-ent" data-col="csPoc" style="cursor:pointer">CS POC<span id="se-csPoc" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="sortable-ent" data-col="obPoc" style="cursor:pointer">OB POC<span id="se-obPoc" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r sortable-ent" data-col="liveArrNum" style="cursor:pointer">Live ARR<span id="se-liveArrNum" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r sortable-ent" data-col="contractedArrNum" style="cursor:pointer">Contracted ARR<span id="se-contractedArrNum" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r sortable-ent" data-col="vins" style="cursor:pointer">VINs<span id="se-vins" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r sortable-ent" data-col="units" style="cursor:pointer">Units<span id="se-units" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r sortable-ent" data-col="totalCost" style="cursor:pointer">Delivery Cost<span id="se-totalCost" style="font-size:9px;color:var(--blue);margin-left:2px"> ▼</span></th>
+        <th class="r sortable-ent" data-col="costPerUnit" style="cursor:pointer">₹/Unit<span id="se-costPerUnit" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
       </tr></thead>
       <tbody id="co-ent-tbl"></tbody>
     </table></div>
@@ -1201,27 +1206,30 @@ function setChartFilter(chartKey,value,btn){
   document.querySelectorAll('.cf-pill[data-chart="'+chartKey+'"]').forEach(function(b){b.classList.remove('active','active-green','active-amber','active-purple');});
   if(btn){const cm={all:'active',image:'active',cost:'active',units:'active-green',costPerUnit:'active-amber',efficiency:'active-amber',video:'active-amber','360':'active-green'};btn.classList.add(cm[value]||'active');}
   if(!DATA)return;const months=filteredMonths();if(!months.length)return;
+  const allMonths=DATA?DATA.months:months;
   const chartMap={
-    cost:function(){renderChart1(months);},
-    seg:function(){renderChart2(months);},
-    segp:function(){renderChart2(months);},
+    cost:function(){renderChart1(allMonths);},
+    seg:function(){renderChart2(allMonths);},
+    segp:function(){renderChart2(allMonths);},
     ed:function(){renderChart3(months);},
     edp:function(){renderChart3(months);},
-    prod:function(){renderChart4(months);},
-    prodm:function(){renderChart4(months);},
+    prod:function(){renderChart4(allMonths);},
+    prodm:function(){renderChart4(allMonths);},
   };
   const fn=chartMap[chartKey];if(fn)fn();else renderCharts(months);
 }
 function renderCharts(months){
+  // Cost Trend, Segment Breakdown, Product Breakdown always show ALL months
+  const allMonths = DATA ? DATA.months : months;
   if(CURRENT_VIEW==='enterprise'){
-    renderChart2(months);
+    renderChart2(allMonths);
     renderPocChart(months);
     return;
   }
-  renderChart1(months);
-  renderChart2(months);
+  renderChart1(allMonths);
+  renderChart2(allMonths);
   renderChart3(months);
-  renderChart4(months);
+  renderChart4(allMonths);
 }
 
 function renderChart1(months){
@@ -1400,9 +1408,24 @@ function renderUserSummary(months){
   });o._wired=true;}
 }
 
-window.cycleSortEnt=mkSorter('se',['vins','units','totalCost','costPerUnit'],function(col,dir){_entSort.col=col;_entSort.dir=dir;renderEntTable();});
+window.cycleSortEnt=mkSorter('se',['enterprise','segment','csPoc','obPoc','liveArrNum','contractedArrNum','vins','units','totalCost','costPerUnit'],function(col,dir){_entSort.col=col;_entSort.dir=dir;renderEntTable();});
+// Wire click delegation for all sortable-ent headers
+document.addEventListener('click',function(e){
+  var th=e.target.closest('.sortable-ent');
+  if(!th)return;
+  var col=th.dataset.col;
+  if(!col)return;
+  var s=_entSort;
+  if(s.col===col)s.dir*=-1; else{s.col=col;s.dir=-1;}
+  // Update all arrows
+  document.querySelectorAll('[id^="se-"]').forEach(function(el){
+    var c=el.id.replace('se-','');
+    el.textContent=s.col===c?(s.dir===-1?' ▼':' ▲'):'';
+  });
+  renderEntTable();
+});
 function renderEntTable(){
-  // Apply CS/OB POC filter + segment filter
+  // Apply segment + CS/OB POC filter
   var rows=_entData.filter(function(e){
     var meta=entMeta(e.name);
     var seg=e.segment||meta.segment||'Unknown';
@@ -1418,27 +1441,31 @@ function renderEntTable(){
   window._entList=rows;
   var tbl=document.getElementById('co-ent-tbl');
   if(!tbl)return;
+  function fmtArr(raw){
+    var n=parseFloat(String(raw||'').replace(/[^0-9.]/g,''))||0;
+    if(!n)return'—';
+    return n>=1e6?'$'+(n/1e6).toFixed(2)+'M':n>=1e3?'$'+(n/1e3).toFixed(1)+'K':'$'+n;
+  }
   try{
   tbl.innerHTML=rows.map(function(e,i){
-    // Use embedded Metabase data (from backend mapping) with ENT_META as fallback
     var meta=entMeta(e.name);
     var seg=e.segment||meta.segment||'';
     var cs=e.csPoc||meta.csPoc||'—';
     var ob=e.obPoc||meta.obPoc||'—';
-    var rawArr=String(e.liveArr||meta.liveArr||'');
-    var arr=rawArr?'₹'+Number(rawArr.replace(/[^0-9.]/g,'')).toLocaleString('en-IN'):'—';
-    if(arr==='₹0'||arr==='₹NaN')arr='—';
+    var rawLive=String(e.liveArr||meta.liveArr||'');
+    var rawContracted=String(meta.contractedArr||0);
     var segBadge=seg?'<span class="seg" style="background:'+sc(seg)+'22;color:'+sc(seg)+';font-size:9px">'+seg+'</span>':'—';
     var rag=meta.rag||'';
     var ragColor=rag==='Green'?'#22d4a0':rag==='Amber'?'#f5a42a':rag==='Red'?'#f0566a':rag.includes('Churn')?'#a07cff':'#666';
     var ragBadge=rag?'<span style="font-size:8px;padding:1px 5px;border-radius:3px;background:'+ragColor+'22;color:'+ragColor+';margin-left:4px">'+rag+'</span>':'';
     return'<tr style="cursor:pointer" onclick="_showEnt('+i+')">'+
       '<td class="rank-num">'+(i+1)+'</td>'+
-      '<td class="bright" style="max-width:140px;overflow:hidden;text-overflow:ellipsis" title="'+e.name+'">'+e.name+'</td>'+
+      '<td class="bright" style="max-width:130px;overflow:hidden;text-overflow:ellipsis" title="'+e.name+'">'+e.name+'</td>'+
       '<td>'+segBadge+ragBadge+'</td>'+
-      '<td style="font-size:11px;color:var(--sub);max-width:120px;overflow:hidden;text-overflow:ellipsis" title="'+cs+'">'+cs+'</td>'+
-      '<td style="font-size:11px;color:var(--sub);max-width:120px;overflow:hidden;text-overflow:ellipsis" title="'+ob+'">'+ob+'</td>'+
-      '<td class="r" style="font-size:11px;color:var(--green)">'+arr+'</td>'+
+      '<td style="font-size:11px;color:var(--sub);max-width:100px;overflow:hidden;text-overflow:ellipsis" title="'+cs+'">'+cs+'</td>'+
+      '<td style="font-size:11px;color:var(--sub);max-width:100px;overflow:hidden;text-overflow:ellipsis" title="'+ob+'">'+ob+'</td>'+
+      '<td class="r" style="font-size:11px;color:#22d4a0">'+fmtArr(rawLive)+'</td>'+
+      '<td class="r" style="font-size:11px;color:#38c4f0">'+fmtArr(rawContracted)+'</td>'+
       '<td class="r">'+f.num(e.vins)+'</td>'+
       '<td class="r">'+f.num(e.units)+'</td>'+
       '<td class="r" style="color:var(--blue)">'+f.inr0(e.totalCost||0)+'</td>'+
@@ -1447,7 +1474,7 @@ function renderEntTable(){
   }).join('');
   }catch(err){
     console.error('[renderEntTable] row build error:',err);
-    tbl.innerHTML='<tr><td colspan="10" style="color:var(--red);padding:12px;font-size:11px">Error rendering rows: '+err.message+'</td></tr>';
+    tbl.innerHTML='<tr><td colspan="11" style="color:var(--red);padding:12px;font-size:11px">Error: '+err.message+'</td></tr>';
   }
 }
 
@@ -1483,7 +1510,7 @@ function aggregateEnterprises(months){
     const totalCost=m.summary.totalCost||0;
     (m.enterpriseBreakdown||[]).forEach(function(e){
       const n=e.name;
-      if(!acc[n])acc[n]={name:n,segment:e.segment||'',csPoc:e.csPoc||'',obPoc:e.obPoc||'',liveArr:e.liveArr||'',vins:0,units:0,actualMins:0,sumTarget:0,costPerUnit_sum:0,totalCost:0};
+      if(!acc[n])acc[n]={name:n,segment:e.segment||'',csPoc:e.csPoc||'',obPoc:e.obPoc||'',liveArr:e.liveArr||'',contractedArr:e.contractedArr||0,vins:0,units:0,actualMins:0,sumTarget:0,costPerUnit_sum:0,totalCost:0};
       acc[n].vins+=e.vins||0;
       acc[n].units+=e.units||0;
       acc[n].actualMins+=e.actualMins||0;
@@ -1495,11 +1522,15 @@ function aggregateEnterprises(months){
       if(!acc[n].csPoc&&e.csPoc)acc[n].csPoc=e.csPoc;
       if(!acc[n].obPoc&&e.obPoc)acc[n].obPoc=e.obPoc;
       if(!acc[n].liveArr&&e.liveArr)acc[n].liveArr=e.liveArr;
+      if(!acc[n].contractedArr&&e.contractedArr)acc[n].contractedArr=e.contractedArr;
     });
   });
   return Object.values(acc).map(function(e){
     e.efficiency=e.actualMins>0?+((e.sumTarget/e.actualMins)*100).toFixed(2):0;
     e.costPerUnit=e.units>0?+(e.costPerUnit_sum/e.units).toFixed(2):0;
+    // Numeric sort keys for ARR columns
+    e.liveArrNum=parseFloat(String(e.liveArr||'').replace(/[^0-9.]/g,''))||0;
+    e.contractedArrNum=parseFloat(String(e.contractedArr||'').replace(/[^0-9.]/g,''))||e.contractedArr||0;
     return e;
   }).filter(function(e){return e.units>0;}).sort(function(a,b){return b.costPerUnit-a.costPerUnit;});
   // Note: no .slice here — renderEntTable applies segment filter and then shows top 50
@@ -1848,13 +1879,12 @@ function showPocDetail(pocRow, months) {
   var accounts = pocRow.enterprises.map(function(entName) {
     var meta = entMeta(entName);
     var annualArr = meta.contractedArr || 0;
-    var mrr  = (annualArr / 12) * numMonths;  // MRR × numMonths
+    var mrr  = (annualArr / 12) * numMonths;
     var cost = entCosts[entName] || 0;
     var mrrINR = mrr * 83;
     var pct = (mrrINR && cost) ? +((cost / mrrINR) * 100).toFixed(2) : 0;
     return { name: entName, mrr: mrr, cost: cost, pct: pct, segment: meta.segment || '—', activeRooftops: meta.activeRooftops || 0 };
-  }).filter(function(a) { return a.mrr > 0 || a.cost > 0; })
-    .sort(function(a, b) { return (b.mrr - a.mrr) || (b.cost - a.cost); });
+  }).filter(function(a) { return a.mrr > 0 || a.cost > 0; });
 
   var pocName = pocRow.poc.split('@')[0].replace('.', ' ');
   pocName = pocName.charAt(0).toUpperCase() + pocName.slice(1);
@@ -1866,19 +1896,59 @@ function showPocDetail(pocRow, months) {
   function fmtMrr(v) { return v >= 1e6 ? '$' + (v/1e6).toFixed(2) + 'M' : v >= 1e3 ? '$' + (v/1e3).toFixed(1) + 'K' : '$' + v; }
   function fmtCost(v) { return v >= 1e7 ? '₹' + (v/1e7).toFixed(2) + 'Cr' : v >= 1e5 ? '₹' + (v/1e5).toFixed(2) + 'L' : '₹' + v.toLocaleString('en-IN'); }
 
-  var rows = accounts.map(function(a, i) {
-    var segBadge = a.segment !== '—' ? '<span class="seg" style="background:' + sc(a.segment) + '22;color:' + sc(a.segment) + ';font-size:9px">' + a.segment + '</span>' : '—';
-    var pctBar = a.pct > 0 ? '<div style="display:inline-block;width:' + Math.min(a.pct * 2, 80) + 'px;height:4px;background:' + (a.pct > 10 ? '#f0566a' : a.pct > 5 ? '#f5a42a' : '#22d4a0') + ';border-radius:2px;vertical-align:middle;margin-left:4px"></div>' : '';
-    return '<tr>'
-      + '<td class="rank-num">' + (i+1) + '</td>'
-      + '<td class="bright" style="max-width:200px;overflow:hidden;text-overflow:ellipsis" title="' + a.name + '">' + a.name + '</td>'
-      + '<td>' + segBadge + '</td>'
-      + '<td style="font-size:10px;color:var(--muted);text-align:right">' + (a.activeRooftops || '—') + '</td>'
-      + '<td class="r" style="color:#4f78ff;font-weight:600">' + fmtMrr(a.mrr) + '</td>'
-      + '<td class="r" style="color:#22d4a0">' + fmtCost(a.cost) + '</td>'
-      + '<td class="r" style="color:' + (a.pct > 10 ? '#f0566a' : a.pct > 5 ? '#f5a42a' : '#aaaaaa') + '">' + (a.pct ? a.pct.toFixed(2) + '%' : '—') + pctBar + '</td>'
-      + '</tr>';
-  }).join('');
+  // Sort state for modal
+  var modalSort = { col: 'mrr', dir: -1 };
+
+  function sortedAccounts() {
+    return [...accounts].sort(function(a, b) {
+      var av = a[modalSort.col] != null ? a[modalSort.col] : 0;
+      var bv = b[modalSort.col] != null ? b[modalSort.col] : 0;
+      return typeof av === 'string' ? av.localeCompare(bv) * modalSort.dir : (av - bv) * modalSort.dir;
+    });
+  }
+
+  function buildRows(sorted) {
+    return sorted.map(function(a, i) {
+      var segBadge = a.segment !== '—' ? '<span class="seg" style="background:' + sc(a.segment) + '22;color:' + sc(a.segment) + ';font-size:9px">' + a.segment + '</span>' : '—';
+      var pctBar = a.pct > 0 ? '<div style="display:inline-block;width:' + Math.min(a.pct * 2, 80) + 'px;height:4px;background:' + (a.pct > 10 ? '#f0566a' : a.pct > 5 ? '#f5a42a' : '#22d4a0') + ';border-radius:2px;vertical-align:middle;margin-left:4px"></div>' : '';
+      return '<tr>'
+        + '<td class="rank-num">' + (i+1) + '</td>'
+        + '<td class="bright" style="max-width:200px;overflow:hidden;text-overflow:ellipsis" title="' + a.name + '">' + a.name + '</td>'
+        + '<td>' + segBadge + '</td>'
+        + '<td style="font-size:10px;color:var(--muted);text-align:right">' + (a.activeRooftops || '—') + '</td>'
+        + '<td class="r" style="color:#4f78ff;font-weight:600">' + fmtMrr(a.mrr) + '</td>'
+        + '<td class="r" style="color:#22d4a0">' + fmtCost(a.cost) + '</td>'
+        + '<td class="r" style="color:' + (a.pct > 10 ? '#f0566a' : a.pct > 5 ? '#f5a42a' : '#aaaaaa') + '">' + (a.pct ? a.pct.toFixed(2) + '%' : '—') + pctBar + '</td>'
+        + '</tr>';
+    }).join('');
+  }
+
+  function thSort(col, label, color) {
+    var active = modalSort.col === col;
+    var arrow = active ? (modalSort.dir === -1 ? ' ▼' : ' ▲') : ' ↕';
+    var style = 'cursor:pointer;user-select:none;' + (color ? 'color:' + color + ';' : '');
+    return '<th class="r poc-sort-th" data-col="' + col + '" style="' + style + '">'
+      + label + '<span style="font-size:9px;color:var(--blue);margin-left:2px" id="poc-arrow-' + col + '">' + (active ? (modalSort.dir === -1 ? ' ▼' : ' ▲') : '') + '</span></th>';
+  }
+
+  function buildHeader() {
+    return '<thead><tr>'
+      + '<th>#</th>'
+      + '<th class="poc-sort-th" data-col="name" style="cursor:pointer;user-select:none">Account<span style="font-size:9px;color:var(--blue);margin-left:2px" id="poc-arrow-name"></span></th>'
+      + '<th class="poc-sort-th" data-col="segment" style="cursor:pointer;user-select:none">Segment<span style="font-size:9px;color:var(--blue);margin-left:2px" id="poc-arrow-segment"></span></th>'
+      + thSort('activeRooftops', 'Rooftops', null)
+      + thSort('mrr', 'MRR (' + numMonths + 'mo) USD', '#4f78ff')
+      + thSort('cost', 'Delivery Cost', '#22d4a0')
+      + thSort('pct', '% Cost/MRR', '#f5a42a')
+      + '</tr></thead>';
+  }
+
+  function refreshArrows() {
+    document.querySelectorAll('[id^="poc-arrow-"]').forEach(function(el) {
+      var col = el.id.replace('poc-arrow-', '');
+      el.textContent = modalSort.col === col ? (modalSort.dir === -1 ? ' ▼' : ' ▲') : '';
+    });
+  }
 
   var modal = document.createElement('div');
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(10,10,10,.9);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
@@ -1893,7 +1963,6 @@ function showPocDetail(pocRow, months) {
     +   '</div>'
     +   '<button id="poc-close-btn" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;line-height:1">✕</button>'
     + '</div>'
-    // Summary KPIs
     + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">'
     +   '<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">'
     +     '<div style="font-size:18px;font-weight:700;color:#4f78ff">' + fmtMrr(totalMrr) + '</div>'
@@ -1912,19 +1981,32 @@ function showPocDetail(pocRow, months) {
     +     '<div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:3px">Accounts</div>'
     +   '</div>'
     + '</div>'
-    // Table
-    + '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px">Account Breakdown</div>'
-    + '<div class="tbl-wrap"><table><thead><tr>'
-    +   '<th>#</th><th>Account</th><th>Segment</th>'
-    +   '<th class="r" style="font-size:10px">Rooftops</th>'
-    +   '<th class="r" style="color:#4f78ff">MRR (' + numMonths + 'mo) USD</th>'
-    +   '<th class="r" style="color:#22d4a0">Delivery Cost</th>'
-    +   '<th class="r" style="color:#f5a42a">% Cost/MRR</th>'
-    + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+    + '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px">Account Breakdown <span style="font-weight:400;color:#555;font-size:10px">· click column headers to sort</span></div>'
+    + '<div class="tbl-wrap" id="poc-tbl-wrap"><table id="poc-tbl">'
+    + buildHeader()
+    + '<tbody id="poc-tbody">' + buildRows(sortedAccounts()) + '</tbody>'
+    + '</table></div>';
 
   modal.appendChild(inner);
+
+  // Attach close
   inner.querySelector('#poc-close-btn').onclick = function() { modal.remove(); };
   modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
+
+  // Attach sort listeners
+  inner.addEventListener('click', function(e) {
+    var th = e.target.closest('.poc-sort-th');
+    if (!th) return;
+    var col = th.dataset.col;
+    if (modalSort.col === col) modalSort.dir *= -1;
+    else { modalSort.col = col; modalSort.dir = -1; }
+    var tblHead = inner.querySelector('#poc-tbl thead');
+    tblHead.outerHTML = buildHeader();
+    inner.querySelector('#poc-tbody').innerHTML = buildRows(sortedAccounts());
+    // Re-attach sort listeners (header rebuilt)
+    inner.querySelectorAll('.poc-sort-th').forEach(function(el) { el.style.cursor = 'pointer'; });
+  });
+
   document.body.appendChild(modal);
 }
 
