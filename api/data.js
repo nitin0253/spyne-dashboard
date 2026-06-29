@@ -332,13 +332,21 @@ function computeMonth(config, outputRows, factorRows, enterpriseRows, removedRow
     };
   });
 
-  const enriched = output.map(r => ({
-    ...r,
-    segment:          entMap[r.enterprise]?.segment          || 'Unknown',
-    inventoryVersion: entMap[r.enterprise]?.inventoryVersion || '',
-    // Editor team type from factor_calculation
-    teamType: editorCostMap[(r.qcEditor || '').toLowerCase().trim()]?.teamType || 'Unknown',
-  }));
+  const enriched = output.map(r => {
+    const entInfo  = entMap[r.enterprise];
+    // Prefer enterprise_details sheet segment, fall back to Metabase metaIndex
+    const metaInfo = (!entInfo?.segment || entInfo.segment === 'Unknown')
+      ? lookupMeta(metaIndex, r.enterprise)
+      : null;
+    const segment = entInfo?.segment || metaInfo?.segment || 'Unknown';
+    return {
+      ...r,
+      segment,
+      inventoryVersion: entInfo?.inventoryVersion || '',
+      // Editor team type from factor_calculation
+      teamType: editorCostMap[(r.qcEditor || '').toLowerCase().trim()]?.teamType || 'Unknown',
+    };
+  });
 
   const totalUnits     = enriched.reduce((s, r) => s + billingUnits(r), 0);
   const totalImages    = enriched.reduce((s, r) => s + r.images, 0);
