@@ -1,7 +1,11 @@
 // api/data.js — Vercel Serverless Function (CommonJS)
+// maxDuration bumped to 60s (Pro plan) — set in vercel.json too for safety
 
 const { google } = require('googleapis');
 const https = require('https');
+
+// ── Vercel function config — extend timeout ───────────────────────────────────
+module.exports.config = { maxDuration: 60 };
 
 const METABASE_CSV_URL = 'https://metabase.spyne.ai/public/question/84265073-fe7b-4ee1-81d7-5eb37a7e9b2f.csv';
 
@@ -9,11 +13,11 @@ const METABASE_CSV_URL = 'https://metabase.spyne.ai/public/question/84265073-fe7
 function fetchMetabaseCSV() {
   return new Promise((resolve) => {
     const req = https.get(METABASE_CSV_URL, {
-      timeout: 10000,
+      timeout: 4000,
       headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'text/csv,*/*' }
     }, (res) => {
       if (res.statusCode === 301 || res.statusCode === 302) {
-        https.get(res.headers.location, { timeout: 10000 }, (res2) => {
+        https.get(res.headers.location, { timeout: 4000 }, (res2) => {
           let raw = '';
           res2.on('data', chunk => { raw += chunk; });
           res2.on('end', () => { try { resolve(parseEnterpriseMeta(raw)); } catch(e) { resolve({}); } });
@@ -172,8 +176,15 @@ function getSheetsClient() {
 }
 
 async function fetchRange(client, sheetId, range) {
+  const TIMEOUT_MS = 20000; // 20s per individual range call
+  const timeout = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error(`fetchRange timeout: ${range}`)), TIMEOUT_MS)
+  );
   try {
-    const res = await client.spreadsheets.values.get({ spreadsheetId: sheetId, range });
+    const res = await Promise.race([
+      client.spreadsheets.values.get({ spreadsheetId: sheetId, range }),
+      timeout,
+    ]);
     return res.data.values || [];
   } catch (e) {
     console.error(`fetchRange failed [${sheetId}][${range}]:`, e.message);
@@ -549,18 +560,19 @@ function computeMonth(config, outputRows, factorRows, enterpriseRows, removedRow
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=60');
+  // Cache aggressively: 30 min fresh, serve stale for 2 hrs while revalidating
+  res.setHeader('Cache-Control', 's-maxage=1800, stale-while-revalidate=7200');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET')     return res.status(405).json({ error: 'Method not allowed' });
   try {
     const client = getSheetsClient();
 
-    // Fetch Sheets and Metabase concurrently — both have independent timeouts
-    // Metabase deadline is 25s (within Vercel's 60s function limit)
-    const metaDeadline = new Promise(resolve => setTimeout(() => resolve({}), 25000));
+    // Metabase deadline: tight 5s — if slow, skip and return empty meta
+    // Sheets are the critical path; Metabase enrichment is best-effort
+    const metaDeadline = new Promise(resolve => setTimeout(() => resolve({}), 5000));
 
     const [rawSheetsData, enterpriseMeta] = await Promise.all([
-      // Critical path: all 6 sheet ranges
+      // Critical path: all 6 sheets, 4 ranges each — all concurrent
       Promise.all(
         SHEETS.map(async cfg => {
           const [outputRows, factorRows, entRows, removedRows] = await Promise.all([
@@ -572,7 +584,7 @@ module.exports = async function handler(req, res) {
           return { cfg, outputRows, factorRows, entRows, removedRows };
         })
       ),
-      // Metabase CSV: up to 25s, never blocks the response
+      // Metabase CSV: max 5s, non-blocking
       Promise.race([fetchMetabaseCSV(), metaDeadline]),
     ]);
 
