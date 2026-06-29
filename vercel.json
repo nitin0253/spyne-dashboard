@@ -1,10 +1,7 @@
 {
   "functions": {
-    "api/data.js": {
+    "api/*.js": {
       "maxDuration": 60
-    },
-    "api/meta.js": {
-      "maxDuration": 30
     }
   }
 }
