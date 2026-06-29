@@ -477,16 +477,18 @@ select.sel:focus{border-color:var(--blue)}
 
   <div class="section" style="margin-bottom:12px">
     <div class="sec-head">
-      <div><div class="sec-title">Segment Summary</div><div class="sec-sub">Latest selected month · VINs · Units · Efficiency · ₹/Unit</div></div>
+      <div><div class="sec-title">Segment Summary</div><div class="sec-sub">Filtered months · VINs · Units · ARR · ₹/Unit · Cost %</div></div>
     </div>
     <div class="tbl-wrap"><table>
       <thead><tr>
         <th>Segment</th>
         <th class="r" onclick="cycleSortSeg('vins')" style="cursor:pointer">VINs<span id="ss-vins" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
         <th class="r" onclick="cycleSortSeg('units')" style="cursor:pointer">Units<span id="ss-units" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-        <th class="r" onclick="cycleSortSeg('efficiency')" style="cursor:pointer">Efficiency<span id="ss-efficiency" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortSeg('liveArrUSD')" style="cursor:pointer">Live ARR (USD)<span id="ss-liveArrUSD" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortSeg('contractedArrMonthly')" style="cursor:pointer">Contracted / mo (USD)<span id="ss-contractedArrMonthly" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortSeg('arrShare')" style="cursor:pointer">ARR Share %<span id="ss-arrShare" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
         <th class="r" onclick="cycleSortSeg('costPerUnit')" style="cursor:pointer">₹/Unit<span id="ss-costPerUnit" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-        <th class="r" onclick="cycleSortSeg('costShare')" style="cursor:pointer">Cost Share<span id="ss-costShare" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortSeg('costShare')" style="cursor:pointer">Cost %<span id="ss-costShare" style="font-size:9px;color:var(--blue);margin-left:2px"> ▼</span></th>
       </tr></thead>
       <tbody id="sg-summary-tbl"></tbody>
     </table></div>
@@ -974,12 +976,24 @@ function applySortArr(arr,col,dir){
   if(!col||!arr)return arr;
   return[...arr].sort((a,b)=>{const av=a[col]??0,bv=b[col]??0;return typeof av==='number'?((av-bv)*dir):String(av).localeCompare(String(bv))*dir;});
 }
-let _segData=[],_segSort={col:'units',dir:-1};
-window.cycleSortSeg=mkSorter('ss',['vins','units','efficiency','costPerUnit','costShare'],function(col,dir){_segSort={col,dir};renderSegTable();});
+let _segData=[],_segSort={col:'costShare',dir:-1};
+window.cycleSortSeg=mkSorter('ss',['vins','units','liveArrUSD','contractedArrMonthly','arrShare','costPerUnit','costShare'],function(col,dir){_segSort={col,dir};renderSegTable();});
 function renderSegTable(){
   const rows=applySortArr(_segData,_segSort.col,_segSort.dir);
   const el=document.getElementById('sg-summary-tbl');if(!el)return;
-  el.innerHTML=rows.map(s=>'<tr><td class="bright"><span class="seg" style="background:'+sc(s.name)+'22;color:'+sc(s.name)+'">'+s.name+'</span></td><td class="r" style="color:var(--purple)">'+f.num(s.vins)+'</td><td class="r">'+f.num(s.units)+'</td><td class="r"><span class="'+effCls(s.efficiency)+'">'+f.pct(s.efficiency)+'</span></td><td class="r" style="color:var(--amber)">'+f.inr(s.costPerUnit)+'</td><td class="r">'+f.pct(s.costShare)+'</td></tr>').join('');
+  function fmtUSD(v){v=+v||0;return v>=1e6?'$'+(v/1e6).toFixed(2)+'M':v>=1e3?'$'+(v/1e3).toFixed(1)+'K':v>0?'$'+Math.round(v):'—';}
+  el.innerHTML=rows.map(function(s){
+    return'<tr>'+
+      '<td class="bright"><span class="seg" style="background:'+sc(s.name)+'22;color:'+sc(s.name)+'">'+s.name+'</span></td>'+
+      '<td class="r" style="color:var(--purple)">'+f.num(s.vins)+'</td>'+
+      '<td class="r">'+f.num(s.units)+'</td>'+
+      '<td class="r" style="color:#22d4a0">'+fmtUSD(s.liveArrUSD)+'</td>'+
+      '<td class="r" style="color:#38c4f0">'+fmtUSD(s.contractedArrMonthly)+'</td>'+
+      '<td class="r" style="color:var(--muted)">'+f.pct(s.arrShare)+'</td>'+
+      '<td class="r" style="color:var(--amber)">'+f.inr(s.costPerUnit)+'</td>'+
+      '<td class="r" style="font-weight:600">'+f.pct(s.costShare)+'</td>'+
+      '</tr>';
+  }).join('');
 }
 let _prodData=[],_prodSort={col:'units',dir:-1};
 window.cycleSortProd=mkSorter('sp',['units','efficiency','costPerUnit','costSharePct'],function(col,dir){_prodSort={col,dir};renderProdTable();});
@@ -1500,22 +1514,49 @@ function aggregateSegments(months){
   months.forEach(function(m){
     filterBreakdown(m.segmentBreakdown,'segment').forEach(function(sg){
       const n=sg.name;
-      if(!acc[n])acc[n]={name:n,vins:0,units:0,actualMins:0,sumTarget:0,costPerUnit_sum:0,count:0};
+      if(!acc[n])acc[n]={name:n,vins:0,units:0,actualMins:0,sumTarget:0,costPerUnit_sum:0,count:0,
+        liveArrUSD:0,contractedArrAnnual:0};
       acc[n].vins+=sg.vins||0;
       acc[n].units+=sg.units||0;
       acc[n].actualMins+=sg.actualMins||0;
       acc[n].sumTarget+=sg.sumTarget||0;
-      // weighted costPerUnit
       acc[n].costPerUnit_sum+=(sg.costPerUnit||0)*(sg.units||0);
     });
   });
+
+  // Build map of active enterprises → their segment (from filtered months)
+  // Use a deduped set via plain object keyed by enterprise name
+  const activeEntSegs={};
+  months.forEach(function(m){
+    (m.enterpriseBreakdown||[]).forEach(function(e){
+      if(!e.units)return;
+      if(!activeEntSegs[e.name])activeEntSegs[e.name]=e.segment||'Unknown';
+    });
+  });
+
+  // Aggregate ARR from ENT_META for active enterprises, bucketed by segment
+  Object.entries(activeEntSegs).forEach(function(kv){
+    var entName=kv[0],seg=kv[1];
+    if(!acc[seg])return;
+    var meta=entMeta(entName);
+    var liveRaw=parseFloat(String(meta.liveArr||'0').replace(/[^0-9.]/g,''))||0;
+    acc[seg].liveArrUSD+= liveRaw;
+    acc[seg].contractedArrAnnual+=(meta.contractedArr||0);
+  });
+
   const rows=Object.values(acc).map(function(s){
     s.efficiency=s.actualMins>0?+((s.sumTarget/s.actualMins)*100).toFixed(2):0;
     s.costPerUnit=s.units>0?+(s.costPerUnit_sum/s.units).toFixed(2):0;
+    // Contracted ARR monthly = annual / 12
+    s.contractedArrMonthly=Math.round((s.contractedArrAnnual||0)/12);
     return s;
   });
   const totalWeightedCost=rows.reduce(function(t,s){return t+(s.costPerUnit||0)*(s.units||0);},0)||1;
-  rows.forEach(function(s){s.costShare=+(((s.costPerUnit||0)*(s.units||0)/totalWeightedCost)*100).toFixed(2);});
+  const totalContractedArr=rows.reduce(function(t,s){return t+(s.contractedArrAnnual||0);},0)||1;
+  rows.forEach(function(s){
+    s.costShare=+(((s.costPerUnit||0)*(s.units||0)/totalWeightedCost)*100).toFixed(2);
+    s.arrShare=+(((s.contractedArrAnnual||0)/totalContractedArr)*100).toFixed(2);
+  });
   return rows.filter(function(s){return s.units>0;});
 }
 
