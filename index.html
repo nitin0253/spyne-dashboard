@@ -1248,23 +1248,39 @@ function renderChart2(months){
   const segColors=allSegNames.map(function(n){return sc(n);});
   function segVal(s,metric){if(metric==='cost')return Math.round((s.costPerUnit||0)*(s.units||0));if(metric==='units')return s.units||0;return s.costPerUnit||0;}
   const smFmt=sm==='cost'?function(v){return'\u20b9'+f.short(v);}:sm==='costPerUnit'?function(v){return'\u20b9'+Number(v).toFixed(2);}:function(v){return f.short(v);};
-  const segDS=allSegNames.map(function(sn,i){return{label:sn,data:months.map(function(m){const sd=segProdData(m,sp).find(function(x){return x.name===sn;});return sd?segVal(sd,sm):0;}),backgroundColor:segColors[i],borderRadius:3,barPercentage:.9,categoryPercentage:.7,maxBarThickness:80,stack:'seg',
-      datalabels:{display:false}};});
-  // Add stack total label on last dataset only
-  if(segDS.length>0){
-    const lastDS=segDS[segDS.length-1];
-    lastDS.datalabels={
+
+  // Min fraction of stack height for an inner label to be visible
+  const MIN_FRAC=0.07;
+
+  const segDS=allSegNames.map(function(sn,i){
+    const isLast=(i===allSegNames.length-1);
+    const innerDL={
+      display:function(ctx){
+        var v=ctx.dataset.data[ctx.dataIndex]||0;
+        if(!v)return false;
+        var t=0;ctx.chart.data.datasets.forEach(function(d){t+=(+d.data[ctx.dataIndex]||0);});
+        return t>0&&(v/t)>=MIN_FRAC;
+      },
+      color:'rgba(255,255,255,0.92)',font:{size:9,weight:'600'},anchor:'center',align:'center',offset:0,clamp:true,
+      formatter:function(v){return v>0?smFmt(v):'';}
+    };
+    const totalDL={
       display:function(ctx){
         var t=0;ctx.chart.data.datasets.forEach(function(d){t+=(+d.data[ctx.dataIndex]||0);});return t>0;
       },
-      color:'#FFFFFF',font:{size:10,weight:'700'},anchor:'end',align:'top',offset:3,clamp:true,
+      color:'#FFFFFF',font:{size:10,weight:'700'},anchor:'end',align:'top',offset:4,clamp:true,
       formatter:function(v,ctx){
         var t=0;ctx.chart.data.datasets.forEach(function(d){t+=(+d.data[ctx.dataIndex]||0);});return t>0?smFmt(t):'';
       }
     };
-  }
-  // Add formatter after (avoids variable capture issue with smFmt)
-  segDS.forEach(function(ds){ds.datalabels.formatter=function(v){return smFmt(v);};});
+    return{
+      label:sn,
+      data:months.map(function(m){const sd=segProdData(m,sp).find(function(x){return x.name===sn;});return sd?segVal(sd,sm):0;}),
+      backgroundColor:segColors[i],borderRadius:3,barPercentage:.9,categoryPercentage:.7,maxBarThickness:80,stack:'seg',
+      datalabels:isLast?totalDL:innerDL
+    };
+  });
+
   mk('ch-seg-trend',{type:'bar',data:{labels,datasets:segDS},options:{onClick:function(evt,els){if(els.length)showMonthDetail(months[els[0].index],'segment',allSegNames[els[0].datasetIndex]);},plugins:{legend:{position:'bottom',labels:{color:'#F3F4F6',font:{size:11},boxWidth:10,padding:10}},tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){return ctx.dataset.label+': '+smFmt(ctx.raw);},footer:function(items){const t=items.reduce(function(s,i){return s+i.raw;},0);return t>0?'Total: '+smFmt(t):'';}}},scales:{x:{stacked:true,ticks:{color:'#F3F4F6',font:{size:11}},grid:{color:'rgba(60,60,60,.5)'}},y:{stacked:true,ticks:{color:'#F3F4F6',font:{size:10},callback:smFmt},grid:{color:'rgba(60,60,60,.5)'}}}}}});
 }
 function aggregateEditors(months){
