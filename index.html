@@ -1201,30 +1201,27 @@ function setChartFilter(chartKey,value,btn){
   document.querySelectorAll('.cf-pill[data-chart="'+chartKey+'"]').forEach(function(b){b.classList.remove('active','active-green','active-amber','active-purple');});
   if(btn){const cm={all:'active',image:'active',cost:'active',units:'active-green',costPerUnit:'active-amber',efficiency:'active-amber',video:'active-amber','360':'active-green'};btn.classList.add(cm[value]||'active');}
   if(!DATA)return;const months=filteredMonths();if(!months.length)return;
-  const allMonths=DATA?DATA.months:months;
   const chartMap={
-    cost:function(){renderChart1(allMonths);},
+    cost:function(){renderChart1(months);},
     seg:function(){renderChart2(months);},
     segp:function(){renderChart2(months);},
     ed:function(){renderChart3(months);},
     edp:function(){renderChart3(months);},
-    prod:function(){renderChart4(allMonths);},
-    prodm:function(){renderChart4(allMonths);},
+    prod:function(){renderChart4(months);},
+    prodm:function(){renderChart4(months);},
   };
   const fn=chartMap[chartKey];if(fn)fn();else renderCharts(months);
 }
 function renderCharts(months){
-  // Charts 1 and 4 always show ALL months (not filtered by date range)
-  const allMonths=DATA?DATA.months:months;
   if(CURRENT_VIEW==='enterprise'){
     renderChart2(months);
     renderPocChart(months);
     return;
   }
-  renderChart1(allMonths);
+  renderChart1(months);
   renderChart2(months);
   renderChart3(months);
-  renderChart4(allMonths);
+  renderChart4(months);
 }
 
 function renderChart1(months){
@@ -1405,28 +1402,32 @@ function renderUserSummary(months){
 
 window.cycleSortEnt=mkSorter('se',['vins','units','totalCost','costPerUnit'],function(col,dir){_entSort.col=col;_entSort.dir=dir;renderEntTable();});
 function renderEntTable(){
-  // Apply CS/OB POC filter
+  // Apply CS/OB POC filter + segment filter
   var rows=_entData.filter(function(e){
     var meta=entMeta(e.name);
+    var seg=e.segment||meta.segment||'Unknown';
     var cs=e.csPoc||meta.csPoc||'';
-    var ob=e.obPoc||meta.obPoc||'—';
+    var segOk=passesFilter('segment',seg);
     var csOk=FILTERS.cspoc.selected.size===0||FILTERS.cspoc.selected.size===FILTERS.cspoc.all.length||
               (cs&&FILTERS.cspoc.selected.has(cs));
     var obOk=FILTERS.obpoc.selected.size===0||FILTERS.obpoc.selected.size===FILTERS.obpoc.all.length||
               (meta.obPoc&&FILTERS.obpoc.selected.has(meta.obPoc));
-    return csOk&&obOk;
+    return segOk&&csOk&&obOk;
   });
-  rows=applySortArr(rows,_entSort.col,_entSort.dir);
+  rows=applySortArr(rows,_entSort.col,_entSort.dir).slice(0,50);
   window._entList=rows;
   var tbl=document.getElementById('co-ent-tbl');
   if(!tbl)return;
+  try{
   tbl.innerHTML=rows.map(function(e,i){
     // Use embedded Metabase data (from backend mapping) with ENT_META as fallback
     var meta=entMeta(e.name);
     var seg=e.segment||meta.segment||'';
     var cs=e.csPoc||meta.csPoc||'—';
-    var rawArr=e.liveArr||meta.liveArr||'';
+    var ob=e.obPoc||meta.obPoc||'—';
+    var rawArr=String(e.liveArr||meta.liveArr||'');
     var arr=rawArr?'₹'+Number(rawArr.replace(/[^0-9.]/g,'')).toLocaleString('en-IN'):'—';
+    if(arr==='₹0'||arr==='₹NaN')arr='—';
     var segBadge=seg?'<span class="seg" style="background:'+sc(seg)+'22;color:'+sc(seg)+';font-size:9px">'+seg+'</span>':'—';
     var rag=meta.rag||'';
     var ragColor=rag==='Green'?'#22d4a0':rag==='Amber'?'#f5a42a':rag==='Red'?'#f0566a':rag.includes('Churn')?'#a07cff':'#666';
@@ -1444,6 +1445,10 @@ function renderEntTable(){
       '<td class="r" style="color:var(--amber)">'+f.inr(e.costPerUnit)+'</td>'+
       '</tr>';
   }).join('');
+  }catch(err){
+    console.error('[renderEntTable] row build error:',err);
+    tbl.innerHTML='<tr><td colspan="10" style="color:var(--red);padding:12px;font-size:11px">Error rendering rows: '+err.message+'</td></tr>';
+  }
 }
 
 // Aggregate segment/enterprise data across multiple months
@@ -1496,7 +1501,8 @@ function aggregateEnterprises(months){
     e.efficiency=e.actualMins>0?+((e.sumTarget/e.actualMins)*100).toFixed(2):0;
     e.costPerUnit=e.units>0?+(e.costPerUnit_sum/e.units).toFixed(2):0;
     return e;
-  }).filter(function(e){return e.units>0;}).sort(function(a,b){return b.costPerUnit-a.costPerUnit;}).slice(0,25);
+  }).filter(function(e){return e.units>0;}).sort(function(a,b){return b.costPerUnit-a.costPerUnit;});
+  // Note: no .slice here — renderEntTable applies segment filter and then shows top 50
 }
 
 function renderTables(months){
