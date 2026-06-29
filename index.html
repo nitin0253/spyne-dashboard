@@ -500,10 +500,11 @@ select.sel:focus{border-color:var(--blue)}
     </div>
     <div class="tbl-wrap" style="max-height:460px;overflow-y:auto"><table>
       <thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr>
-        <th>#</th><th>Enterprise</th><th>Segment</th><th>CS POC</th>
+        <th>#</th><th>Enterprise</th><th>Segment</th><th>CS POC</th><th>OB POC</th>
         <th class="r">Live ARR</th>
         <th class="r" onclick="cycleSortEnt('vins')" style="cursor:pointer">VINs<span id="se-vins" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
         <th class="r" onclick="cycleSortEnt('units')" style="cursor:pointer">Units<span id="se-units" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortEnt('totalCost')" style="cursor:pointer">Delivery Cost<span id="se-totalCost" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
         <th class="r" onclick="cycleSortEnt('costPerUnit')" style="cursor:pointer">₹/Unit<span id="se-costPerUnit" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
       </tr></thead>
       <tbody id="co-ent-tbl"></tbody>
@@ -1231,8 +1232,8 @@ function renderChart1(months){
   const cms=months.map(m=>prodFilteredSummary(m,cp));
   const dl=function(fmt,clr){return{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:clr||'#FFFFFF',font:{size:10,weight:'600'},anchor:'end',align:'top',offset:3,clamp:true,formatter:fmt};};
   mk('ch-cost-trend',{type:'bar',data:{labels,datasets:[
-    {label:'Overall Cost',data:cms.map(s=>s.totalCost),backgroundColor:'rgba(79,120,255,.75)',borderRadius:3,yAxisID:'y',order:2,barPercentage:.45,categoryPercentage:.8,datalabels:dl(function(v){return'\u20b9'+f.short(v);})},
-    {label:'Volume',data:cms.map(s=>s.totalUnits),backgroundColor:'rgba(34,212,160,.55)',borderRadius:3,yAxisID:'y1',order:3,barPercentage:.45,categoryPercentage:.8,datalabels:dl(function(v){return f.short(v);},'#22d4a0')},
+    {label:'Overall Cost',data:cms.map(s=>s.totalCost),backgroundColor:'rgba(79,120,255,.75)',borderRadius:3,yAxisID:'y',order:2,barPercentage:.45,categoryPercentage:.8,maxBarThickness:80,datalabels:dl(function(v){return'\u20b9'+f.short(v);})},
+    {label:'Volume',data:cms.map(s=>s.totalUnits),backgroundColor:'rgba(34,212,160,.55)',borderRadius:3,yAxisID:'y1',order:3,barPercentage:.45,categoryPercentage:.8,maxBarThickness:80,datalabels:dl(function(v){return f.short(v);},'#22d4a0')},
     {label:'\u20b9/Unit',data:cms.map(s=>s.costPerUnit),type:'line',borderColor:'#f5a42a',borderWidth:2.5,tension:.3,pointBackgroundColor:'#f5a42a',pointRadius:5,yAxisID:'y2',order:1,fill:false,datalabels:{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:'#f5a42a',font:{size:10,weight:'700'},anchor:'center',align:'top',offset:10,formatter:function(v){return'\u20b9'+Number(v).toFixed(2);}}},
   ]},options:{onClick:function(evt,els){if(els.length)showMonthDetail(months[els[0].index],'cost',cp);},plugins:{legend:{labels:{color:'#F3F4F6',font:{size:11},boxWidth:10,padding:14}},tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){if(ctx.dataset.label==='\u20b9/Unit')return' \u20b9/Unit: \u20b9'+Number(ctx.raw).toFixed(2);if(ctx.dataset.label==='Overall Cost')return' Cost: \u20b9'+f.short(ctx.raw);return' Volume: '+f.short(ctx.raw)+' units';}}}},scales:{x:{ticks:{color:'#F3F4F6',font:{size:11}},grid:{color:'rgba(60,60,60,.5)'}},y:{type:'linear',position:'left',ticks:{color:'#F3F4F6',font:{size:10},callback:function(v){return'\u20b9'+f.short(v);}},grid:{color:'rgba(60,60,60,.5)'}},y1:{type:'linear',position:'right',ticks:{color:'#22d4a0',font:{size:10},callback:function(v){return f.short(v);}},grid:{display:false}},y2:{type:'linear',position:'right',display:false}}}});
 }
@@ -1242,7 +1243,7 @@ function renderChart2(months){
   const segColors=allSegNames.map(function(n){return sc(n);});
   function segVal(s,metric){if(metric==='cost')return Math.round((s.costPerUnit||0)*(s.units||0));if(metric==='units')return s.units||0;return s.costPerUnit||0;}
   const smFmt=sm==='cost'?function(v){return'\u20b9'+f.short(v);}:sm==='costPerUnit'?function(v){return'\u20b9'+Number(v).toFixed(2);}:function(v){return f.short(v);};
-  const segDS=allSegNames.map(function(sn,i){return{label:sn,data:months.map(function(m){const sd=segProdData(m,sp).find(function(x){return x.name===sn;});return sd?segVal(sd,sm):0;}),backgroundColor:segColors[i],borderRadius:3,barPercentage:.9,categoryPercentage:.7,stack:'seg',
+  const segDS=allSegNames.map(function(sn,i){return{label:sn,data:months.map(function(m){const sd=segProdData(m,sp).find(function(x){return x.name===sn;});return sd?segVal(sd,sm):0;}),backgroundColor:segColors[i],borderRadius:3,barPercentage:.9,categoryPercentage:.7,maxBarThickness:80,stack:'seg',
       datalabels:{display:false}};});
   // Add stack total label on last dataset only
   if(segDS.length>0){
@@ -1315,7 +1316,7 @@ function renderChart4(months){
   const allPN=[...new Set(months.flatMap(function(m){return m.productBreakdown.map(function(p){return p.name;});}))].filter(function(n){if(pp==='all')return true;if(pp==='image')return /image/i.test(n);if(pp==='360')return /360|spin/i.test(n);if(pp==='video')return /video/i.test(n);return true;});
   function pVal(p,m){if(m==='units')return p?p.units||0:0;if(m==='costPerUnit')return p?p.costPerUnit||0:0;return p?Math.round((p.costSharePct||0)/100*(months[months.length-1].summary.totalCost||0)):0;}
   const pmFmt=pm==='cost'?function(v){return'\u20b9'+f.short(v);}:pm==='costPerUnit'?function(v){return'\u20b9'+Number(v).toFixed(2);}:function(v){return f.short(v);};
-  const pDS=allPN.map(function(pn,i){return{label:pn,data:months.map(function(m){return pVal(getFilteredProducts(m).find(function(x){return x.name===pn;}),pm);}),backgroundColor:pc(pn,i),borderRadius:3,barPercentage:.8,categoryPercentage:.8,datalabels:{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:'#FFFFFF',font:{size:10,weight:'600'},anchor:'end',align:'top',offset:2,clamp:true,formatter:function(v){return pmFmt(v);}}};});
+  const pDS=allPN.map(function(pn,i){return{label:pn,data:months.map(function(m){return pVal(getFilteredProducts(m).find(function(x){return x.name===pn;}),pm);}),backgroundColor:pc(pn,i),borderRadius:3,barPercentage:.8,categoryPercentage:.8,maxBarThickness:80,datalabels:{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:'#FFFFFF',font:{size:10,weight:'600'},anchor:'end',align:'top',offset:2,clamp:true,formatter:function(v){return pmFmt(v);}}};});
   mk('ch-prod-trend',{type:'bar',data:{labels,datasets:pDS},options:{onClick:function(evt,els){if(els.length)showMonthDetail(months[els[0].index],'product',allPN[els[0].datasetIndex]);},plugins:{legend:{position:'bottom',labels:{color:'#F3F4F6',font:{size:11},boxWidth:10,padding:10}},tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){return ctx.dataset.label+': '+pmFmt(ctx.raw);},footer:function(items){const t=items.reduce(function(s,i){return s+i.raw;},0);return t>0?'Total: '+pmFmt(t):'';}}},scales:{x:{ticks:{color:'#F3F4F6',font:{size:11}},grid:{color:'rgba(60,60,60,.5)'}},y:{ticks:{color:'#F3F4F6',font:{size:10},callback:pmFmt},grid:{color:'rgba(60,60,60,.5)'}}}}}});
 }
 
@@ -1638,7 +1639,7 @@ function renderPocChart(months) {
       borderRadius: isStacked ? 0 : 3,
       yAxisID: 'y', order: 2,
       stack: isStacked ? 'poc' : undefined,
-      barPercentage: 0.7, categoryPercentage: 0.8,
+      barPercentage: 0.7, categoryPercentage: 0.8, maxBarThickness: 80,
       datalabels: {
         display: function(ctx) {
           if (!isStacked) return ctx.dataset.data[ctx.dataIndex] > 0;
@@ -1663,7 +1664,7 @@ function renderPocChart(months) {
       borderRadius: isStacked ? [3,3,0,0] : 3,
       yAxisID: isStacked ? 'y' : 'y', order: 3,
       stack: isStacked ? 'poc' : undefined,
-      barPercentage: 0.7, categoryPercentage: 0.8,
+      barPercentage: 0.7, categoryPercentage: 0.8, maxBarThickness: 80,
       datalabels: {
         display: function(ctx) { return isStacked && ctx.dataset.data[ctx.dataIndex] > 0; },
         color: '#22d4a0', font: { size: 9, weight: '700' },
