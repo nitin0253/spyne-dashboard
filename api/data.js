@@ -54,6 +54,7 @@ function parseEnterpriseMeta(csvText) {
 
   const headers = parseLine(lines[0]);
   const idx = {
+    entId:         headers.findIndex(h => /enterprise\s*id/i.test(h)),
     name:          headers.findIndex(h => /enterprise name/i.test(h)),
     seg:           headers.findIndex(h => /customer segment/i.test(h)),
     csPoc:         headers.findIndex(h => /cs poc/i.test(h)),
@@ -71,6 +72,7 @@ function parseEnterpriseMeta(csvText) {
     if (!name) return;
 
     const segment      = (cols[idx.seg]           || '').trim();
+    const entId        = (cols[idx.entId]         || '').trim();
     const csPoc        = (cols[idx.csPoc]          || '').trim();
     const obPoc        = (cols[idx.obPoc]          || '').trim();
     const liveArr      = (cols[idx.liveArr]        || '').trim();
@@ -81,12 +83,13 @@ function parseEnterpriseMeta(csvText) {
 
     if (!map[name]) {
       map[name] = {
-        segment, csPoc, obPoc, liveArr,
+        entId, segment, csPoc, obPoc, liveArr,
         contractedArr:  isActive ? contractedVal : 0,
         rooftopCount:   1,
         activeRooftops: isActive ? 1 : 0,
       };
     } else {
+      if (!map[name].entId   && entId)   map[name].entId   = entId;
       if (!map[name].segment && segment) map[name].segment = segment;
       if (!map[name].csPoc   && csPoc)   map[name].csPoc   = csPoc;
       if (!map[name].obPoc   && obPoc)   map[name].obPoc   = obPoc;
@@ -512,10 +515,13 @@ function computeMonth(config, outputRows, factorRows, enterpriseRows, removedRow
       segment:          lookupEnt(entMap, name)?.segment          || meta?.segment || 'Unknown',
       inventoryVersion: lookupEnt(entMap, name)?.inventoryVersion || '',
       // Metabase enrichment fields
+      entId:   meta?.entId   || '',
       csPoc:   meta?.csPoc   || '',
       obPoc:   meta?.obPoc   || '',
       liveArr: meta?.liveArr || '',
-      contractedArr: meta?.contractedArr || 0,
+      contractedArr:  meta?.contractedArr  || 0,
+      rooftopCount:   meta?.rooftopCount   || 0,
+      activeRooftops: meta?.activeRooftops || 0,
     };
   }).sort((a, b) => b.units - a.units);
 
