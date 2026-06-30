@@ -503,6 +503,7 @@ select.sel:focus{border-color:var(--blue)}
       <thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr>
         <th>#</th>
         <th class="sortable-ent" data-col="enterprise" style="cursor:pointer">Enterprise<span id="se-enterprise" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="sortable-ent" data-col="entId" style="cursor:pointer">Enterprise ID<span id="se-entId" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
         <th class="sortable-ent" data-col="segment" style="cursor:pointer">Segment<span id="se-segment" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
         <th class="sortable-ent" data-col="csPoc" style="cursor:pointer">CS POC<span id="se-csPoc" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
         <th class="sortable-ent" data-col="obPoc" style="cursor:pointer">OB POC<span id="se-obPoc" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
@@ -1066,14 +1067,16 @@ function showSegmentDetail(idx){
     });
   });
 
-  // Enrich with ENT_META ARR
+  // Enrich with ENT_META ARR + rooftop count + entId
   var accounts=Object.values(entMap).map(function(e){
     var meta=entMeta(e.name);
     var annualContracted=meta.contractedArr||0;
     return{
       name:       e.name,
+      entId:      meta.entId||'—',
       segment:    meta.segment||segName,
       csPoc:      meta.csPoc||e.csPoc||'—',
+      rooftops:   meta.activeRooftops||meta.rooftopCount||0,
       vins:       e.vins,
       units:      e.units,
       efficiency: e.actualMins>0?+((e.sumTarget/e.actualMins)*100).toFixed(2):0,
@@ -1089,6 +1092,7 @@ function showSegmentDetail(idx){
   var totalUnits=accounts.reduce(function(s,e){return s+e.units;},0);
   var totalCost=accounts.reduce(function(s,e){return s+e.totalCost;},0);
   var totalContracted=accounts.reduce(function(s,e){return s+e.contractedMRR;},0);
+  var totalRooftops=accounts.reduce(function(s,e){return s+(e.rooftops||0);},0);
 
   function fmtUSD(v){v=+v||0;return v>=1e6?'$'+(v/1e6).toFixed(2)+'M':v>=1e3?'$'+(v/1e3).toFixed(1)+'K':v>0?'$'+Math.round(v):'—';}
   function fmtInr(v){v=+v||0;if(v>=1e7)return'₹'+(v/1e7).toFixed(2)+'Cr';if(v>=1e5)return'₹'+(v/1e5).toFixed(1)+'L';if(v>=1e3)return'₹'+(v/1e3).toFixed(0)+'K';return'₹'+v;}
@@ -1110,9 +1114,11 @@ function showSegmentDetail(idx){
     function th(col,label,cls){
       return'<th class="r seg-modal-th'+(cls?' '+cls:'')+'" data-col="'+col+'" style="cursor:pointer">'+label+'<span style="font-size:12px;color:var(--blue);margin-left:2px">'+arrowFor(col)+'</span></th>';
     }
-    return'<thead><tr>'+
+    return'<thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr>'+
       '<th class="seg-modal-th" data-col="name" style="cursor:pointer">Account<span style="font-size:12px;color:var(--blue);margin-left:2px">'+arrowFor('name')+'</span></th>'+
+      '<th class="seg-modal-th" data-col="entId" style="cursor:pointer">Enterprise ID<span style="font-size:12px;color:var(--blue);margin-left:2px">'+arrowFor('entId')+'</span></th>'+
       '<th class="seg-modal-th" data-col="csPoc" style="cursor:pointer">CS POC<span style="font-size:12px;color:var(--blue);margin-left:2px">'+arrowFor('csPoc')+'</span></th>'+
+      th('rooftops','Rooftops')+
       th('vins','VINs')+th('units','Units')+
       th('contractedMRR','Contracted MRR')+
       th('totalCost','Delivery Cost')+
@@ -1124,7 +1130,9 @@ function showSegmentDetail(idx){
     return sortedRows().map(function(e,i){
       return'<tr>'+
         '<td class="bright" style="max-width:160px;overflow:hidden;text-overflow:ellipsis" title="'+e.name+'">'+e.name+'</td>'+
+        '<td style="font-size:12px;color:var(--muted);font-family:var(--mono)">'+e.entId+'</td>'+
         '<td style="font-size:13px;color:var(--sub)">'+e.csPoc+'</td>'+
+        '<td class="r">'+(e.rooftops||'—')+'</td>'+
         '<td class="r" style="color:var(--purple)">'+f.num(e.vins)+'</td>'+
         '<td class="r">'+f.num(e.units)+'</td>'+
         '<td class="r" style="color:#38c4f0">'+fmtUSD(e.contractedMRR)+'</td>'+
@@ -1138,11 +1146,11 @@ function showSegmentDetail(idx){
   modal.style.cssText='position:fixed;inset:0;background:rgba(10,10,10,.9);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
 
   var inner=document.createElement('div');
-  inner.style.cssText='background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:960px;max-width:96vw;max-height:88vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.7)';
+  inner.style.cssText='background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:1040px;max-width:96vw;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.7)';
 
   var moLabel=numMonths===1?'1 month':numMonths+' months';
   inner.innerHTML=
-    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px">'+
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;flex-shrink:0">'+
       '<div>'+
         '<div style="font-weight:700;font-size:16px;color:var(--text)">'+
           '<span class="seg" style="background:'+sc(segName)+'22;color:'+sc(segName)+';margin-right:8px">'+segName+'</span>Segment — Account Breakdown'+
@@ -1151,14 +1159,15 @@ function showSegmentDetail(idx){
       '</div>'+
       '<button id="seg-modal-close" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;line-height:1">✕</button>'+
     '</div>'+
-    '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px">'+
+    '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:20px;flex-shrink:0">'+
       kpi('Accounts',accounts.length,'in this segment',null,'var(--blue)')+
+      kpi('Rooftops',f.num(totalRooftops),'active locations',null,'var(--cyan)')+
       kpi('VINs',f.num(totalVins),'unique vehicles',null,'var(--purple)')+
       kpi('Units',f.num(totalUnits),moLabel,null,'var(--green)')+
       kpi('Contracted MRR',fmtUSD(totalContracted),'×'+numMonths+' mo (USD)',null,'#38c4f0')+
       kpi('Delivery Cost',fmtInr(totalCost),moLabel,null,'var(--blue)')+
     '</div>'+
-    '<div class="tbl-wrap" id="seg-modal-tbl-wrap">'+
+    '<div class="tbl-wrap" id="seg-modal-tbl-wrap" style="overflow-y:auto;flex:1;min-height:0">'+
       '<table id="seg-modal-tbl">'+buildHead()+'<tbody id="seg-modal-tbody">'+buildRows()+'</tbody></table>'+
     '</div>';
 
@@ -1201,7 +1210,7 @@ function showEnterpriseDetail(name,e){
   const modal=document.createElement('div');
   modal.style.cssText='position:fixed;inset:0;background:rgba(17,17,17,.92);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
   const inner=document.createElement('div');
-  inner.style.cssText='background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;min-width:520px;max-width:680px;max-height:85vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.7)';
+  inner.style.cssText='background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;min-width:560px;max-width:720px;max-height:85vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.7)';
   const closeBtn=document.createElement('button');
   closeBtn.textContent='✕';
   closeBtn.style.cssText='background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;line-height:1;float:right';
@@ -1212,14 +1221,19 @@ function showEnterpriseDetail(name,e){
     +(seg?'<span class="seg" style="background:'+sc(seg)+'22;color:'+sc(seg)+'">'+seg+'</span>':'')+ragBadgeHtml
     +(contractedMRR?'<span style="font-size:13px;color:#38c4f0;font-weight:600">'+mrrLabel+': $'+Math.round(contractedMRR).toLocaleString('en-IN')+'</span>':'')
     +'</div></div><span id="_modal_close_ent"></span></div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">'
+    +'<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px">'
+    +'<div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Enterprise ID</div>'
+    +'<div style="font-size:13px;color:var(--text);font-family:var(--mono)">'+(meta.entId||'—')+'</div></div>'
     +'<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px">'
     +'<div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">CS POC</div>'
     +'<div style="font-size:13px;color:var(--text)">'+(e.csPoc||meta.csPoc||'—')+'</div></div>'
-
+    +'<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px">'
+    +'<div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Rooftops</div>'
+    +'<div style="font-size:13px;color:var(--text)">'+(meta.activeRooftops||meta.rooftopCount||'—')+'</div></div>'
     +'</div>'
     +'<div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px">Month-on-Month Performance</div>'
-    +'<div class="tbl-wrap"><table><thead><tr><th>Month</th><th class="r">Units</th><th class="r">VINs</th><th class="r">Efficiency</th><th class="r">₹/Unit</th></tr></thead>'
+    +'<div class="tbl-wrap" style="max-height:320px;overflow-y:auto"><table><thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr><th>Month</th><th class="r">Units</th><th class="r">VINs</th><th class="r">Efficiency</th><th class="r">₹/Unit</th></tr></thead>'
     +'<tbody>'+trendRows+'</tbody></table></div>';
   inner.querySelector('#_modal_close_ent').replaceWith(closeBtn);
   modal.appendChild(inner);
@@ -1604,7 +1618,7 @@ function renderUserSummary(months){
   });o._wired=true;}
 }
 
-window.cycleSortEnt=mkSorter('se',['enterprise','segment','csPoc','obPoc','contractedArrNum','vins','units','totalCost','costPerUnit'],function(col,dir){_entSort.col=col;_entSort.dir=dir;renderEntTable();});
+window.cycleSortEnt=mkSorter('se',['enterprise','entId','segment','csPoc','obPoc','contractedArrNum','vins','units','totalCost','costPerUnit'],function(col,dir){_entSort.col=col;_entSort.dir=dir;renderEntTable();});
 // Wire click delegation for all sortable-ent headers
 document.addEventListener('click',function(e){
   var th=e.target.closest('.sortable-ent');
@@ -1661,6 +1675,7 @@ function renderEntTable(){
     return'<tr style="cursor:pointer" onclick="_showEnt('+i+')">'+
       '<td class="rank-num">'+(i+1)+'</td>'+
       '<td class="bright" style="max-width:130px;overflow:hidden;text-overflow:ellipsis" title="'+e.name+'">'+e.name+'</td>'+
+      '<td style="font-size:12px;color:var(--muted);font-family:var(--mono)">'+(e.entId||meta.entId||'—')+'</td>'+
       '<td>'+segBadge+ragBadge+'</td>'+
       '<td style="font-size:13px;color:var(--sub);max-width:100px;overflow:hidden;text-overflow:ellipsis" title="'+cs+'">'+cs+'</td>'+
       '<td style="font-size:13px;color:var(--sub);max-width:100px;overflow:hidden;text-overflow:ellipsis" title="'+ob+'">'+ob+'</td>'+
@@ -1673,7 +1688,7 @@ function renderEntTable(){
   }).join('');
   }catch(err){
     console.error('[renderEntTable] row build error:',err);
-    tbl.innerHTML='<tr><td colspan="10" style="color:var(--red);padding:12px;font-size:13px">Error: '+err.message+'</td></tr>';
+    tbl.innerHTML='<tr><td colspan="11" style="color:var(--red);padding:12px;font-size:13px">Error: '+err.message+'</td></tr>';
   }
 }
 
@@ -1738,7 +1753,7 @@ function aggregateEnterprises(months){
     const totalCost=m.summary.totalCost||0;
     (m.enterpriseBreakdown||[]).forEach(function(e){
       const n=e.name;
-      if(!acc[n])acc[n]={name:n,segment:e.segment||'',csPoc:e.csPoc||'',obPoc:e.obPoc||'',liveArr:e.liveArr||'',contractedArr:e.contractedArr||0,vins:0,units:0,actualMins:0,sumTarget:0,costPerUnit_sum:0,totalCost:0};
+      if(!acc[n])acc[n]={name:n,entId:e.entId||'',segment:e.segment||'',csPoc:e.csPoc||'',obPoc:e.obPoc||'',liveArr:e.liveArr||'',contractedArr:e.contractedArr||0,vins:0,units:0,actualMins:0,sumTarget:0,costPerUnit_sum:0,totalCost:0};
       acc[n].vins+=e.vins||0;
       acc[n].units+=e.units||0;
       acc[n].actualMins+=e.actualMins||0;
@@ -1746,6 +1761,7 @@ function aggregateEnterprises(months){
       const entCostThisMonth=Math.round((e.costPerUnit||0)*(e.units||0));
       acc[n].costPerUnit_sum+=(e.costPerUnit||0)*(e.units||0);
       acc[n].totalCost+=entCostThisMonth;
+      if(!acc[n].entId&&e.entId)acc[n].entId=e.entId;
       if(!acc[n].segment&&e.segment)acc[n].segment=e.segment;
       if(!acc[n].csPoc&&e.csPoc)acc[n].csPoc=e.csPoc;
       if(!acc[n].obPoc&&e.obPoc)acc[n].obPoc=e.obPoc;
@@ -2110,7 +2126,7 @@ function showPocDetail(pocRow, months) {
     var cost = entCosts[entName] || 0;
     var mrrINR = mrr * 83;
     var pct = (mrrINR && cost) ? +((cost / mrrINR) * 100).toFixed(2) : 0;
-    return { name: entName, mrr: mrr, cost: cost, pct: pct, segment: meta.segment || '—', activeRooftops: meta.activeRooftops || 0 };
+    return { name: entName, entId: meta.entId || '—', mrr: mrr, cost: cost, pct: pct, segment: meta.segment || '—', activeRooftops: meta.activeRooftops || 0 };
   }).filter(function(a) { return a.mrr > 0 || a.cost > 0; });
 
   var pocName = pocRow.poc.split('@')[0].replace('.', ' ');
@@ -2140,7 +2156,8 @@ function showPocDetail(pocRow, months) {
       var pctBar = a.pct > 0 ? '<div style="display:inline-block;width:' + Math.min(a.pct * 2, 80) + 'px;height:4px;background:' + (a.pct > 10 ? '#f0566a' : a.pct > 5 ? '#f5a42a' : '#22d4a0') + ';border-radius:2px;vertical-align:middle;margin-left:4px"></div>' : '';
       return '<tr>'
         + '<td class="rank-num">' + (i+1) + '</td>'
-        + '<td class="bright" style="max-width:200px;overflow:hidden;text-overflow:ellipsis" title="' + a.name + '">' + a.name + '</td>'
+        + '<td class="bright" style="max-width:180px;overflow:hidden;text-overflow:ellipsis" title="' + a.name + '">' + a.name + '</td>'
+        + '<td style="font-size:12px;color:var(--muted);font-family:var(--mono)">' + a.entId + '</td>'
         + '<td>' + segBadge + '</td>'
         + '<td style="font-size:12px;color:var(--muted);text-align:right">' + (a.activeRooftops || '—') + '</td>'
         + '<td class="r" style="color:#4f78ff;font-weight:600">' + fmtMrr(a.mrr) + '</td>'
@@ -2159,9 +2176,10 @@ function showPocDetail(pocRow, months) {
   }
 
   function buildHeader() {
-    return '<thead><tr>'
+    return '<thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr>'
       + '<th>#</th>'
       + '<th class="poc-sort-th" data-col="name" style="cursor:pointer;user-select:none">Account<span style="font-size:12px;color:var(--blue);margin-left:2px" id="poc-arrow-name"></span></th>'
+      + '<th class="poc-sort-th" data-col="entId" style="cursor:pointer;user-select:none">Enterprise ID<span style="font-size:12px;color:var(--blue);margin-left:2px" id="poc-arrow-entId"></span></th>'
       + '<th class="poc-sort-th" data-col="segment" style="cursor:pointer;user-select:none">Segment<span style="font-size:12px;color:var(--blue);margin-left:2px" id="poc-arrow-segment"></span></th>'
       + thSort('activeRooftops', 'Rooftops', null)
       + thSort('mrr', 'MRR (' + numMonths + 'mo) USD', '#4f78ff')
@@ -2181,16 +2199,16 @@ function showPocDetail(pocRow, months) {
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(10,10,10,.9);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
 
   var inner = document.createElement('div');
-  inner.style.cssText = 'background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:800px;max-width:95vw;max-height:88vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.7)';
+  inner.style.cssText = 'background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:880px;max-width:95vw;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.7)';
   inner.innerHTML = ''
-    + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px">'
+    + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;flex-shrink:0">'
     +   '<div>'
     +     '<div style="font-weight:700;font-size:16px;color:var(--text)">' + pocName + '</div>'
     +     '<div style="font-size:13px;color:var(--muted);margin-top:2px">' + pocRow.poc + '</div>'
     +   '</div>'
     +   '<button id="poc-close-btn" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;line-height:1">✕</button>'
     + '</div>'
-    + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">'
+    + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;flex-shrink:0">'
     +   '<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">'
     +     '<div style="font-size:18px;font-weight:700;color:#4f78ff">' + fmtMrr(totalMrr) + '</div>'
     +     '<div style="font-size:12px;color:var(--muted);text-transform:uppercase;margin-top:3px">MRR × '+numMonths+' months (USD)</div>'
@@ -2208,8 +2226,8 @@ function showPocDetail(pocRow, months) {
     +     '<div style="font-size:12px;color:var(--muted);text-transform:uppercase;margin-top:3px">Accounts</div>'
     +   '</div>'
     + '</div>'
-    + '<div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px">Account Breakdown <span style="font-weight:400;color:#555;font-size:12px">· click column headers to sort</span></div>'
-    + '<div class="tbl-wrap" id="poc-tbl-wrap"><table id="poc-tbl">'
+    + '<div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px;flex-shrink:0">Account Breakdown <span style="font-weight:400;color:#555;font-size:12px">· click column headers to sort</span></div>'
+    + '<div class="tbl-wrap" id="poc-tbl-wrap" style="overflow-y:auto;flex:1;min-height:0"><table id="poc-tbl">'
     + buildHeader()
     + '<tbody id="poc-tbody">' + buildRows(sortedAccounts()) + '</tbody>'
     + '</table></div>';
