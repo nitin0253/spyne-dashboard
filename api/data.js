@@ -278,9 +278,20 @@ function parseFactorCalc(rows, excludeSet) {
 function parseEnterprise(rows) {
   const map = {};
   (rows || []).slice(1).forEach(r => {
-    if (r && r[1]) map[r[1].trim()] = { segment: r[3] || 'Unknown', inventoryVersion: r[2] || '' };
+    if (r && r[1]) {
+      const name = r[1].trim();
+      map[name.toLowerCase()] = { originalKey: name, segment: r[3] || 'Unknown', inventoryVersion: r[2] || '' };
+    }
   });
   return map;
+}
+
+// Lookup enterprise_details info by output enterprise name — case-insensitive,
+// mirrors lookupMeta() so a row like "Teton solution Group" (output sheet)
+// still matches "Teton Solution Group" (enterprise_details sheet).
+function lookupEnt(entMap, outputName) {
+  if (!outputName) return null;
+  return entMap[outputName.toLowerCase().trim()] || null;
 }
 
 // ── Aggregation ───────────────────────────────────────────────────────────────
@@ -344,7 +355,7 @@ function computeMonth(config, outputRows, factorRows, enterpriseRows, removedRow
   });
 
   const enriched = output.map(r => {
-    const entInfo  = entMap[r.enterprise];
+    const entInfo  = lookupEnt(entMap, r.enterprise);
     // Prefer enterprise_details sheet segment, fall back to Metabase metaIndex
     const metaInfo = (!entInfo?.segment || entInfo.segment === 'Unknown')
       ? lookupMeta(metaIndex, r.enterprise)
@@ -447,7 +458,7 @@ function computeMonth(config, outputRows, factorRows, enterpriseRows, removedRow
     const entGroups2 = groupSum(segRows, r => r.enterprise);
     const topEnterprises = Object.entries(entGroups2).map(([eName, eg]) => {
       const eCost = totalActMins > 0 ? (eg.actualMins / totalActMins) * totalCost : 0;
-      return { ...enrichGroup(eName, eg, eCost), inventoryVersion: entMap[eName]?.inventoryVersion || '' };
+      return { ...enrichGroup(eName, eg, eCost), inventoryVersion: lookupEnt(entMap, eName)?.inventoryVersion || '' };
     }).sort((a, b) => b.units - a.units).slice(0, 10);
 
     return {
@@ -498,8 +509,8 @@ function computeMonth(config, outputRows, factorRows, enterpriseRows, removedRow
     return {
       ...enrichGroup(name, g, cost),
       byProduct,
-      segment:          entMap[name]?.segment          || meta?.segment || 'Unknown',
-      inventoryVersion: entMap[name]?.inventoryVersion || '',
+      segment:          lookupEnt(entMap, name)?.segment          || meta?.segment || 'Unknown',
+      inventoryVersion: lookupEnt(entMap, name)?.inventoryVersion || '',
       // Metabase enrichment fields
       csPoc:   meta?.csPoc   || '',
       obPoc:   meta?.obPoc   || '',
