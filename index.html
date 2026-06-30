@@ -484,6 +484,7 @@ select.sel:focus{border-color:var(--blue)}
         <th>Segment</th>
         <th class="r" onclick="cycleSortSeg('vins')" style="cursor:pointer">VINs<span id="ss-vins" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
         <th class="r" onclick="cycleSortSeg('units')" style="cursor:pointer">Units<span id="ss-units" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortSeg('volumeShare')" style="cursor:pointer">Volume %<span id="ss-volumeShare" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
         <th class="r" onclick="cycleSortSeg('contractedArrMonthly')" style="cursor:pointer" id="seg-contracted-hdr">Contracted MRR (USD)<span id="ss-contractedArrMonthly" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
         <th class="r" onclick="cycleSortSeg('arrShare')" style="cursor:pointer">ARR Share %<span id="ss-arrShare" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
         <th class="r" onclick="cycleSortSeg('costPerUnit')" style="cursor:pointer">₹/Unit<span id="ss-costPerUnit" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
@@ -1015,7 +1016,7 @@ function applySortArr(arr,col,dir){
   return[...arr].sort((a,b)=>{const av=a[col]??0,bv=b[col]??0;return typeof av==='number'?((av-bv)*dir):String(av).localeCompare(String(bv))*dir;});
 }
 let _segData=[],_segSort={col:'costShare',dir:-1};
-window.cycleSortSeg=mkSorter('ss',['vins','units','contractedArrMonthly','arrShare','costPerUnit','costShare'],function(col,dir){_segSort={col,dir};renderSegTable();});
+window.cycleSortSeg=mkSorter('ss',['vins','units','volumeShare','contractedArrMonthly','arrShare','costPerUnit','costShare'],function(col,dir){_segSort={col,dir};renderSegTable();});
 function renderSegTable(){
   const rows=applySortArr(_segData,_segSort.col,_segSort.dir);
   const el=document.getElementById('sg-summary-tbl');if(!el)return;
@@ -1031,6 +1032,7 @@ function renderSegTable(){
       '<td class="bright"><span class="seg" style="background:'+sc(s.name)+'22;color:'+sc(s.name)+'">'+s.name+'</span></td>'+
       '<td class="r" style="color:var(--purple)">'+f.num(s.vins)+'</td>'+
       '<td class="r">'+f.num(s.units)+'</td>'+
+      '<td class="r" style="color:var(--cyan)">'+f.pct(s.volumeShare)+'</td>'+
       '<td class="r" style="color:#38c4f0">'+fmtUSD(s.contractedArrMonthly)+'</td>'+
       '<td class="r" style="color:var(--muted)">'+f.pct(s.arrShare)+'</td>'+
       '<td class="r" style="color:var(--amber)">'+f.inr(s.costPerUnit)+'</td>'+
@@ -1861,9 +1863,11 @@ function aggregateSegments(months){
   });
   const totalWeightedCost=rows.reduce(function(t,s){return t+(s.costPerUnit||0)*(s.units||0);},0)||1;
   const totalContractedArr=rows.reduce(function(t,s){return t+(s.contractedArrAnnual||0);},0)||1;
+  const totalUnits=rows.reduce(function(t,s){return t+(s.units||0);},0)||1;
   rows.forEach(function(s){
     s.costShare=+(((s.costPerUnit||0)*(s.units||0)/totalWeightedCost)*100).toFixed(2);
     s.arrShare=+(((s.contractedArrAnnual||0)/totalContractedArr)*100).toFixed(2);
+    s.volumeShare=+(((s.units||0)/totalUnits)*100).toFixed(2);
   });
   return rows.filter(function(s){return s.units>0;});
 }
