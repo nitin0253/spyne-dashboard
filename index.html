@@ -862,7 +862,13 @@ function toggleDatePicker(){
   else{panel.classList.add('open');renderCal();}
 }
 document.addEventListener('click',function(e){
-  if(!e.target.closest('#fw-daterange'))document.getElementById('dr-panel').classList.remove('open');
+  // Keep the date panel open if the click was inside the date-range widget
+  // OR inside the panel itself. We need both checks because calClickDay() calls
+  // renderCal() which replaces the grid innerHTML — the original day-cell element
+  // is removed from the DOM before the event reaches here, so .closest('#fw-daterange')
+  // returns null even though the click was genuinely inside the panel.
+  if(e.target.closest('#fw-daterange')||e.target.closest('#dr-panel'))return;
+  document.getElementById('dr-panel').classList.remove('open');
 });
 
 function applyPreset(preset,silent){
