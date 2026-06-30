@@ -1209,13 +1209,15 @@ function showEnterpriseDetail(name,e){
       '<td class="r" style="color:var(--amber)">'+f.inr(r.costPerUnit)+'</td></tr>';
   }).join('');
 
-  // ── Aggregate byProduct + byEditor across the filtered months for this enterprise
+  // ── Aggregate byProduct + byEditor (with per-product split) across the filtered months
   const prodAcc={},editorAcc={};
+  let allProductNames=new Set();
   months.forEach(function(m){
     const raw=(m.enterpriseBreakdown||[]).find(function(x){return (x.name||'').toLowerCase().trim()===nameNorm;});
     if(!raw)return;
     Object.entries(raw.byProduct||{}).forEach(function(kv){
       var pname=kv[0],pd=kv[1];
+      allProductNames.add(pname);
       if(!prodAcc[pname])prodAcc[pname]={name:pname,units:0,skus:0,images:0,vins:0,actualMins:0,sumTarget:0,cost:0};
       var a=prodAcc[pname];
       a.units+=pd.units||0;a.skus+=pd.skus||0;a.images+=pd.images||0;a.vins+=pd.vins||0;
@@ -1223,11 +1225,16 @@ function showEnterpriseDetail(name,e){
     });
     Object.entries(raw.byEditor||{}).forEach(function(kv){
       var email=kv[0],bd=kv[1];
-      if(!editorAcc[email])editorAcc[email]={email:email,units:0,vins:0,actualMins:0,sumTarget:0,cost:0,teamType:bd.teamType||'Unknown'};
+      if(!editorAcc[email])editorAcc[email]={email:email,units:0,vins:0,actualMins:0,sumTarget:0,cost:0,teamType:bd.teamType||'Unknown',byProduct:{}};
       var a=editorAcc[email];
       a.units+=bd.units||0;a.vins+=bd.vins||0;a.actualMins+=bd.actualMins||0;
       a.sumTarget+=bd.sumTarget||0;a.cost+=bd.cost||0;
       if(bd.teamType&&bd.teamType!=='Unknown')a.teamType=bd.teamType;
+      Object.entries(bd.byProduct||{}).forEach(function(pkv){
+        var pname=pkv[0],pu=pkv[1].units||0;
+        allProductNames.add(pname);
+        a.byProduct[pname]=(a.byProduct[pname]||0)+pu;
+      });
     });
   });
   const prodRows=Object.values(prodAcc).map(function(p){
@@ -1240,6 +1247,15 @@ function showEnterpriseDetail(name,e){
     ed.efficiency=ed.actualMins>0?+((ed.sumTarget/ed.actualMins)*100).toFixed(2):0;
     return ed;
   }).sort(function(a,b){return b.cost-a.cost;});
+
+  // Resolve up to 3 product columns to show: Images / 360 / Video (in that priority order)
+  const prodCols=[];
+  if([...allProductNames].some(function(n){return/image/i.test(n);}))prodCols.push({key:'image',label:'Image Units',rx:/image/i});
+  if([...allProductNames].some(function(n){return/360|spin/i.test(n);}))prodCols.push({key:'360',label:'360 Units',rx:/360|spin/i});
+  if([...allProductNames].some(function(n){return/video/i.test(n);}))prodCols.push({key:'video',label:'Video Units',rx:/video/i});
+  function prodUnitsFor(byProduct,rx){
+    return Object.entries(byProduct||{}).filter(function(kv){return rx.test(kv[0]);}).reduce(function(s,kv){return s+kv[1];},0);
+  }
 
   const prodBody=prodRows.length?prodRows.map(function(p){
     return'<tr><td>'+prodTag(p.name)+'</td>'+
@@ -1254,14 +1270,18 @@ function showEnterpriseDetail(name,e){
     const teamBadge=/payroll/i.test(ed.teamType)?
       '<span style="background:rgba(34,212,160,.15);color:#22d4a0;padding:1px 6px;border-radius:4px;font-size:12px;font-weight:600">Inhouse</span>':
       '<span style="background:rgba(245,164,42,.15);color:#f5a42a;padding:1px 6px;border-radius:4px;font-size:12px;font-weight:600">OS</span>';
+    const prodCells=prodCols.map(function(pc){return'<td class="r">'+f.num(prodUnitsFor(ed.byProduct,pc.rx))+'</td>';}).join('');
     return'<tr><td><div style="color:var(--text);font-weight:500">'+f.email(ed.email)+'</div>'+
       '<div style="font-size:12px;color:var(--muted)">'+ed.email+'</div></td>'+
       '<td>'+teamBadge+'</td>'+
-      '<td class="r">'+f.num(ed.units)+'</td>'+
+      prodCells+
+      '<td class="r" style="color:var(--text);font-weight:600">'+f.num(ed.units)+'</td>'+
       '<td class="r"><span class="'+effCls(ed.efficiency)+'">'+f.pct(ed.efficiency)+'</span></td>'+
       '<td class="r" style="color:var(--amber)">'+f.inr(ed.costPerUnit)+'</td>'+
       '<td class="r" style="color:var(--blue)">'+f.inr0(ed.cost)+'</td></tr>';
-  }).join(''):'<tr><td colspan="6" style="color:var(--muted);padding:14px;text-align:center">No editor data for this period</td></tr>';
+  }).join(''):'<tr><td colspan="'+(6+prodCols.length)+'" style="color:var(--muted);padding:14px;text-align:center">No editor data for this period</td></tr>';
+
+  const editorHeadCols=prodCols.map(function(pc){return'<th class="r">'+pc.label+'</th>';}).join('');
 
   const numMonths=months.length||1;
   const contractedAnnual=meta.contractedArr||0;
@@ -1270,7 +1290,7 @@ function showEnterpriseDetail(name,e){
   const modal=document.createElement('div');
   modal.style.cssText='position:fixed;inset:0;background:rgba(17,17,17,.92);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
   const inner=document.createElement('div');
-  inner.style.cssText='background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:760px;max-width:96vw;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.7)';
+  inner.style.cssText='background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:980px;max-width:97vw;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.7)';
   const closeBtn=document.createElement('button');
   closeBtn.textContent='✕';
   closeBtn.style.cssText='background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;line-height:1;float:right';
@@ -1292,29 +1312,16 @@ function showEnterpriseDetail(name,e){
     +'<div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Rooftops</div>'
     +'<div style="font-size:13px;color:var(--text)">'+(meta.activeRooftops||meta.rooftopCount||'—')+'</div></div>'
     +'</div>'
-    +'<div style="display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--border);flex-shrink:0">'
-    +'<button class="ent-tab-btn active" data-tab="trend" style="background:none;border:none;border-bottom:2px solid var(--blue);color:var(--text);padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">Month Trend</button>'
-    +'<button class="ent-tab-btn" data-tab="product" style="background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">By Product</button>'
-    +'<button class="ent-tab-btn" data-tab="user" style="background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">By User</button>'
-    +'</div>'
-    +'<div id="ent-tab-trend" class="ent-tab-pane" style="flex:1;min-height:0;overflow-y:auto">'
-    +'<div class="tbl-wrap"><table><thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr><th>Month</th><th class="r">Units</th><th class="r">VINs</th><th class="r">Efficiency</th><th class="r">₹/Unit</th></tr></thead>'
-    +'<tbody>'+trendRows+'</tbody></table></div></div>'
-    +'<div id="ent-tab-product" class="ent-tab-pane" style="display:none;flex:1;min-height:0;overflow-y:auto">'
-    +'<div class="tbl-wrap"><table><thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr><th>Product</th><th class="r">Units</th><th class="r">VINs</th><th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r">Cost</th></tr></thead>'
-    +'<tbody>'+prodBody+'</tbody></table></div></div>'
-    +'<div id="ent-tab-user" class="ent-tab-pane" style="display:none;flex:1;min-height:0;overflow-y:auto">'
-    +'<div class="tbl-wrap"><table><thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr><th>Editor</th><th>Team</th><th class="r">Units</th><th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r">Cost</th></tr></thead>'
-    +'<tbody>'+editorBody+'</tbody></table></div></div>';
+    +'<div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px;flex-shrink:0">Month-on-Month Performance</div>'
+    +'<div class="tbl-wrap" style="max-height:160px;overflow-y:auto;flex-shrink:0;margin-bottom:20px"><table><thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr><th>Month</th><th class="r">Units</th><th class="r">VINs</th><th class="r">Efficiency</th><th class="r">₹/Unit</th></tr></thead>'
+    +'<tbody>'+trendRows+'</tbody></table></div>'
+    +'<div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px;flex-shrink:0">Cost Breakdown by Product</div>'
+    +'<div class="tbl-wrap" style="max-height:200px;overflow-y:auto;flex-shrink:0;margin-bottom:20px"><table><thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr><th>Product</th><th class="r">Units</th><th class="r">VINs</th><th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r">Cost</th></tr></thead>'
+    +'<tbody>'+prodBody+'</tbody></table></div>'
+    +'<div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px;flex-shrink:0">Cost Breakdown by User</div>'
+    +'<div class="tbl-wrap" style="flex:1;min-height:0;overflow-y:auto"><table><thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr><th>Editor</th><th>Team</th>'+editorHeadCols+'<th class="r">Total Units</th><th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r">Cost</th></tr></thead>'
+    +'<tbody>'+editorBody+'</tbody></table></div>';
   inner.querySelector('#_modal_close_ent').replaceWith(closeBtn);
-  inner.querySelectorAll('.ent-tab-btn').forEach(function(btn){
-    btn.addEventListener('click',function(){
-      inner.querySelectorAll('.ent-tab-btn').forEach(function(b){b.classList.remove('active');b.style.color='var(--muted)';b.style.borderBottomColor='transparent';});
-      btn.classList.add('active');btn.style.color='var(--text)';btn.style.borderBottomColor='var(--blue)';
-      inner.querySelectorAll('.ent-tab-pane').forEach(function(p){p.style.display='none';});
-      inner.querySelector('#ent-tab-'+btn.dataset.tab).style.display='block';
-    });
-  });
   modal.appendChild(inner);
   modal.addEventListener('click',function(ev){if(ev.target===modal)modal.remove();});
   document.body.appendChild(modal);
