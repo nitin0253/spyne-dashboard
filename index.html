@@ -1129,7 +1129,7 @@ function showSegmentDetail(idx){
   function buildRows(){
     return sortedRows().map(function(e,i){
       return'<tr>'+
-        '<td class="bright" style="max-width:160px;overflow:hidden;text-overflow:ellipsis" title="'+e.name+'">'+e.name+'</td>'+
+        '<td class="bright" style="max-width:220px;overflow:hidden;text-overflow:ellipsis" title="'+e.name+'">'+e.name+'</td>'+
         '<td style="font-size:12px;color:var(--muted);font-family:var(--mono)">'+e.entId+'</td>'+
         '<td style="font-size:13px;color:var(--sub)">'+e.csPoc+'</td>'+
         '<td class="r">'+(e.rooftops||'—')+'</td>'+
@@ -1146,7 +1146,7 @@ function showSegmentDetail(idx){
   modal.style.cssText='position:fixed;inset:0;background:rgba(10,10,10,.9);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
 
   var inner=document.createElement('div');
-  inner.style.cssText='background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:1040px;max-width:96vw;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.7)';
+  inner.style.cssText='background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:1320px;max-width:97vw;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.7)';
 
   var moLabel=numMonths===1?'1 month':numMonths+' months';
   inner.innerHTML=
@@ -2156,7 +2156,7 @@ function showPocDetail(pocRow, months) {
       var pctBar = a.pct > 0 ? '<div style="display:inline-block;width:' + Math.min(a.pct * 2, 80) + 'px;height:4px;background:' + (a.pct > 10 ? '#f0566a' : a.pct > 5 ? '#f5a42a' : '#22d4a0') + ';border-radius:2px;vertical-align:middle;margin-left:4px"></div>' : '';
       return '<tr>'
         + '<td class="rank-num">' + (i+1) + '</td>'
-        + '<td class="bright" style="max-width:180px;overflow:hidden;text-overflow:ellipsis" title="' + a.name + '">' + a.name + '</td>'
+        + '<td class="bright" style="max-width:240px;overflow:hidden;text-overflow:ellipsis" title="' + a.name + '">' + a.name + '</td>'
         + '<td style="font-size:12px;color:var(--muted);font-family:var(--mono)">' + a.entId + '</td>'
         + '<td>' + segBadge + '</td>'
         + '<td style="font-size:12px;color:var(--muted);text-align:right">' + (a.activeRooftops || '—') + '</td>'
@@ -2199,7 +2199,7 @@ function showPocDetail(pocRow, months) {
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(10,10,10,.9);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
 
   var inner = document.createElement('div');
-  inner.style.cssText = 'background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:880px;max-width:95vw;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.7)';
+  inner.style.cssText = 'background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:1240px;max-width:97vw;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.7)';
   inner.innerHTML = ''
     + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;flex-shrink:0">'
     +   '<div>'
