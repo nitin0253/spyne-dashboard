@@ -840,8 +840,21 @@ function updateFilterBtn(key){
 function initFilters(){
   if(!DATA)return;
   const months=DATA.months;
-  // Date range: initialize to "this month" preset
-  applyPreset('thismonth',true); // true = silent (no re-render yet)
+  // Default to the latest month that has actual data — avoids "No data matches filter"
+  // when the calendar month hasn't started yet (e.g. data ends June but today is July).
+  const lastMonth=months[months.length-1];
+  const lastKey=lastMonth?lastMonth.key:'';
+  const parsed=lastKey?parseMonthKey(lastKey):null;
+  if(parsed){
+    const start=new Date(parsed.year,parsed.month,1);
+    const end=new Date(parsed.year,parsed.month+1,0);
+    DR.start=start;DR.end=end;DR.preset='lastmonth';
+    document.querySelectorAll('.dr-preset').forEach(b=>b.classList.remove('active'));
+    const btn=document.getElementById('dr-p-lastmonth');if(btn)btn.classList.add('active');
+    setDRLabel(lastMonth.month.replace('-',' '));
+  }else{
+    applyPreset('all',true);
+  }
   const segs=[...new Set(months.flatMap(m=>m.segmentBreakdown.map(s=>s.name)))].sort();
   buildDropdown('segment',segs);
   const prods=[...new Set(months.flatMap(m=>m.productBreakdown.map(p=>p.name)))];
@@ -956,7 +969,7 @@ function renderCal(){
       else if(date.getTime()===e.getTime())cls+=' range-end';
       else if(date>s&&date<e)cls+=' in-range';
     }
-    html+='<div class="'+cls+'" onclick="calClickDay('+y+','+mo+','+d+')">'+d+'</div>';
+    html+='<div class="'+cls+'" onclick="calClickDay(event,'+y+','+mo+','+d+')">'+d+'</div>';
   }
   // Next month padding
   const totalCells=Math.ceil((firstDay+daysInMonth)/7)*7;
@@ -968,7 +981,12 @@ function renderCal(){
   updateCalLabel();
 }
 
-function calClickDay(y,mo,d){
+function calClickDay(ev,y,mo,d){
+  // Stop propagation so the global "click outside to close" listener doesn't
+  // fire while we're mid-selection (step 0 → picking start date).
+  // On step 1 we intentionally let the panel stay open until end-date is picked,
+  // and closing happens explicitly inside this function after the range is set.
+  if(ev&&ev.stopPropagation)ev.stopPropagation();
   const clicked=new Date(y,mo,d);
   if(calPickStep===0){
     calTempStart=clicked;calPickStep=1;
