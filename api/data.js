@@ -560,11 +560,50 @@ function computeMonth(config, outputRows, factorRows, enterpriseRows, removedRow
       pd.images = Math.round(pd.images); pd.vins = Math.round(pd.vins);
       pd.actualMins = Math.round(pd.actualMins); pd.sumTarget = Math.round(pd.sumTarget);
     });
+    // ── Editor (user) breakdown for this enterprise — who worked on it, and at what cost
+    const byEditor = {};
+    entRows.forEach(r => {
+      const email = (r.qcEditor || '').toLowerCase().trim();
+      if (!email) return;
+      if (!byEditor[email]) byEditor[email] = { units:0, skus:0, images:0, vins:0, actualMins:0, sumTarget:0, rows:0 };
+      const be = byEditor[email];
+      be.units      += billingUnits(r);
+      be.skus       += r.skus;
+      be.images     += r.images;
+      be.vins       += r.skus;
+      be.actualMins += r.actualMins;
+      be.sumTarget  += r.sumTarget;
+      be.rows++;
+    });
+    Object.entries(byEditor).forEach(([email, be]) => {
+      // Prefer this editor's exact salary cost prorated by their share of THIS
+      // enterprise's actualMins (consistent with how product cost is prorated
+      // above) — falls back to the global cost-per-minute rate if the editor
+      // has no salary record (e.g. excluded/contractor rows).
+      const ec = editorCostMap[email];
+      let beCost;
+      if (ec && ec.totalCost > 0) {
+        // Editor's salary cost, scaled by the share of THEIR OWN total minutes
+        // that went into this specific enterprise (not the global total).
+        const editorAllMins = editorGroups[email]?.actualMins || be.actualMins || 1;
+        beCost = ec.totalCost * (be.actualMins / editorAllMins);
+      } else {
+        beCost = totalActMins > 0 ? (be.actualMins / totalActMins) * totalCost : 0;
+      }
+      be.cost = Math.round(beCost);
+      be.costPerUnit = be.units > 0 ? +(beCost / be.units).toFixed(2) : 0;
+      be.efficiency  = be.actualMins > 0 ? +((be.sumTarget / be.actualMins) * 100).toFixed(2) : 0;
+      be.teamType    = ec?.teamType || 'Unknown';
+      be.units = Math.round(be.units); be.skus = Math.round(be.skus);
+      be.images = Math.round(be.images); be.vins = Math.round(be.vins);
+      be.actualMins = Math.round(be.actualMins); be.sumTarget = Math.round(be.sumTarget);
+    });
     // Look up Metabase meta by normalized name match
     const meta = metaIndex ? lookupMeta(metaIndex, name) : null;
     return {
       ...enrichGroup(name, g, cost),
       byProduct,
+      byEditor,
       segment:          lookupEnt(entMap, name)?.segment          || meta?.segment || 'Unknown',
       inventoryVersion: lookupEnt(entMap, name)?.inventoryVersion || '',
       // Metabase enrichment fields
