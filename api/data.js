@@ -225,7 +225,7 @@ function parseOutput(rows, excludeSet) {
       type:       (r[3] || '').toLowerCase().trim(),
       enterprise: r[4]  || '',
       dealerType: r[5]  || '',
-      qcEditor:   r[6]  || '',
+      qcEditor:   (r[6] || '').toLowerCase().trim(),
       skus:       +r[7]  || 0,
       images:     +r[8]  || 0,
       tools:      +r[9]  || 0,
@@ -312,6 +312,41 @@ function groupSum(rows, keyFn) {
     acc[k].rows++;
   });
   return acc;
+}
+
+// Same as groupSum, but groups by a case/whitespace-insensitive key while
+// preserving the most frequently occurring original casing as the display
+// label. Use this for free-text fields like enterprise names, where the
+// same enterprise may be typed with inconsistent casing across different
+// rows/days — exact-string grouping would otherwise silently split one
+// enterprise into multiple rows with the totals divided between them.
+function groupSumNormalized(rows, keyFn) {
+  const acc = {};         // normKey -> { images, skus, units, ..., labelCounts: {label: count} }
+  rows.forEach(r => {
+    const rawKey = keyFn(r) || 'Unknown';
+    const normKey = rawKey.toLowerCase().trim();
+    if (!acc[normKey]) acc[normKey] = { images:0, skus:0, units:0, vins:0, actualMins:0, sumTarget:0, rows:0, labelCounts:{} };
+    const a = acc[normKey];
+    a.images     += r.images;
+    a.skus       += r.skus;
+    a.units      += billingUnits(r);
+    a.vins       += r.skus;
+    a.actualMins += r.actualMins;
+    a.sumTarget  += r.sumTarget;
+    a.rows++;
+    a.labelCounts[rawKey] = (a.labelCounts[rawKey] || 0) + 1;
+  });
+  // Resolve each group's display label to whichever original casing appeared most often
+  const result = {};
+  Object.entries(acc).forEach(([normKey, g]) => {
+    let bestLabel = normKey, bestCount = -1;
+    Object.entries(g.labelCounts).forEach(([label, count]) => {
+      if (count > bestCount) { bestCount = count; bestLabel = label; }
+    });
+    const { labelCounts, ...rest } = g;
+    result[bestLabel] = rest;
+  });
+  return result;
 }
 
 function enrichGroup(name, g, allocatedCost) {
@@ -475,7 +510,7 @@ function computeMonth(config, outputRows, factorRows, enterpriseRows, removedRow
     const seg360Skus  = segRows.filter(r => is360(r.product)).reduce((s,r) => s + r.skus, 0);
     const segVideoIds = segRows.filter(r => isVideo(r.product)).reduce((s,r) => s + r.skus, 0);
 
-    const entGroups2 = groupSum(segRows, r => r.enterprise);
+    const entGroups2 = groupSumNormalized(segRows, r => r.enterprise);
     const topEnterprises = Object.entries(entGroups2).map(([eName, eg]) => {
       const eCost = totalActMins > 0 ? (eg.actualMins / totalActMins) * totalCost : 0;
       return { ...enrichGroup(eName, eg, eCost), inventoryVersion: lookupEnt(entMap, eName)?.inventoryVersion || '' };
@@ -499,10 +534,11 @@ function computeMonth(config, outputRows, factorRows, enterpriseRows, removedRow
   }).sort((a, b) => b.units - a.units);
 
   // ── Enterprise breakdown (top 25)
-  const entGroups = groupSum(enriched, r => r.enterprise);
+  const entGroups = groupSumNormalized(enriched, r => r.enterprise);
   const enterpriseBreakdown = Object.entries(entGroups).map(([name, g]) => {
     const cost = totalActMins > 0 ? (g.actualMins / totalActMins) * totalCost : 0;
-    const entRows = enriched.filter(r => r.enterprise === name);
+    const nameNorm = name.toLowerCase().trim();
+    const entRows = enriched.filter(r => (r.enterprise || '').toLowerCase().trim() === nameNorm);
     const byProduct = {};
     entRows.forEach(r => {
       const p = r.product;
