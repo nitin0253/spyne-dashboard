@@ -557,14 +557,30 @@ function applyEntMeta(rawMeta){
 
   // Build CS POC + OB POC filter dropdowns (these were declared in HTML but
   // never populated — applyEntMeta is what fills them once meta is available).
-  var csPocs=new Set(),obPocs=new Set();
+  // Deduplicated case-insensitively — the Metabase CSV may have the same
+  // person's email typed with inconsistent casing across different rows.
+  function dedupeCaseInsensitive(values){
+    var seen={}; // normKey -> {label, count}
+    values.forEach(function(v){
+      var k=v.toLowerCase().trim();
+      if(!seen[k])seen[k]={label:v,count:0};
+      seen[k].count++;
+      // Prefer all-lowercase-looking emails as the canonical display form when tied,
+      // otherwise keep whichever casing appeared most often.
+      if(v.toLowerCase().trim()===v.trim())seen[k].label=v;
+    });
+    return Object.values(seen).map(function(s){return s.label;});
+  }
+  var csPocsRaw=[],obPocsRaw=[];
   Object.values(ENT_META).forEach(function(m){
-    if(m.csPoc)csPocs.add(m.csPoc);
-    if(m.obPoc)obPocs.add(m.obPoc);
+    if(m.csPoc)csPocsRaw.push(m.csPoc);
+    if(m.obPoc)obPocsRaw.push(m.obPoc);
   });
+  var csPocs=dedupeCaseInsensitive(csPocsRaw);
+  var obPocs=dedupeCaseInsensitive(obPocsRaw);
   if(typeof buildDropdown==='function'){
-    if(FILTERS&&FILTERS.cspoc)buildDropdown('cspoc',[].concat([...csPocs]).sort());
-    if(FILTERS&&FILTERS.obpoc)buildDropdown('obpoc',[].concat([...obPocs]).sort());
+    if(FILTERS&&FILTERS.cspoc)buildDropdown('cspoc',csPocs.sort());
+    if(FILTERS&&FILTERS.obpoc)buildDropdown('obpoc',obPocs.sort());
   }
 
   console.log('[applyEntMeta] populated',Object.keys(ENT_META).length,'enterprises,',
@@ -637,6 +653,26 @@ function deepMerge(b,o){for(const k in o){if(o[k]&&typeof o[k]==='object'&&!Arra
 // ── FILTERS ──────────────────────────────────────────────────────────────────
 const FILTERS={month:{all:[],selected:new Set()},segment:{all:[],selected:new Set()},product:{all:[],selected:new Set()},user:{all:[],selected:new Set()},cspoc:{all:[],selected:new Set()},obpoc:{all:[],selected:new Set()}};
 function passesFilter(key,value){const f=FILTERS[key];if(!f||f.selected.size===0||f.selected.size===f.all.length)return true;return f.selected.has(value);}
+// Case-insensitive membership check — CS POC / OB POC values may have inconsistent
+// casing across rows in the source CSV even though the dropdown shows deduped labels.
+function setHasCI(set,value){
+  if(!value)return false;
+  if(set.has(value))return true;
+  var vNorm=value.toLowerCase().trim();
+  for(var item of set){if(item.toLowerCase().trim()===vNorm)return true;}
+  return false;
+}
+
+// Global Esc-to-close for any detail modal. All modals are appended directly
+// to document.body as position:fixed overlays with z-index 999 — find and
+// remove the most recently opened one when Escape is pressed.
+document.addEventListener('keydown',function(ev){
+  if(ev.key!=='Escape')return;
+  var overlays=Array.from(document.body.children).filter(function(el){
+    return el.tagName==='DIV'&&el.style&&el.style.position==='fixed'&&el.style.zIndex==='999';
+  });
+  if(overlays.length){overlays[overlays.length-1].remove();}
+});
 // DATE RANGE STATE
 // DR.start and DR.end are Date objects (or null = no filter)
 const DR={start:null,end:null,preset:'thismonth'};
@@ -1728,9 +1764,9 @@ function renderEntTable(){
     var cs=e.csPoc||meta.csPoc||'';
     var segOk=passesFilter('segment',seg);
     var csOk=FILTERS.cspoc.selected.size===0||FILTERS.cspoc.selected.size===FILTERS.cspoc.all.length||
-              (cs&&FILTERS.cspoc.selected.has(cs));
+              (cs&&setHasCI(FILTERS.cspoc.selected,cs));
     var obOk=FILTERS.obpoc.selected.size===0||FILTERS.obpoc.selected.size===FILTERS.obpoc.all.length||
-              (meta.obPoc&&FILTERS.obpoc.selected.has(meta.obPoc));
+              (meta.obPoc&&setHasCI(FILTERS.obpoc.selected,meta.obPoc));
     return segOk&&csOk&&obOk;
   });
   rows=applySortArr(rows,_entSort.col,_entSort.dir).slice(0,50);
@@ -1933,15 +1969,20 @@ function buildPocData(months) {
   });
 
   // Build POC → {mrr: USD×numMonths, cost: INR, numMonths, enterprises:[]}
+  // Grouped by normalized (lowercase+trim) POC email — the Metabase CSV may have
+  // the same person's email typed with inconsistent casing across rows, which
+  // would otherwise silently split one POC into multiple chart entries.
   const pocMap = {};
+  const pocLabelCounts = {}; // normKey -> { label: count } — resolves display casing
   Object.entries(ENT_META).forEach(function([entName, meta]) {
-    const poc = (meta.csPoc && meta.csPoc !== '') ? meta.csPoc : (meta.obPoc || '');
-    if (!poc) return;
+    const rawPoc = (meta.csPoc && meta.csPoc !== '') ? meta.csPoc : (meta.obPoc || '');
+    if (!rawPoc) return;
+    const poc = rawPoc.toLowerCase().trim();
 
     const csOk = FILTERS.cspoc.selected.size === 0 || FILTERS.cspoc.selected.size === FILTERS.cspoc.all.length ||
-                 (meta.csPoc && FILTERS.cspoc.selected.has(meta.csPoc));
+                 (meta.csPoc && setHasCI(FILTERS.cspoc.selected,meta.csPoc));
     const obOk = FILTERS.obpoc.selected.size === 0 || FILTERS.obpoc.selected.size === FILTERS.obpoc.all.length ||
-                 (meta.obPoc && FILTERS.obpoc.selected.has(meta.obPoc));
+                 (meta.obPoc && setHasCI(FILTERS.obpoc.selected,meta.obPoc));
     if (!csOk && !obOk) return;
 
     if (!entCosts[entName] && (meta.contractedArr || 0) === 0) return;
@@ -1953,6 +1994,19 @@ function buildPocData(months) {
     pocMap[poc].mrr  += mrrUSD;                    // USD — MRR × numMonths
     pocMap[poc].cost += (entCosts[entName] || 0);  // INR — actual delivery cost
     pocMap[poc].enterprises.push(entName);
+
+    if (!pocLabelCounts[poc]) pocLabelCounts[poc] = {};
+    pocLabelCounts[poc][rawPoc] = (pocLabelCounts[poc][rawPoc] || 0) + 1;
+  });
+
+  // Resolve each group's display label to its most frequently occurring original casing
+  Object.entries(pocMap).forEach(function([normKey, row]) {
+    const counts = pocLabelCounts[normKey] || {};
+    let bestLabel = normKey, bestCount = -1;
+    Object.entries(counts).forEach(function([label, count]) {
+      if (count > bestCount) { bestCount = count; bestLabel = label; }
+    });
+    row.poc = bestLabel;
   });
 
   return Object.values(pocMap)
