@@ -346,9 +346,11 @@ function computeMonth(config, outputRows, factorRows, enterpriseRows, removedRow
   const entMap = parseEnterprise(enterpriseRows);
 
   // Editor cost lookup: email → { totalCost, inhouseCost, osCost, teamType, factor }
+  // Keys are normalized (lowercase+trim) so lookups by qcEditor (which may have
+  // different casing in the output sheet) still match.
   const editorCostMap = {};
   employees.forEach(e => {
-    editorCostMap[e.email] = {
+    editorCostMap[(e.email || '').toLowerCase().trim()] = {
       totalCost:   e.totalCost,
       inhouseCost: e.inhouseCost,
       osCost:      e.osCost,
@@ -407,10 +409,25 @@ function computeMonth(config, outputRows, factorRows, enterpriseRows, removedRow
 
   // ── Editor breakdown — use exact cost from factor_calculation
   const editorGroups = groupSum(enriched, r => r.qcEditor);
+  const totalUnitsAllEditors = Object.values(editorGroups).reduce((s, g) => s + g.units, 0) || 1;
   const editorBreakdown = Object.entries(editorGroups).map(([email, g]) => {
-    const ec   = editorCostMap[email.toLowerCase().trim()];
-    const cost = ec ? ec.totalCost
-               : totalActMins > 0 ? (g.actualMins / totalActMins) * totalCost : 0;
+    const ec = editorCostMap[email.toLowerCase().trim()];
+    if (!ec && g.units > 0) {
+      console.warn(`[${config.month}] No salary record for editor "${email}" (${g.units} units, ${g.actualMins} mins) — check for typos vs factor_calculation sheet`);
+    }
+    let cost;
+    if (ec) {
+      cost = ec.totalCost;
+    } else if (g.actualMins > 0 && totalActMins > 0) {
+      // Primary fallback: allocate by share of actual minutes worked
+      cost = (g.actualMins / totalActMins) * totalCost;
+    } else if (g.units > 0) {
+      // Secondary fallback: actualMins missing/zero for this editor's rows —
+      // allocate proportionally by units instead, so cost isn't silently ₹0
+      cost = (g.units / totalUnitsAllEditors) * totalCost;
+    } else {
+      cost = 0;
+    }
     const byProduct = {};
     enriched.filter(r => r.qcEditor === email).forEach(r => {
       if (!byProduct[r.product]) byProduct[r.product] = 0;
