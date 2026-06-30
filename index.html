@@ -513,6 +513,7 @@ select.sel:focus{border-color:var(--blue)}
         <th class="r sortable-ent" data-col="units" style="cursor:pointer">Units<span id="se-units" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
         <th class="r sortable-ent" data-col="totalCost" style="cursor:pointer">Delivery Cost<span id="se-totalCost" style="font-size:12px;color:var(--blue);margin-left:2px"> ▼</span></th>
         <th class="r sortable-ent" data-col="costPerUnit" style="cursor:pointer">₹/Unit<span id="se-costPerUnit" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r sortable-ent" data-col="costMrrPct" style="cursor:pointer">Cost/MRR %<span id="se-costMrrPct" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
       </tr></thead>
       <tbody id="co-ent-tbl"></tbody>
     </table></div>
@@ -907,6 +908,36 @@ function applyPreset(preset,silent){
     DR.start=new Date(y,mo-5,1);DR.end=new Date(y,mo+1,0);
     setDRLabel('Last 6 months');
   }
+  // Clamp to actual data range so presets like "This month" never produce empty results
+  // when the calendar month is ahead of the latest available data month.
+  if(DATA&&(DR.start||DR.end)){
+    const dataMonths=DATA.months;
+    if(dataMonths&&dataMonths.length){
+      const firstParsed=parseMonthKey(dataMonths[0].key);
+      const lastParsed=parseMonthKey(dataMonths[dataMonths.length-1].key);
+      if(firstParsed&&lastParsed){
+        const dataStart=new Date(firstParsed.year,firstParsed.month,1);
+        const dataEnd=new Date(lastParsed.year,lastParsed.month+1,0);
+        // If computed range is entirely after data ends, snap to last data month
+        if(DR.start&&DR.start>dataEnd){
+          DR.start=new Date(lastParsed.year,lastParsed.month,1);
+          DR.end=dataEnd;
+          setDRLabel(dataMonths[dataMonths.length-1].month.replace('-',' '));
+        }
+        // If computed range is entirely before data starts, snap to first data month
+        else if(DR.end&&DR.end<dataStart){
+          DR.start=dataStart;
+          DR.end=new Date(firstParsed.year,firstParsed.month+1,0);
+          setDRLabel(dataMonths[0].month.replace('-',' '));
+        }
+        // Otherwise clamp the boundaries into the data range
+        else{
+          if(DR.start&&DR.start<dataStart)DR.start=dataStart;
+          if(DR.end&&DR.end>dataEnd)DR.end=dataEnd;
+        }
+      }
+    }
+  }
   calPickStep=0;calTempStart=null;
   if(!silent){document.getElementById('dr-panel').classList.remove('open');renderAll();}
 }
@@ -1133,6 +1164,9 @@ function showSegmentDetail(idx){
   var accounts=Object.values(entMap).map(function(e){
     var meta=entMeta(e.name);
     var annualContracted=meta.contractedArr||0;
+    var contractedMRR=Math.round((annualContracted/12)*numMonths);
+    var contractedMRRinr=contractedMRR*83;
+    var costMrrPct=contractedMRRinr>0?+((e.totalCost/contractedMRRinr)*100).toFixed(2):null;
     return{
       name:       e.name,
       entId:      meta.entId||'—',
@@ -1144,8 +1178,8 @@ function showSegmentDetail(idx){
       efficiency: e.actualMins>0?+((e.sumTarget/e.actualMins)*100).toFixed(2):0,
       costPerUnit:e.units>0?+(e.costPerUnit_sum/e.units).toFixed(2):0,
       totalCost:  e.totalCost,
-      // MRR × numMonths
-      contractedMRR: Math.round((annualContracted/12)*numMonths),
+      contractedMRR,
+      costMrrPct: costMrrPct!==null?costMrrPct:0,
     };
   }).sort(function(a,b){return b.totalCost-a.totalCost;});
 
@@ -1185,6 +1219,7 @@ function showSegmentDetail(idx){
       th('contractedMRR','Contracted MRR')+
       th('totalCost','Delivery Cost')+
       th('costPerUnit','₹/Unit')+
+      th('costMrrPct','Cost/MRR %')+
       '</tr></thead>';
   }
 
@@ -1200,6 +1235,8 @@ function showSegmentDetail(idx){
         '<td class="r" style="color:#38c4f0">'+fmtUSD(e.contractedMRR)+'</td>'+
         '<td class="r" style="color:var(--blue)">'+fmtInr(e.totalCost)+'</td>'+
         '<td class="r" style="color:var(--amber)">'+f.inr(e.costPerUnit)+'</td>'+
+        '<td class="r" style="color:'+(e.costMrrPct>10?'#f0566a':e.costMrrPct>5?'#f5a42a':e.costMrrPct>0?'#22d4a0':'var(--muted)')+'">'+
+          (e.contractedMRR>0?e.costMrrPct.toFixed(2)+'%':'—')+'</td>'+
         '</tr>';
     }).join('');
   }
@@ -1264,12 +1301,7 @@ function showEnterpriseDetail(name,e){
     const eb=enterpriseProdData(m).find(function(x){return x.name===name;});
     return eb?{month:m.month,units:eb.units,vins:eb.vins,efficiency:eb.efficiency,costPerUnit:eb.costPerUnit}:null;
   }).filter(Boolean);
-  const trendRows=monthRows.map(function(r){
-    return'<tr><td class="bright">'+r.month+'</td><td class="r">'+f.num(r.units)+'</td>'+
-      '<td class="r" style="color:var(--purple)">'+f.num(r.vins)+'</td>'+
-      '<td class="r"><span class="'+effCls(r.efficiency)+'">'+f.pct(r.efficiency)+'</span></td>'+
-      '<td class="r" style="color:var(--amber)">'+f.inr(r.costPerUnit)+'</td></tr>';
-  }).join('');
+  const trendRowsData=monthRows; // used below after contractedMRRinr is computed
 
   // ── Aggregate byProduct + byEditor (with per-product split) across the filtered months
   const prodAcc={},editorAcc={};
@@ -1319,14 +1351,41 @@ function showEnterpriseDetail(name,e){
     return Object.entries(byProduct||{}).filter(function(kv){return rx.test(kv[0]);}).reduce(function(s,kv){return s+kv[1];},0);
   }
 
+  const numMonths=months.length||1;
+  const contractedAnnual=meta.contractedArr||0;
+  const contractedMRR=(contractedAnnual/12)*numMonths;
+  const contractedMRRinr=contractedMRR*83; // convert USD to INR for % calc
+  const mrrLabel=numMonths===1?'Contracted MRR':'Contracted MRR \u00d7'+numMonths;
+
+  // Shared helper: formats Cost/MRR % cell with colour coding + mini bar
+  function costMrrCell(cost){
+    if(!contractedMRRinr)return'<td class="r" style="color:var(--muted)">—</td>';
+    var pct=+((cost/contractedMRRinr)*100).toFixed(2);
+    var color=pct>10?'#f0566a':pct>5?'#f5a42a':'#22d4a0';
+    var bar='<div style="display:inline-block;width:'+Math.min(pct*2,80)+'px;height:4px;background:'+color+';border-radius:2px;vertical-align:middle;margin-left:4px"></div>';
+    return'<td class="r" style="color:'+color+';white-space:nowrap">'+pct.toFixed(2)+'%'+bar+'</td>';
+  }
+
+  const trendRows=trendRowsData.map(function(r){
+    var monthCost=r.units&&e.costPerUnit?(r.units*e.costPerUnit):0;
+    return'<tr><td class="bright">'+r.month+'</td><td class="r">'+f.num(r.units)+'</td>'+
+      '<td class="r" style="color:var(--purple)">'+f.num(r.vins)+'</td>'+
+      '<td class="r"><span class="'+effCls(r.efficiency)+'">'+f.pct(r.efficiency)+'</span></td>'+
+      '<td class="r" style="color:var(--amber)">'+f.inr(r.costPerUnit)+'</td>'+
+      costMrrCell(r.units*(r.costPerUnit||0))+
+      '</tr>';
+  }).join('');
+
   const prodBody=prodRows.length?prodRows.map(function(p){
     return'<tr><td>'+prodTag(p.name)+'</td>'+
       '<td class="r">'+f.num(p.units)+'</td>'+
       '<td class="r" style="color:var(--purple)">'+f.num(p.vins)+'</td>'+
       '<td class="r"><span class="'+effCls(p.efficiency)+'">'+f.pct(p.efficiency)+'</span></td>'+
       '<td class="r" style="color:var(--amber)">'+f.inr(p.costPerUnit)+'</td>'+
-      '<td class="r" style="color:var(--blue)">'+f.inr0(p.cost)+'</td></tr>';
-  }).join(''):'<tr><td colspan="6" style="color:var(--muted);padding:14px;text-align:center">No product data for this period</td></tr>';
+      '<td class="r" style="color:var(--blue)">'+f.inr0(p.cost)+'</td>'+
+      costMrrCell(p.cost)+
+      '</tr>';
+  }).join(''):'<tr><td colspan="7" style="color:var(--muted);padding:14px;text-align:center">No product data for this period</td></tr>';
 
   const editorBody=editorRows.length?editorRows.map(function(ed){
     const teamBadge=/payroll/i.test(ed.teamType)?
@@ -1340,15 +1399,12 @@ function showEnterpriseDetail(name,e){
       '<td class="r" style="color:var(--text);font-weight:600">'+f.num(ed.units)+'</td>'+
       '<td class="r"><span class="'+effCls(ed.efficiency)+'">'+f.pct(ed.efficiency)+'</span></td>'+
       '<td class="r" style="color:var(--amber)">'+f.inr(ed.costPerUnit)+'</td>'+
-      '<td class="r" style="color:var(--blue)">'+f.inr0(ed.cost)+'</td></tr>';
-  }).join(''):'<tr><td colspan="'+(6+prodCols.length)+'" style="color:var(--muted);padding:14px;text-align:center">No editor data for this period</td></tr>';
+      '<td class="r" style="color:var(--blue)">'+f.inr0(ed.cost)+'</td>'+
+      costMrrCell(ed.cost)+
+      '</tr>';
+  }).join(''):'<tr><td colspan="'+(7+prodCols.length)+'" style="color:var(--muted);padding:14px;text-align:center">No editor data for this period</td></tr>';
 
   const editorHeadCols=prodCols.map(function(pc){return'<th class="r">'+pc.label+'</th>';}).join('');
-
-  const numMonths=months.length||1;
-  const contractedAnnual=meta.contractedArr||0;
-  const contractedMRR=(contractedAnnual/12)*numMonths;
-  const mrrLabel=numMonths===1?'Contracted MRR':'Contracted MRR \u00d7'+numMonths;
   const modal=document.createElement('div');
   modal.style.cssText='position:fixed;inset:0;background:rgba(17,17,17,.92);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
   const inner=document.createElement('div');
@@ -1375,13 +1431,13 @@ function showEnterpriseDetail(name,e){
     +'<div style="font-size:13px;color:var(--text)">'+(meta.activeRooftops||meta.rooftopCount||'—')+'</div></div>'
     +'</div>'
     +'<div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px;flex-shrink:0">Month-on-Month Performance</div>'
-    +'<div class="tbl-wrap" style="max-height:160px;overflow-y:auto;flex-shrink:0;margin-bottom:20px"><table><thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr><th>Month</th><th class="r">Units</th><th class="r">VINs</th><th class="r">Efficiency</th><th class="r">₹/Unit</th></tr></thead>'
+    +'<div class="tbl-wrap" style="max-height:160px;overflow-y:auto;flex-shrink:0;margin-bottom:20px"><table><thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr><th>Month</th><th class="r">Units</th><th class="r">VINs</th><th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r" style="color:#f5a42a">Cost/MRR %</th></tr></thead>'
     +'<tbody>'+trendRows+'</tbody></table></div>'
     +'<div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px;flex-shrink:0">Cost Breakdown by Product</div>'
-    +'<div class="tbl-wrap" style="max-height:200px;overflow-y:auto;flex-shrink:0;margin-bottom:20px"><table><thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr><th>Product</th><th class="r">Units</th><th class="r">VINs</th><th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r">Cost</th></tr></thead>'
+    +'<div class="tbl-wrap" style="max-height:200px;overflow-y:auto;flex-shrink:0;margin-bottom:20px"><table><thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr><th>Product</th><th class="r">Units</th><th class="r">VINs</th><th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r">Cost</th><th class="r" style="color:#f5a42a">Cost/MRR %</th></tr></thead>'
     +'<tbody>'+prodBody+'</tbody></table></div>'
     +'<div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px;flex-shrink:0">Cost Breakdown by User</div>'
-    +'<div class="tbl-wrap" style="flex:1;min-height:0;overflow-y:auto"><table><thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr><th>Editor</th><th>Team</th>'+editorHeadCols+'<th class="r">Total Units</th><th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r">Cost</th></tr></thead>'
+    +'<div class="tbl-wrap" style="flex:1;min-height:0;overflow-y:auto"><table><thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr><th>Editor</th><th>Team</th>'+editorHeadCols+'<th class="r">Total Units</th><th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r">Cost</th><th class="r" style="color:#f5a42a">Cost/MRR %</th></tr></thead>'
     +'<tbody>'+editorBody+'</tbody></table></div>';
   inner.querySelector('#_modal_close_ent').replaceWith(closeBtn);
   modal.appendChild(inner);
@@ -1766,7 +1822,7 @@ function renderUserSummary(months){
   });o._wired=true;}
 }
 
-window.cycleSortEnt=mkSorter('se',['enterprise','entId','segment','csPoc','obPoc','contractedArrNum','vins','units','totalCost','costPerUnit'],function(col,dir){_entSort.col=col;_entSort.dir=dir;renderEntTable();});
+window.cycleSortEnt=mkSorter('se',['enterprise','entId','segment','csPoc','obPoc','contractedArrNum','vins','units','totalCost','costPerUnit','costMrrPct'],function(col,dir){_entSort.col=col;_entSort.dir=dir;renderEntTable();});
 // Wire click delegation for all sortable-ent headers
 document.addEventListener('click',function(e){
   var th=e.target.closest('.sortable-ent');
@@ -1820,6 +1876,12 @@ function renderEntTable(){
     var rag=meta.rag||'';
     var ragColor=rag==='Green'?'#22d4a0':rag==='Amber'?'#f5a42a':rag==='Red'?'#f0566a':rag.includes('Churn')?'#a07cff':'#666';
     var ragBadge=rag?'<span style="font-size:11px;padding:1px 5px;border-radius:3px;background:'+ragColor+'22;color:'+ragColor+';margin-left:4px">'+rag+'</span>':'';
+    // Cost/Contracted MRR % = delivery cost (INR) / (contractedMRR USD × 83) × 100
+    var contractedAnnualNum=parseFloat(String(meta.contractedArr||0).replace(/[^0-9.]/g,''))||0;
+    var contractedMRRinr=((contractedAnnualNum/12)*numMonths)*83;
+    var costMrrPct=contractedMRRinr>0?+((( e.totalCost||0)/contractedMRRinr)*100).toFixed(2):null;
+    var costMrrColor=costMrrPct===null?'var(--muted)':costMrrPct>10?'#f0566a':costMrrPct>5?'#f5a42a':'#22d4a0';
+    var costMrrBar=costMrrPct>0?'<div style="display:inline-block;width:'+Math.min(costMrrPct*2,80)+'px;height:4px;background:'+costMrrColor+';border-radius:2px;vertical-align:middle;margin-left:4px"></div>':'';
     return'<tr style="cursor:pointer" onclick="_showEnt('+i+')">'+
       '<td class="rank-num">'+(i+1)+'</td>'+
       '<td class="bright" style="max-width:130px;overflow:hidden;text-overflow:ellipsis" title="'+e.name+'">'+e.name+'</td>'+
@@ -1832,11 +1894,12 @@ function renderEntTable(){
       '<td class="r">'+f.num(e.units)+'</td>'+
       '<td class="r" style="color:var(--blue)">'+f.inr0(e.totalCost||0)+'</td>'+
       '<td class="r" style="color:var(--amber)">'+f.inr(e.costPerUnit)+'</td>'+
+      '<td class="r" style="color:'+costMrrColor+';white-space:nowrap">'+(costMrrPct!==null?costMrrPct.toFixed(2)+'%':'—')+costMrrBar+'</td>'+
       '</tr>';
   }).join('');
   }catch(err){
     console.error('[renderEntTable] row build error:',err);
-    tbl.innerHTML='<tr><td colspan="11" style="color:var(--red);padding:12px;font-size:13px">Error: '+err.message+'</td></tr>';
+    tbl.innerHTML='<tr><td colspan="12" style="color:var(--red);padding:12px;font-size:13px">Error: '+err.message+'</td></tr>';
   }
 }
 
@@ -1922,8 +1985,11 @@ function aggregateEnterprises(months){
   return Object.values(acc).map(function(e){
     e.efficiency=e.actualMins>0?+((e.sumTarget/e.actualMins)*100).toFixed(2):0;
     e.costPerUnit=e.units>0?+(e.costPerUnit_sum/e.units).toFixed(2):0;
-    // Numeric sort keys for ARR columns
+    // Numeric sort keys
     e.contractedArrNum=parseFloat(String(e.contractedArr||'').replace(/[^0-9.]/g,''))||e.contractedArr||0;
+    // Cost/Contracted MRR % (sort key only — display is in renderEntTable with numMonths)
+    var mrrInr=(e.contractedArrNum/12)*83;
+    e.costMrrPct=mrrInr>0?+((e.totalCost/mrrInr)*100).toFixed(2):0;
     return e;
   }).filter(function(e){return e.units>0;}).sort(function(a,b){return b.costPerUnit-a.costPerUnit;});
   // Note: no .slice here — renderEntTable applies segment filter and then shows top 50
