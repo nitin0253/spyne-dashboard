@@ -399,7 +399,7 @@ select.sel:focus{border-color:var(--blue)}
         <button class="cf-pill" data-chart="prodm" onclick="setChartFilter('prodm','cost',this)">Cost</button>
       </div>
     </div>
-    <div class="ch"><canvas id="ch-prod-trend" height="140"></canvas></div>
+    <div class="ch"><canvas id="ch-prod-trend" height="112"></canvas></div>
   </div>
 
   <!-- USER SUMMARY -->
@@ -484,7 +484,6 @@ select.sel:focus{border-color:var(--blue)}
         <th>Segment</th>
         <th class="r" onclick="cycleSortSeg('vins')" style="cursor:pointer">VINs<span id="ss-vins" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
         <th class="r" onclick="cycleSortSeg('units')" style="cursor:pointer">Units<span id="ss-units" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
-        <th class="r" onclick="cycleSortSeg('liveArrUSD')" style="cursor:pointer">Live MRR (USD)<span id="ss-liveArrUSD" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
         <th class="r" onclick="cycleSortSeg('contractedArrMonthly')" style="cursor:pointer" id="seg-contracted-hdr">Contracted MRR (USD)<span id="ss-contractedArrMonthly" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
         <th class="r" onclick="cycleSortSeg('arrShare')" style="cursor:pointer">ARR Share %<span id="ss-arrShare" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
         <th class="r" onclick="cycleSortSeg('costPerUnit')" style="cursor:pointer">₹/Unit<span id="ss-costPerUnit" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
@@ -507,8 +506,7 @@ select.sel:focus{border-color:var(--blue)}
         <th class="sortable-ent" data-col="segment" style="cursor:pointer">Segment<span id="se-segment" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
         <th class="sortable-ent" data-col="csPoc" style="cursor:pointer">CS POC<span id="se-csPoc" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
         <th class="sortable-ent" data-col="obPoc" style="cursor:pointer">OB POC<span id="se-obPoc" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
-        <th class="r sortable-ent" data-col="liveArrNum" style="cursor:pointer">Live ARR<span id="se-liveArrNum" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
-        <th class="r sortable-ent" data-col="contractedArrNum" style="cursor:pointer">Contracted ARR<span id="se-contractedArrNum" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r sortable-ent" data-col="contractedArrNum" style="cursor:pointer" id="ent-contracted-hdr">Contracted MRR<span id="se-contractedArrNum" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
         <th class="r sortable-ent" data-col="vins" style="cursor:pointer">VINs<span id="se-vins" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
         <th class="r sortable-ent" data-col="units" style="cursor:pointer">Units<span id="se-units" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
         <th class="r sortable-ent" data-col="totalCost" style="cursor:pointer">Delivery Cost<span id="se-totalCost" style="font-size:12px;color:var(--blue);margin-left:2px"> ▼</span></th>
@@ -707,8 +705,11 @@ function getFilteredProducts(m){
 }
 function prodFilteredSummary(m,prodKey){
   if(prodKey==='all')return computeFilteredSummary(m);
-  const matchNames=m.productBreakdown.map(p=>p.name).filter(n=>{if(prodKey==='image')return /image/i.test(n);if(prodKey==='360')return /360|spin/i.test(n);if(prodKey==='video')return /video/i.test(n);return true;});
-  if(!matchNames.length)return computeFilteredSummary(m);
+  const matchNames=m.productBreakdown.map(p=>p.name).filter(n=>productKeyMatches(n,prodKey));
+  if(!matchNames.length){
+    // No products of this type this month — return a zeroed summary, not the unfiltered total
+    return{totalCost:0,inhouseCost:0,osCost:0,totalImages:0,total360Skus:0,totalVideoSkus:0,totalVins:0,totalUnits:0,totalSkus:0,totalActMins:0,totalTarget:0,efficiency:0,costPerUnit:0,costPerSku:0,costPerVin:0,employees:m.summary.employees};
+  }
   const prevSel=new Set(FILTERS.product.selected);const prevAll=FILTERS.product.all.slice();
   FILTERS.product.selected=new Set(matchNames);FILTERS.product.all=matchNames;
   const result=computeFilteredSummary(m);
@@ -977,14 +978,12 @@ function applySortArr(arr,col,dir){
   return[...arr].sort((a,b)=>{const av=a[col]??0,bv=b[col]??0;return typeof av==='number'?((av-bv)*dir):String(av).localeCompare(String(bv))*dir;});
 }
 let _segData=[],_segSort={col:'costShare',dir:-1};
-window.cycleSortSeg=mkSorter('ss',['vins','units','liveArrUSD','contractedArrMonthly','arrShare','costPerUnit','costShare'],function(col,dir){_segSort={col,dir};renderSegTable();});
+window.cycleSortSeg=mkSorter('ss',['vins','units','contractedArrMonthly','arrShare','costPerUnit','costShare'],function(col,dir){_segSort={col,dir};renderSegTable();});
 function renderSegTable(){
   const rows=applySortArr(_segData,_segSort.col,_segSort.dir);
   const el=document.getElementById('sg-summary-tbl');if(!el)return;
   const numMonths=(rows[0]&&rows[0].numMonths)||1;
-  // Update header labels with numMonths context
-  var liveHdr=document.querySelector('th[onclick*="liveArrUSD"]');
-  if(liveHdr)liveHdr.childNodes[0].textContent=numMonths===1?'Live MRR (USD)':'Live MRR \u00d7'+numMonths+' (USD)';
+  // Update header label with numMonths context
   var ctrHdr=document.getElementById('seg-contracted-hdr');
   if(ctrHdr)ctrHdr.childNodes[0].textContent=numMonths===1?'Contracted MRR (USD)':'Contracted MRR \u00d7'+numMonths+' (USD)';
   var sub=document.getElementById('seg-summary-sub');
@@ -995,7 +994,6 @@ function renderSegTable(){
       '<td class="bright"><span class="seg" style="background:'+sc(s.name)+'22;color:'+sc(s.name)+'">'+s.name+'</span></td>'+
       '<td class="r" style="color:var(--purple)">'+f.num(s.vins)+'</td>'+
       '<td class="r">'+f.num(s.units)+'</td>'+
-      '<td class="r" style="color:#22d4a0">'+fmtUSD(s.liveArrUSD)+'</td>'+
       '<td class="r" style="color:#38c4f0">'+fmtUSD(s.contractedArrMonthly)+'</td>'+
       '<td class="r" style="color:var(--muted)">'+f.pct(s.arrShare)+'</td>'+
       '<td class="r" style="color:var(--amber)">'+f.inr(s.costPerUnit)+'</td>'+
@@ -1072,7 +1070,6 @@ function showSegmentDetail(idx){
   var accounts=Object.values(entMap).map(function(e){
     var meta=entMeta(e.name);
     var annualContracted=meta.contractedArr||0;
-    var liveAnnual=parseFloat(String(meta.liveArr||'0').replace(/[^0-9.]/g,''))||0;
     return{
       name:       e.name,
       segment:    meta.segment||segName,
@@ -1083,7 +1080,6 @@ function showSegmentDetail(idx){
       costPerUnit:e.units>0?+(e.costPerUnit_sum/e.units).toFixed(2):0,
       totalCost:  e.totalCost,
       // MRR × numMonths
-      liveMRR:    Math.round((liveAnnual/12)*numMonths),
       contractedMRR: Math.round((annualContracted/12)*numMonths),
     };
   }).sort(function(a,b){return b.totalCost-a.totalCost;});
@@ -1092,7 +1088,6 @@ function showSegmentDetail(idx){
   var totalVins=accounts.reduce(function(s,e){return s+e.vins;},0);
   var totalUnits=accounts.reduce(function(s,e){return s+e.units;},0);
   var totalCost=accounts.reduce(function(s,e){return s+e.totalCost;},0);
-  var totalLive=accounts.reduce(function(s,e){return s+e.liveMRR;},0);
   var totalContracted=accounts.reduce(function(s,e){return s+e.contractedMRR;},0);
 
   function fmtUSD(v){v=+v||0;return v>=1e6?'$'+(v/1e6).toFixed(2)+'M':v>=1e3?'$'+(v/1e3).toFixed(1)+'K':v>0?'$'+Math.round(v):'—';}
@@ -1119,7 +1114,6 @@ function showSegmentDetail(idx){
       '<th class="seg-modal-th" data-col="name" style="cursor:pointer">Account<span style="font-size:12px;color:var(--blue);margin-left:2px">'+arrowFor('name')+'</span></th>'+
       '<th class="seg-modal-th" data-col="csPoc" style="cursor:pointer">CS POC<span style="font-size:12px;color:var(--blue);margin-left:2px">'+arrowFor('csPoc')+'</span></th>'+
       th('vins','VINs')+th('units','Units')+
-      th('liveMRR','Live MRR')+
       th('contractedMRR','Contracted MRR')+
       th('totalCost','Delivery Cost')+
       th('costPerUnit','₹/Unit')+
@@ -1133,7 +1127,6 @@ function showSegmentDetail(idx){
         '<td style="font-size:13px;color:var(--sub)">'+e.csPoc+'</td>'+
         '<td class="r" style="color:var(--purple)">'+f.num(e.vins)+'</td>'+
         '<td class="r">'+f.num(e.units)+'</td>'+
-        '<td class="r" style="color:#22d4a0">'+fmtUSD(e.liveMRR)+'</td>'+
         '<td class="r" style="color:#38c4f0">'+fmtUSD(e.contractedMRR)+'</td>'+
         '<td class="r" style="color:var(--blue)">'+fmtInr(e.totalCost)+'</td>'+
         '<td class="r" style="color:var(--amber)">'+f.inr(e.costPerUnit)+'</td>'+
@@ -1162,7 +1155,7 @@ function showSegmentDetail(idx){
       kpi('Accounts',accounts.length,'in this segment',null,'var(--blue)')+
       kpi('VINs',f.num(totalVins),'unique vehicles',null,'var(--purple)')+
       kpi('Units',f.num(totalUnits),moLabel,null,'var(--green)')+
-      kpi('Live MRR',fmtUSD(totalLive),'×'+numMonths+' mo (USD)',null,'#22d4a0')+
+      kpi('Contracted MRR',fmtUSD(totalContracted),'×'+numMonths+' mo (USD)',null,'#38c4f0')+
       kpi('Delivery Cost',fmtInr(totalCost),moLabel,null,'var(--blue)')+
     '</div>'+
     '<div class="tbl-wrap" id="seg-modal-tbl-wrap">'+
@@ -1201,8 +1194,10 @@ function showEnterpriseDetail(name,e){
       '<td class="r"><span class="'+effCls(r.efficiency)+'">'+f.pct(r.efficiency)+'</span></td>'+
       '<td class="r" style="color:var(--amber)">'+f.inr(r.costPerUnit)+'</td></tr>';
   }).join('');
-  const rawArr=e.liveArr||meta.liveArr||'';
-  const arrVal=rawArr?Number(rawArr.replace(/[^0-9.]/g,'')):0;
+  const numMonths=months.length||1;
+  const contractedAnnual=meta.contractedArr||0;
+  const contractedMRR=(contractedAnnual/12)*numMonths;
+  const mrrLabel=numMonths===1?'Contracted MRR':'Contracted MRR \u00d7'+numMonths;
   const modal=document.createElement('div');
   modal.style.cssText='position:fixed;inset:0;background:rgba(17,17,17,.92);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
   const inner=document.createElement('div');
@@ -1215,7 +1210,7 @@ function showEnterpriseDetail(name,e){
     +'<div><div style="font-weight:700;font-size:16px;color:var(--text)">'+name+'</div>'
     +'<div style="margin-top:4px;display:flex;gap:8px;align-items:center">'
     +(seg?'<span class="seg" style="background:'+sc(seg)+'22;color:'+sc(seg)+'">'+seg+'</span>':'')+ragBadgeHtml
-    +(arrVal?'<span style="font-size:13px;color:var(--green);font-weight:600">Live ARR: ₹'+arrVal.toLocaleString('en-IN')+'</span>':'')
+    +(contractedMRR?'<span style="font-size:13px;color:#38c4f0;font-weight:600">'+mrrLabel+': $'+Math.round(contractedMRR).toLocaleString('en-IN')+'</span>':'')
     +'</div></div><span id="_modal_close_ent"></span></div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">'
     +'<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px">'
@@ -1503,8 +1498,27 @@ function renderChart4(months){
   const allPN=[...new Set(months.flatMap(function(m){return m.productBreakdown.map(function(p){return p.name;});}))].filter(function(n){if(pp==='all')return true;if(pp==='image')return /image/i.test(n);if(pp==='360')return /360|spin/i.test(n);if(pp==='video')return /video/i.test(n);return true;});
   function pVal(p,m){if(m==='units')return p?p.units||0:0;if(m==='costPerUnit')return p?p.costPerUnit||0:0;return p?Math.round((p.costSharePct||0)/100*(months[months.length-1].summary.totalCost||0)):0;}
   const pmFmt=pm==='cost'?function(v){return'\u20b9'+f.short(v);}:pm==='costPerUnit'?function(v){return'\u20b9'+Number(v).toFixed(2);}:function(v){return f.short(v);};
-  const pDS=allPN.map(function(pn,i){return{label:pn,data:months.map(function(m){return pVal(getFilteredProducts(m).find(function(x){return x.name===pn;}),pm);}),backgroundColor:pc(pn,i),borderRadius:3,barPercentage:.8,categoryPercentage:.8,maxBarThickness:80,datalabels:{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:'#FFFFFF',font:{size:13,weight:'600'},anchor:'end',align:'top',offset:2,clamp:true,formatter:function(v){return pmFmt(v);}}};});
-  mk('ch-prod-trend',{type:'bar',data:{labels,datasets:pDS},options:{onClick:function(evt,els){if(els.length)showMonthDetail(months[els[0].index],'product',allPN[els[0].datasetIndex]);},plugins:{legend:{position:'bottom',labels:{color:'#F3F4F6',font:{size:14},boxWidth:10,padding:10}},tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){return ctx.dataset.label+': '+pmFmt(ctx.raw);},footer:function(items){const t=items.reduce(function(s,i){return s+i.raw;},0);return t>0?'Total: '+pmFmt(t):'';}}},scales:{x:{ticks:{color:'#F3F4F6',font:{size:14}},grid:{color:'rgba(60,60,60,.5)'}},y:{ticks:{color:'#F3F4F6',font:{size:13},callback:pmFmt},grid:{color:'rgba(60,60,60,.5)'}}}}}});
+  const pDS=allPN.map(function(pn,i){return{label:pn,data:months.map(function(m){return pVal(getFilteredProducts(m).find(function(x){return x.name===pn;}),pm);}),backgroundColor:pc(pn,i),borderRadius:3,barPercentage:.8,categoryPercentage:.8,maxBarThickness:80,order:2,datalabels:{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:'#FFFFFF',font:{size:13,weight:'600'},anchor:'end',align:'top',offset:2,clamp:true,formatter:function(v){return pmFmt(v);}}};});
+
+  // Trend line: sum (Volume/Cost) or avg (Cost-per-Unit) across all visible products, per month
+  const trendData=months.map(function(m){
+    var prods=allPN.map(function(pn){return getFilteredProducts(m).find(function(x){return x.name===pn;});}).filter(Boolean);
+    if(pm==='costPerUnit'){
+      var totalUnits=prods.reduce(function(s,p){return s+(p.units||0);},0);
+      var totalCost=prods.reduce(function(s,p){return s+(p.costPerUnit||0)*(p.units||0);},0);
+      return totalUnits>0?+(totalCost/totalUnits).toFixed(2):0;
+    }
+    return prods.reduce(function(s,p){return s+pVal(p,pm);},0);
+  });
+  var trendColor='#ffffff';
+  var trendLabel=pm==='costPerUnit'?'Avg \u20b9/Unit (all products)':pm==='cost'?'Total Cost (all products)':'Total Volume (all products)';
+  var trendDS={
+    label:trendLabel,data:trendData,type:'line',borderColor:trendColor,borderWidth:2.5,borderDash:[6,3],
+    tension:.3,pointBackgroundColor:trendColor,pointRadius:4,pointHoverRadius:6,fill:false,order:1,
+    datalabels:{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:trendColor,font:{size:11,weight:'700'},anchor:'end',align:'top',offset:14,clamp:true,formatter:function(v){return pmFmt(v);}}
+  };
+
+  mk('ch-prod-trend',{type:'bar',data:{labels,datasets:pDS.concat([trendDS])},options:{onClick:function(evt,els){if(els.length)showMonthDetail(months[els[0].index],'product',allPN[els[0].datasetIndex]);},plugins:{legend:{position:'bottom',labels:{color:'#F3F4F6',font:{size:14},boxWidth:10,padding:10}},tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){return ctx.dataset.label+': '+pmFmt(ctx.raw);},footer:function(items){const t=items.filter(function(i){return i.dataset.label!==trendLabel;}).reduce(function(s,i){return s+i.raw;},0);return t>0?'Total: '+pmFmt(t):'';}}},scales:{x:{ticks:{color:'#F3F4F6',font:{size:14}},grid:{color:'rgba(60,60,60,.5)'}},y:{ticks:{color:'#F3F4F6',font:{size:13},callback:pmFmt},grid:{color:'rgba(60,60,60,.5)'}}}}}});
 }
 
 // ── RENDER USER SUMMARY ───────────────────────────────────────────────────────
@@ -1590,7 +1604,7 @@ function renderUserSummary(months){
   });o._wired=true;}
 }
 
-window.cycleSortEnt=mkSorter('se',['enterprise','segment','csPoc','obPoc','liveArrNum','contractedArrNum','vins','units','totalCost','costPerUnit'],function(col,dir){_entSort.col=col;_entSort.dir=dir;renderEntTable();});
+window.cycleSortEnt=mkSorter('se',['enterprise','segment','csPoc','obPoc','contractedArrNum','vins','units','totalCost','costPerUnit'],function(col,dir){_entSort.col=col;_entSort.dir=dir;renderEntTable();});
 // Wire click delegation for all sortable-ent headers
 document.addEventListener('click',function(e){
   var th=e.target.closest('.sortable-ent');
@@ -1623,10 +1637,15 @@ function renderEntTable(){
   window._entList=rows;
   var tbl=document.getElementById('co-ent-tbl');
   if(!tbl)return;
-  function fmtArr(raw){
-    var n=parseFloat(String(raw||'').replace(/[^0-9.]/g,''))||0;
+  var numMonths=filteredMonths().length||1;
+  // Update header label with month-count context, same convention as Segment Summary
+  var ctrHdr=document.getElementById('ent-contracted-hdr');
+  if(ctrHdr)ctrHdr.childNodes[0].textContent=numMonths===1?'Contracted MRR':'Contracted MRR \u00d7'+numMonths;
+  function fmtArr(annualRaw){
+    var n=parseFloat(String(annualRaw||'').replace(/[^0-9.]/g,''))||0;
     if(!n)return'—';
-    return n>=1e6?'$'+(n/1e6).toFixed(2)+'M':n>=1e3?'$'+(n/1e3).toFixed(1)+'K':'$'+n;
+    var mrr=(n/12)*numMonths;
+    return mrr>=1e6?'$'+(mrr/1e6).toFixed(2)+'M':mrr>=1e3?'$'+(mrr/1e3).toFixed(1)+'K':'$'+Math.round(mrr);
   }
   try{
   tbl.innerHTML=rows.map(function(e,i){
@@ -1634,7 +1653,6 @@ function renderEntTable(){
     var seg=e.segment||meta.segment||'';
     var cs=e.csPoc||meta.csPoc||'—';
     var ob=e.obPoc||meta.obPoc||'—';
-    var rawLive=String(e.liveArr||meta.liveArr||'');
     var rawContracted=String(meta.contractedArr||0);
     var segBadge=seg?'<span class="seg" style="background:'+sc(seg)+'22;color:'+sc(seg)+';font-size:12px">'+seg+'</span>':'—';
     var rag=meta.rag||'';
@@ -1646,7 +1664,6 @@ function renderEntTable(){
       '<td>'+segBadge+ragBadge+'</td>'+
       '<td style="font-size:13px;color:var(--sub);max-width:100px;overflow:hidden;text-overflow:ellipsis" title="'+cs+'">'+cs+'</td>'+
       '<td style="font-size:13px;color:var(--sub);max-width:100px;overflow:hidden;text-overflow:ellipsis" title="'+ob+'">'+ob+'</td>'+
-      '<td class="r" style="font-size:13px;color:#22d4a0">'+fmtArr(rawLive)+'</td>'+
       '<td class="r" style="font-size:13px;color:#38c4f0">'+fmtArr(rawContracted)+'</td>'+
       '<td class="r">'+f.num(e.vins)+'</td>'+
       '<td class="r">'+f.num(e.units)+'</td>'+
@@ -1656,7 +1673,7 @@ function renderEntTable(){
   }).join('');
   }catch(err){
     console.error('[renderEntTable] row build error:',err);
-    tbl.innerHTML='<tr><td colspan="11" style="color:var(--red);padding:12px;font-size:13px">Error: '+err.message+'</td></tr>';
+    tbl.innerHTML='<tr><td colspan="10" style="color:var(--red);padding:12px;font-size:13px">Error: '+err.message+'</td></tr>';
   }
 }
 
@@ -1740,7 +1757,6 @@ function aggregateEnterprises(months){
     e.efficiency=e.actualMins>0?+((e.sumTarget/e.actualMins)*100).toFixed(2):0;
     e.costPerUnit=e.units>0?+(e.costPerUnit_sum/e.units).toFixed(2):0;
     // Numeric sort keys for ARR columns
-    e.liveArrNum=parseFloat(String(e.liveArr||'').replace(/[^0-9.]/g,''))||0;
     e.contractedArrNum=parseFloat(String(e.contractedArr||'').replace(/[^0-9.]/g,''))||e.contractedArr||0;
     return e;
   }).filter(function(e){return e.units>0;}).sort(function(a,b){return b.costPerUnit-a.costPerUnit;});
