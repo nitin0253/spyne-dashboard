@@ -565,7 +565,7 @@ function computeMonth(config, outputRows, factorRows, enterpriseRows, removedRow
     entRows.forEach(r => {
       const email = (r.qcEditor || '').toLowerCase().trim();
       if (!email) return;
-      if (!byEditor[email]) byEditor[email] = { units:0, skus:0, images:0, vins:0, actualMins:0, sumTarget:0, rows:0 };
+      if (!byEditor[email]) byEditor[email] = { units:0, skus:0, images:0, vins:0, actualMins:0, sumTarget:0, rows:0, byProduct:{} };
       const be = byEditor[email];
       be.units      += billingUnits(r);
       be.skus       += r.skus;
@@ -574,6 +574,10 @@ function computeMonth(config, outputRows, factorRows, enterpriseRows, removedRow
       be.actualMins += r.actualMins;
       be.sumTarget  += r.sumTarget;
       be.rows++;
+      // Per-product unit split (Image/360/Video) for this editor within this enterprise
+      const p = r.product;
+      if (!be.byProduct[p]) be.byProduct[p] = { units: 0 };
+      be.byProduct[p].units += billingUnits(r);
     });
     Object.entries(byEditor).forEach(([email, be]) => {
       // Prefer this editor's exact salary cost prorated by their share of THIS
@@ -597,6 +601,7 @@ function computeMonth(config, outputRows, factorRows, enterpriseRows, removedRow
       be.units = Math.round(be.units); be.skus = Math.round(be.skus);
       be.images = Math.round(be.images); be.vins = Math.round(be.vins);
       be.actualMins = Math.round(be.actualMins); be.sumTarget = Math.round(be.sumTarget);
+      Object.values(be.byProduct).forEach(pd => { pd.units = Math.round(pd.units); });
     });
     // Look up Metabase meta by normalized name match
     const meta = metaIndex ? lookupMeta(metaIndex, name) : null;
