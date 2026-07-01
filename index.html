@@ -617,6 +617,10 @@ const f={
   mins: v=>{if(!v)return'—';const h=Math.floor(v/60),m=Math.round(v%60);return h?`${f.num(h)}h ${m}m`:`${m}m`;},
   short:v=>{if(!v&&v!==0)return'—';if(v>=1e7)return(v/1e7).toFixed(2)+'Cr';if(v>=1e5)return(v/1e5).toFixed(2)+'L';if(v>=1e3)return(v/1e3).toFixed(2)+'K';return Number(v).toLocaleString('en-IN');},
   email:e=>e?e.split('@')[0]:'—',
+  // Shared USD formatter (MRR / ARR) — always 2dp
+  usd:  v=>{v=+v||0;if(!v)return'—';if(v>=1e6)return'$'+(v/1e6).toFixed(2)+'M';if(v>=1e3)return'$'+(v/1e3).toFixed(2)+'K';return'$'+v.toFixed(2);},
+  // Shared INR large-value formatter (delivery cost) — always 2dp
+  inrL: v=>{v=+v||0;if(!v)return'—';if(v>=1e7)return'₹'+(v/1e7).toFixed(2)+'Cr';if(v>=1e5)return'₹'+(v/1e5).toFixed(2)+'L';if(v>=1e3)return'₹'+(v/1e3).toFixed(2)+'K';return'₹'+v.toFixed(2);},
 };
 
 // ── COLOURS ──────────────────────────────────────────────────────────────────
@@ -740,7 +744,7 @@ function getFilteredProducts(m){
   segs.forEach(sg=>{Object.entries(sg.byProduct||{}).forEach(([pName,pd])=>{if(!passesFilter('product',pName))return;if(!byProd[pName])byProd[pName]={name:pName,images:0,skus:0,units:0,vins:0,actualMins:0,sumTarget:0};const bp=byProd[pName];bp.images+=pd.images||0;bp.skus+=pd.skus||0;bp.units+=pd.units||0;bp.vins+=pd.vins||0;bp.actualMins+=pd.actualMins||0;bp.sumTarget+=pd.sumTarget||0;});});
   const totalActMins=Object.values(byProd).reduce((s,p)=>s+p.actualMins,0)||1;
   const totalCost=m.summary.totalCost*(Object.values(byProd).reduce((s,p)=>s+p.actualMins,0)/(m.summary.totalActMins||1));
-  return Object.values(byProd).map(p=>{const pCost=totalCost*(p.actualMins/totalActMins);const orig=m.productBreakdown.find(x=>x.name===p.name)||{};return{...p,efficiency:p.actualMins>0?+((p.sumTarget/p.actualMins)*100).toFixed(2):0,costPerUnit:p.units>0?+(pCost/p.units).toFixed(2):0,costPerSku:p.skus>0?+(pCost/p.skus).toFixed(2):0,costSharePct:totalCost>0?+((pCost/totalCost)*100).toFixed(1):0,unitLabel:orig.unitLabel||''};}).filter(p=>p.units>0);
+  return Object.values(byProd).map(p=>{const pCost=totalCost*(p.actualMins/totalActMins);const orig=m.productBreakdown.find(x=>x.name===p.name)||{};return{...p,efficiency:p.actualMins>0?+((p.sumTarget/p.actualMins)*100).toFixed(2):0,costPerUnit:p.units>0?+(pCost/p.units).toFixed(2):0,costPerSku:p.skus>0?+(pCost/p.skus).toFixed(2):0,costSharePct:totalCost>0?+((pCost/totalCost)*100).toFixed(2):0,unitLabel:orig.unitLabel||''};}).filter(p=>p.units>0);
 }
 function prodFilteredSummary(m,prodKey){
   if(prodKey==='all')return computeFilteredSummary(m);
@@ -1081,7 +1085,7 @@ function renderSegTable(){
   if(ctrHdr)ctrHdr.childNodes[0].textContent=numMonths===1?'Contracted MRR (USD)':'Contracted MRR \u00d7'+numMonths+' (USD)';
   var sub=document.getElementById('seg-summary-sub');
   if(sub)sub.textContent=(numMonths===1?'1 month':numMonths+' months')+' \u00b7 VINs \u00b7 Units \u00b7 MRR (scaled by months) \u00b7 \u20b9/Unit \u00b7 Cost %';
-  function fmtUSD(v){v=+v||0;return v>=1e6?'$'+(v/1e6).toFixed(2)+'M':v>=1e3?'$'+(v/1e3).toFixed(1)+'K':v>0?'$'+Math.round(v):'—';}
+  var fmtUSD=f.usd;
   el.innerHTML=rows.map(function(s,i){
     return'<tr style="cursor:pointer" onclick="showSegmentDetail('+i+')" title="Click for account breakdown">'+
       '<td class="bright"><span class="seg" style="background:'+sc(s.name)+'22;color:'+sc(s.name)+'">'+s.name+'</span></td>'+
@@ -1190,8 +1194,7 @@ function showSegmentDetail(idx){
   var totalContracted=accounts.reduce(function(s,e){return s+e.contractedMRR;},0);
   var totalRooftops=accounts.reduce(function(s,e){return s+(e.rooftops||0);},0);
 
-  function fmtUSD(v){v=+v||0;return v>=1e6?'$'+(v/1e6).toFixed(2)+'M':v>=1e3?'$'+(v/1e3).toFixed(1)+'K':v>0?'$'+Math.round(v):'—';}
-  function fmtInr(v){v=+v||0;if(v>=1e7)return'₹'+(v/1e7).toFixed(2)+'Cr';if(v>=1e5)return'₹'+(v/1e5).toFixed(1)+'L';if(v>=1e3)return'₹'+(v/1e3).toFixed(0)+'K';return'₹'+v;}
+  var fmtUSD=f.usd;var fmtInr=f.inrL;
 
   // Modal sort state
   var msort={col:'totalCost',dir:-1};
@@ -1628,12 +1631,13 @@ function renderChart2(months){
   function segVal(s,metric){if(metric==='cost')return Math.round((s.costPerUnit||0)*(s.units||0));if(metric==='units')return s.units||0;return s.costPerUnit||0;}
   const smFmt=sm==='cost'?function(v){return'\u20b9'+f.short(v);}:sm==='costPerUnit'?function(v){return'\u20b9'+Number(v).toFixed(2);}:function(v){return f.short(v);};
 
-  // Min fraction of stack height for an inner label to be visible
-  const MIN_FRAC=0.07;
+  // Min fraction of stack height for an inner label to render
+  // (prevents illegible text on tiny slivers — 5% threshold)
+  const MIN_FRAC=0.05;
 
-  const segDS=allSegNames.map(function(sn,i){
-    const isLast=(i===allSegNames.length-1);
-    const innerDL={
+  // Shared inner-label config: shows segment value centred inside its slice
+  function makeInnerDL(){
+    return{
       display:function(ctx){
         var v=ctx.dataset.data[ctx.dataIndex]||0;
         if(!v)return false;
@@ -1643,35 +1647,41 @@ function renderChart2(months){
       color:'rgba(255,255,255,0.92)',font:{size:12,weight:'600'},anchor:'center',align:'center',offset:0,clamp:true,
       formatter:function(v){return v>0?smFmt(v):'';}
     };
-    const totalDL={
-      display:function(ctx){
-        var t=0;ctx.chart.data.datasets.forEach(function(d){t+=(+d.data[ctx.dataIndex]||0);});return t>0;
-      },
-      color:'#FFFFFF',font:{size:13,weight:'700'},anchor:'end',align:'top',offset:4,clamp:true,
-      formatter:function(v,ctx){
-        if(sm==='costPerUnit'){
-          // Weighted average: need units per segment to weight; datasets hold ₹/Unit
-          // We stored segDS in closure — use allSegNames and monthData from outer scope
-          var total=0,weightedSum=0;
-          ctx.chart.data.datasets.forEach(function(ds,di){
-            var cpuVal=+ds.data[ctx.dataIndex]||0;
-            // volume for this segment this month from months array
-            var m=months[ctx.dataIndex];
-            var seg=m&&segProdData(m,sp).find(function(x){return x.name===allSegNames[di];});
-            var units=seg?seg.units||0:0;
-            weightedSum+=cpuVal*units;
-            total+=units;
-          });
-          return total>0?smFmt(weightedSum/total):'';
-        }
-        var t=0;ctx.chart.data.datasets.forEach(function(d){t+=(+d.data[ctx.dataIndex]||0);});return t>0?smFmt(t):'';
+  }
+
+  // Stack-total label: shown above the bar on the last (topmost) dataset
+  const totalDL={
+    display:function(ctx){
+      var t=0;ctx.chart.data.datasets.forEach(function(d){t+=(+d.data[ctx.dataIndex]||0);});return t>0;
+    },
+    color:'#FFFFFF',font:{size:13,weight:'700'},anchor:'end',align:'top',offset:4,clamp:true,
+    formatter:function(v,ctx){
+      if(sm==='costPerUnit'){
+        var total=0,weightedSum=0;
+        ctx.chart.data.datasets.forEach(function(ds,di){
+          var cpuVal=+ds.data[ctx.dataIndex]||0;
+          var m=months[ctx.dataIndex];
+          var seg=m&&segProdData(m,sp).find(function(x){return x.name===allSegNames[di];});
+          var units=seg?seg.units||0:0;
+          weightedSum+=cpuVal*units;
+          total+=units;
+        });
+        return total>0?smFmt(weightedSum/total):'';
       }
-    };
+      var t=0;ctx.chart.data.datasets.forEach(function(d){t+=(+d.data[ctx.dataIndex]||0);});return t>0?smFmt(t):'';
+    }
+  };
+
+  const segDS=allSegNames.map(function(sn,i){
+    const isLast=(i===allSegNames.length-1);
+    // All segments show their own value inside the slice.
+    // The last (topmost) segment ALSO shows the stack total above the bar.
+    // Chart.js v3+ supports array of datalabels configs via the plugin.
     return{
       label:sn,
       data:months.map(function(m){const sd=segProdData(m,sp).find(function(x){return x.name===sn;});return sd?segVal(sd,sm):0;}),
       backgroundColor:segColors[i],borderRadius:3,barPercentage:.9,categoryPercentage:.7,maxBarThickness:80,stack:'seg',
-      datalabels:isLast?totalDL:innerDL
+      datalabels:isLast?[makeInnerDL(),totalDL]:makeInnerDL()
     };
   });
 
@@ -1878,7 +1888,7 @@ function renderEntTable(){
     var n=parseFloat(String(annualRaw||'').replace(/[^0-9.]/g,''))||0;
     if(!n)return'—';
     var mrr=(n/12)*numMonths;
-    return mrr>=1e6?'$'+(mrr/1e6).toFixed(2)+'M':mrr>=1e3?'$'+(mrr/1e3).toFixed(1)+'K':'$'+Math.round(mrr);
+    return f.usd(mrr);
   }
   try{
   tbl.innerHTML=rows.map(function(e,i){
@@ -2177,7 +2187,7 @@ function renderPocChart(months) {
         },
         color: '#FFFFFF', font: { size: 9, weight: '600' },
         anchor: 'end', align: 'top', offset: 2, clamp: true,
-        formatter: function(v) { return v >= 1e6 ? '$' + (v/1e6).toFixed(2) + 'M' : v >= 1e3 ? '$' + (v/1e3).toFixed(1) + 'K' : '$' + v; }
+        formatter: function(v) { return f.usd(v); }
       }
     });
   }
@@ -2201,7 +2211,7 @@ function renderPocChart(months) {
         formatter: function(v, ctx) {
           // v is USD-equiv in stacked mode — show original INR
           var costINR = data[ctx.dataIndex].cost;
-          return costINR >= 1e7 ? '₹'+(costINR/1e7).toFixed(1)+'Cr' : costINR >= 1e5 ? '₹'+(costINR/1e5).toFixed(1)+'L' : '₹'+costINR.toLocaleString('en-IN');
+          return f.inrL(costINR);
         }
       }
     });
@@ -2231,7 +2241,7 @@ function renderPocChart(months) {
         display: function(ctx) { return ctx.dataset.data[ctx.dataIndex] > 0; },
         color: '#f5a42a', font: { size: 9, weight: '700' },
         anchor: 'center', align: 'top', offset: 8,
-        formatter: function(v) { return v.toFixed(1) + '%'; }
+        formatter: function(v) { return v.toFixed(2) + '%'; }
       }
     });
     // Stack total label on last bar dataset (Delivery Cost)
@@ -2245,8 +2255,8 @@ function renderPocChart(months) {
         formatter: function(v, ctx) {
           var d = data[ctx.dataIndex];
           var mrrINR = (d.mrr || 0) * 83;
-          var pct = (mrrINR && d.cost) ? ((d.cost / mrrINR) * 100).toFixed(1) + '%' : '';
-          var mrrFmt = (d.mrr||0) >= 1e6 ? '$'+((d.mrr||0)/1e6).toFixed(1)+'M' : (d.mrr||0) >= 1e3 ? '$'+((d.mrr||0)/1e3).toFixed(0)+'K' : '$'+Math.round(d.mrr||0);
+          var pct = (mrrINR && d.cost) ? ((d.cost / mrrINR) * 100).toFixed(2) + '%' : '';
+          var mrrFmt = f.usd(d.mrr||0);
           return mrrFmt + (pct ? ' | ' + pct : '');
         }
       };
@@ -2265,11 +2275,11 @@ function renderPocChart(months) {
       ticks: { color: '#6a82a8', font: { size: 9 },
         callback: function(v) {
           if (POC_METRIC === 'cost') {
-            if (v >= 1e7) return '₹' + (v/1e7).toFixed(1) + 'Cr';
-            if (v >= 1e5) return '₹' + (v/1e5).toFixed(1) + 'L';
+            if (v >= 1e7) return '₹' + (v/1e7).toFixed(2) + 'Cr';
+            if (v >= 1e5) return '₹' + (v/1e5).toFixed(2) + 'L';
             return '₹' + v;
           }
-          return v >= 1e6 ? '$' + (v/1e6).toFixed(1) + 'M' : v >= 1e3 ? '$' + (v/1e3).toFixed(0) + 'K' : '$' + v;
+          return f.usd(v);
         }
       },
       grid: { color: 'rgba(60,60,60,.5)' }
@@ -2285,7 +2295,7 @@ function renderPocChart(months) {
     };
     scales.y3 = {
       type: 'linear', position: 'right',
-      ticks: { color: '#f5a42a', font: { size: 9 }, callback: function(v) { return v.toFixed(0) + '%'; } },
+      ticks: { color: '#f5a42a', font: { size: 9 }, callback: function(v) { return v.toFixed(2) + '%'; } },
       grid: { display: false },
       title: { display: true, text: '% Cost / ARR', color: '#f5a42a', font: { size: 10 } }
     };
@@ -2295,8 +2305,8 @@ function renderPocChart(months) {
     scales.y.stacked = true;
     delete scales.y1;
     scales.y.ticks.callback = function(v) {
-      if (v >= 1e6) return '$' + (v/1e6).toFixed(1) + 'M';
-      if (v >= 1e3) return '$' + (v/1e3).toFixed(0) + 'K';
+      if (v >= 1e6) return '$' + (v/1e6).toFixed(2) + 'M';
+      if (v >= 1e3) return '$' + (v/1e3).toFixed(2) + 'K';
       return '$' + v;
     };
   }
@@ -2328,7 +2338,7 @@ function renderPocChart(months) {
             label: function(ctx) {
               var v = ctx.raw, d = data[ctx.dataIndex];
               if (ctx.dataset.label === '% Cost / ARR') return ' % Cost/MRR (ARR/12×83): ' + v.toFixed(2) + '%';
-              if (ctx.dataset.label.includes('MRR') || ctx.dataset.label.includes('ARR')) return ' MRR: ' + (v >= 1e6 ? '$' + (v/1e6).toFixed(2) + 'M' : '$' + v.toLocaleString());
+              if (ctx.dataset.label.includes('MRR') || ctx.dataset.label.includes('ARR')) return ' MRR: ' + f.usd(v);
               // v is USD-equiv in stacked, INR in cost-only mode
               var costINR = isStacked ? v * 83 : v;
               var costFmt = costINR >= 1e7 ? '₹'+(costINR/1e7).toFixed(2)+'Cr' : costINR >= 1e5 ? '₹'+(costINR/1e5).toFixed(2)+'L' : '₹'+costINR.toLocaleString('en-IN');
@@ -2385,8 +2395,7 @@ function showPocDetail(pocRow, months) {
   var totalMrrINR = totalMrr * 83;
   var totalPct = (totalMrrINR && totalCost) ? ((totalCost / totalMrrINR) * 100).toFixed(2) : '—';
 
-  function fmtMrr(v) { return v >= 1e6 ? '$' + (v/1e6).toFixed(2) + 'M' : v >= 1e3 ? '$' + (v/1e3).toFixed(1) + 'K' : '$' + v; }
-  function fmtCost(v) { return v >= 1e7 ? '₹' + (v/1e7).toFixed(2) + 'Cr' : v >= 1e5 ? '₹' + (v/1e5).toFixed(2) + 'L' : '₹' + v.toLocaleString('en-IN'); }
+  var fmtMrr=f.usd;var fmtCost=f.inrL;
 
   // Sort state for modal
   var modalSort = { col: 'mrr', dir: -1 };
