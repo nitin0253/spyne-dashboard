@@ -1635,8 +1635,11 @@ function renderChart2(months){
   // (prevents illegible text on tiny slivers — 5% threshold)
   const MIN_FRAC=0.05;
 
-  // Shared inner-label config: shows segment value centred inside its slice
-  function makeInnerDL(){
+  // Per-segment inner label — auto-contrast text colour against the bar background
+  function makeInnerDL(bgColor){
+    // Use dark text on light backgrounds (Unknown grey), white on dark
+    var isLight=bgColor&&/^#[Ee][0-9A-Fa-f]/i.test(bgColor);
+    var textColor=isLight?'#222222':'rgba(255,255,255,0.95)';
     return{
       display:function(ctx){
         var v=ctx.dataset.data[ctx.dataIndex]||0;
@@ -1644,48 +1647,60 @@ function renderChart2(months){
         var t=0;ctx.chart.data.datasets.forEach(function(d){t+=(+d.data[ctx.dataIndex]||0);});
         return t>0&&(v/t)>=MIN_FRAC;
       },
-      color:'rgba(255,255,255,0.92)',font:{size:12,weight:'600'},anchor:'center',align:'center',offset:0,clamp:true,
+      color:textColor,font:{size:12,weight:'600'},anchor:'center',align:'center',offset:0,clamp:true,
       formatter:function(v){return v>0?smFmt(v):'';}
     };
   }
 
-  // Stack-total label: shown above the bar on the last (topmost) dataset
-  const totalDL={
-    display:function(ctx){
-      var t=0;ctx.chart.data.datasets.forEach(function(d){t+=(+d.data[ctx.dataIndex]||0);});return t>0;
-    },
-    color:'#FFFFFF',font:{size:13,weight:'700'},anchor:'end',align:'top',offset:4,clamp:true,
-    formatter:function(v,ctx){
-      if(sm==='costPerUnit'){
-        var total=0,weightedSum=0;
-        ctx.chart.data.datasets.forEach(function(ds,di){
-          var cpuVal=+ds.data[ctx.dataIndex]||0;
-          var m=months[ctx.dataIndex];
-          var seg=m&&segProdData(m,sp).find(function(x){return x.name===allSegNames[di];});
-          var units=seg?seg.units||0:0;
-          weightedSum+=cpuVal*units;
-          total+=units;
-        });
-        return total>0?smFmt(weightedSum/total):'';
+  // Stack-total label on a dedicated transparent "cap" dataset — always visible above bar
+  const totalCapData=months.map(function(m){return 0;}); // zero-height, just anchors the label
+  const totalDScap={
+    label:'_total_',
+    data:totalCapData,
+    backgroundColor:'transparent',
+    borderWidth:0,
+    barPercentage:.9,categoryPercentage:.7,maxBarThickness:80,stack:'seg',
+    datalabels:{
+      display:function(ctx){
+        var t=0;ctx.chart.data.datasets.forEach(function(d){if(d.label!=='_total_')t+=(+d.data[ctx.dataIndex]||0);});return t>0;
+      },
+      color:'#FFFFFF',
+      textStrokeColor:'rgba(0,0,0,0.6)',
+      textStrokeWidth:3,
+      font:{size:13,weight:'700'},
+      anchor:'end',align:'top',offset:4,clamp:true,
+      formatter:function(v,ctx){
+        var datasets=ctx.chart.data.datasets;
+        if(sm==='costPerUnit'){
+          var total=0,weightedSum=0;
+          datasets.forEach(function(ds,di){
+            if(ds.label==='_total_')return;
+            var cpuVal=+ds.data[ctx.dataIndex]||0;
+            var m=months[ctx.dataIndex];
+            var seg=m&&segProdData(m,sp).find(function(x){return x.name===allSegNames[di];});
+            var units=seg?seg.units||0:0;
+            weightedSum+=cpuVal*units;
+            total+=units;
+          });
+          return total>0?smFmt(weightedSum/total):'';
+        }
+        var t=0;datasets.forEach(function(d){if(d.label!=='_total_')t+=(+d.data[ctx.dataIndex]||0);});
+        return t>0?smFmt(t):'';
       }
-      var t=0;ctx.chart.data.datasets.forEach(function(d){t+=(+d.data[ctx.dataIndex]||0);});return t>0?smFmt(t):'';
     }
   };
 
   const segDS=allSegNames.map(function(sn,i){
-    const isLast=(i===allSegNames.length-1);
-    // All segments show their own value inside the slice.
-    // The last (topmost) segment ALSO shows the stack total above the bar.
-    // Chart.js v3+ supports array of datalabels configs via the plugin.
     return{
       label:sn,
       data:months.map(function(m){const sd=segProdData(m,sp).find(function(x){return x.name===sn;});return sd?segVal(sd,sm):0;}),
       backgroundColor:segColors[i],borderRadius:3,barPercentage:.9,categoryPercentage:.7,maxBarThickness:80,stack:'seg',
-      datalabels:isLast?[makeInnerDL(),totalDL]:makeInnerDL()
+      datalabels:makeInnerDL(segColors[i])
     };
   });
+  segDS.push(totalDScap);
 
-  mk('ch-seg-trend',{type:'bar',data:{labels,datasets:segDS},options:{onClick:function(evt,els){if(els.length)showMonthDetail(months[els[0].index],'segment',allSegNames[els[0].datasetIndex]);},plugins:{legend:{position:'bottom',labels:{color:'#F3F4F6',font:{size:14},boxWidth:10,padding:10}},tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){return ctx.dataset.label+': '+smFmt(ctx.raw);},footer:function(items){const t=items.reduce(function(s,i){return s+i.raw;},0);return t>0?'Total: '+smFmt(t):'';}}},scales:{x:{stacked:true,ticks:{color:'#F3F4F6',font:{size:14}},grid:{color:'rgba(60,60,60,.5)'}},y:{stacked:true,ticks:{color:'#F3F4F6',font:{size:13},callback:smFmt},grid:{color:'rgba(60,60,60,.5)'}}}}}});
+  mk('ch-seg-trend',{type:'bar',data:{labels,datasets:segDS},options:{onClick:function(evt,els){if(els.length&&els[0].datasetIndex<allSegNames.length)showMonthDetail(months[els[0].index],'segment',allSegNames[els[0].datasetIndex]);},plugins:{legend:{position:'bottom',labels:{color:'#F3F4F6',font:{size:14},boxWidth:10,padding:10,filter:function(item){return item.text!=='_total_';}}},tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){if(ctx.dataset.label==='_total_')return null;return ctx.dataset.label+': '+smFmt(ctx.raw);},footer:function(items){const t=items.filter(function(i){return i.dataset.label!=='_total_';}).reduce(function(s,i){return s+i.raw;},0);return t>0?'Total: '+smFmt(t):'';}}},scales:{x:{stacked:true,ticks:{color:'#F3F4F6',font:{size:14}},grid:{color:'rgba(60,60,60,.5)'}},y:{stacked:true,ticks:{color:'#F3F4F6',font:{size:13},callback:smFmt},grid:{color:'rgba(60,60,60,.5)'}}}}}});
 }
 function aggregateEditors(months){
   // Aggregate editor data across all filtered months
