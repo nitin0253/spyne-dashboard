@@ -179,15 +179,8 @@ function getSheetsClient() {
 }
 
 async function fetchRange(client, sheetId, range) {
-  const TIMEOUT_MS = 20000; // 20s per individual range call
-  const timeout = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error(`fetchRange timeout: ${range}`)), TIMEOUT_MS)
-  );
   try {
-    const res = await Promise.race([
-      client.spreadsheets.values.get({ spreadsheetId: sheetId, range }),
-      timeout,
-    ]);
+    const res = await client.spreadsheets.values.get({ spreadsheetId: sheetId, range });
     return res.data.values || [];
   } catch (e) {
     console.error(`fetchRange failed [${sheetId}][${range}]:`, e.message);
