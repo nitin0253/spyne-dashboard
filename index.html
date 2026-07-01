@@ -494,11 +494,11 @@ select.sel:focus{border-color:var(--blue)}
     </table></div>
   </div>
 
-  <!-- Top Enterprises — full width -->
+  <!-- Enterprise List Breakdown — full width -->
   <div class="section" style="margin-bottom:12px">
     <div class="sec-head">
-      <div class="sec-title">Top Enterprises</div>
-      <div style="font-size:12px;color:var(--muted)">Click any row for details · click column headers to sort</div>
+      <div class="sec-title">Enterprise List Breakdown</div>
+      <div style="font-size:12px;color:var(--muted)">All enterprises · filtered date range · click any row for details · click column headers to sort</div>
     </div>
     <div class="tbl-wrap" style="max-height:460px;overflow-y:auto"><table>
       <thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr>
@@ -610,10 +610,10 @@ function toggleSection(id){const body=document.getElementById(id);const tog=docu
 
 // ── FORMAT ───────────────────────────────────────────────────────────────────
 const f={
-  num:  v=>v==null?'—':Number(v).toLocaleString('en-IN'),
-  inr:  v=>{if(v==null)return'—';const n=Number(v);if(n===0)return'₹0.00';return'₹'+n.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});},
-  inr0: v=>v==null?'—':'₹'+Math.round(v).toLocaleString('en-IN'),
-  pct:  v=>v==null?'—':Number(v).toFixed(2)+'%',
+  num:  v=>v==null||!isFinite(v)?'—':Number(v).toLocaleString('en-IN'),
+  inr:  v=>{if(v==null||!isFinite(v))return'—';const n=Number(v);if(n===0)return'₹0.00';return'₹'+n.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});},
+  inr0: v=>(v==null||!isFinite(v))?'—':'₹'+Math.round(v).toLocaleString('en-IN'),
+  pct:  v=>(v==null||!isFinite(v))?'—':Number(v).toFixed(2)+'%',
   mins: v=>{if(!v)return'—';const h=Math.floor(v/60),m=Math.round(v%60);return h?`${f.num(h)}h ${m}m`:`${m}m`;},
   short:v=>{if(!v&&v!==0)return'—';if(v>=1e7)return(v/1e7).toFixed(2)+'Cr';if(v>=1e5)return(v/1e5).toFixed(2)+'L';if(v>=1e3)return(v/1e3).toFixed(2)+'K';return Number(v).toLocaleString('en-IN');},
   email:e=>e?e.split('@')[0]:'—',
@@ -1649,6 +1649,21 @@ function renderChart2(months){
       },
       color:'#FFFFFF',font:{size:13,weight:'700'},anchor:'end',align:'top',offset:4,clamp:true,
       formatter:function(v,ctx){
+        if(sm==='costPerUnit'){
+          // Weighted average: need units per segment to weight; datasets hold ₹/Unit
+          // We stored segDS in closure — use allSegNames and monthData from outer scope
+          var total=0,weightedSum=0;
+          ctx.chart.data.datasets.forEach(function(ds,di){
+            var cpuVal=+ds.data[ctx.dataIndex]||0;
+            // volume for this segment this month from months array
+            var m=months[ctx.dataIndex];
+            var seg=m&&segProdData(m,sp).find(function(x){return x.name===allSegNames[di];});
+            var units=seg?seg.units||0:0;
+            weightedSum+=cpuVal*units;
+            total+=units;
+          });
+          return total>0?smFmt(weightedSum/total):'';
+        }
         var t=0;ctx.chart.data.datasets.forEach(function(d){t+=(+d.data[ctx.dataIndex]||0);});return t>0?smFmt(t):'';
       }
     };
@@ -1851,7 +1866,7 @@ function renderEntTable(){
               (meta.obPoc&&setHasCI(FILTERS.obpoc.selected,meta.obPoc));
     return segOk&&csOk&&obOk;
   });
-  rows=applySortArr(rows,_entSort.col,_entSort.dir).slice(0,50);
+  rows=applySortArr(rows,_entSort.col,_entSort.dir); // show ALL enterprises, no slice
   window._entList=rows;
   var tbl=document.getElementById('co-ent-tbl');
   if(!tbl)return;
@@ -1971,9 +1986,9 @@ function aggregateEnterprises(months){
       acc[n].units+=e.units||0;
       acc[n].actualMins+=e.actualMins||0;
       acc[n].sumTarget+=e.sumTarget||0;
-      const entCostThisMonth=Math.round((e.costPerUnit||0)*(e.units||0));
-      acc[n].costPerUnit_sum+=(e.costPerUnit||0)*(e.units||0);
-      acc[n].totalCost+=entCostThisMonth;
+      const entCostThisMonth=Math.round((+e.costPerUnit||0)*(e.units||0));
+      acc[n].costPerUnit_sum+=isFinite(e.costPerUnit)?(+e.costPerUnit||0)*(e.units||0):0;
+      acc[n].totalCost+=isFinite(entCostThisMonth)?entCostThisMonth:0;
       if(!acc[n].entId&&e.entId)acc[n].entId=e.entId;
       if(!acc[n].segment&&e.segment)acc[n].segment=e.segment;
       if(!acc[n].csPoc&&e.csPoc)acc[n].csPoc=e.csPoc;
