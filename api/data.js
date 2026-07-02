@@ -407,7 +407,8 @@ function computeMonth(config, outputRows, factorRows, removedRows, metaIndex) {
     const costShare = totalActMins > 0 ? (g.actualMins / totalActMins) * effectiveTotalCost : 0;
     return {
       ...enrichGroup(name, g, costShare),
-      costSharePct: effectiveTotalCost > 0 ? +((costShare / effectiveTotalCost) * 100).toFixed(1) : 0,
+      cost:         Math.round(costShare),
+      costSharePct: effectiveTotalCost > 0 ? +((costShare / effectiveTotalCost) * 100).toFixed(2) : 0,
       unitLabel: isImage(name) ? 'Images' : is360(name) ? 'SKUs (spins)' : 'SKUs (videos)',
     };
   }).sort((a, b) => b.actualMins - a.actualMins);
