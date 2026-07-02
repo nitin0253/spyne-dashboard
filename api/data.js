@@ -138,7 +138,7 @@ const SHEETS = [
   { month: 'Jun-26', key: 'jun26', id: '1bNs5JvqzZ0HifsSy4fcu0-z-s11NRY8kTH9t9yLeKGA' },
   { month: 'Jul-26', key: 'jul26', id: '1i3KqktELNb-ykpZeHaMh3wk3FBBV-eHNAw6736oaXbI' },
   // ↓ ADD NEW MONTHS HERE ↓
-  // { month: 'Jul-26', key: 'jul26', id: 'PASTE_SHEET_ID_HERE' },
+  // { month: 'Aug-26', key: 'aug26', id: 'PASTE_SHEET_ID_HERE' },
 ];
 
 // Always-excluded emails
