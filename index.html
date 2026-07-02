@@ -649,6 +649,8 @@ const BASE={
 function mk(id,cfg){
   if(CHARTS[id]){CHARTS[id].destroy();delete CHARTS[id];}
   const el=document.getElementById(id);if(!el)return;
+  // Deep-clone BASE first so renderChart4's y2 axis (or any other chart-specific scale)
+  // never leaks into subsequently rendered charts via BASE mutation.
   const opts=deepMerge(JSON.parse(JSON.stringify(BASE)),cfg.options||{});
   if(['bar','line'].includes(cfg.type)){if(!opts.layout)opts.layout={};if(!opts.layout.padding)opts.layout.padding={};opts.layout.padding.top=opts.layout.padding.top||(id==='ch-prod-trend'||id==='ch-seg-trend'?20:40);}
   if(cfg._lf&&cfg.data?.datasets){cfg.data.datasets.forEach(ds=>{if(!ds.datalabels)ds.datalabels={display:ctx=>{const v=ctx.dataset.data[ctx.dataIndex];return v!=null&&v!==0;},color:'#FFFFFF',font:{size:13,weight:'500'},anchor:'end',align:'top',offset:3,clamp:true,formatter:cfg._lf};});}
