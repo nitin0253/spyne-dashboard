@@ -714,24 +714,34 @@ module.exports = async function handler(req, res) {
   try {
     const client = getSheetsClient();
 
-    // Metabase deadline: tight 5s — if slow, skip and return empty meta
-    // Sheets are the critical path; Metabase enrichment is best-effort
+    // Fetch sheets in batches of 3 to avoid Google Sheets API rate limits.
+    // 7 sheets × 4 ranges = 28 concurrent calls was causing 504 timeouts.
+    // Batching keeps concurrent calls to 12 max (3 sheets × 4 ranges).
+    async function fetchSheet(cfg) {
+      const [outputRows, factorRows, entRows, removedRows] = await Promise.all([
+        fetchRange(client, cfg.id, 'output!A:M'),
+        fetchRange(client, cfg.id, 'factor_calculation!A:G'),
+        fetchRange(client, cfg.id, 'enterprise_details!A:D'),
+        fetchRange(client, cfg.id, 'remove_users!A:E'),
+      ]);
+      return { cfg, outputRows, factorRows, entRows, removedRows };
+    }
+
+    async function fetchInBatches(sheets, batchSize) {
+      const results = [];
+      for (let i = 0; i < sheets.length; i += batchSize) {
+        const batch = sheets.slice(i, i + batchSize);
+        const batchResults = await Promise.all(batch.map(fetchSheet));
+        results.push(...batchResults);
+      }
+      return results;
+    }
+
+    // Metabase deadline: tight 5s — non-blocking, best-effort enrichment
     const metaDeadline = new Promise(resolve => setTimeout(() => resolve({}), 5000));
 
     const [rawSheetsData, enterpriseMeta] = await Promise.all([
-      // Critical path: all 6 sheets, 4 ranges each — all concurrent
-      Promise.all(
-        SHEETS.map(async cfg => {
-          const [outputRows, factorRows, entRows, removedRows] = await Promise.all([
-            fetchRange(client, cfg.id, 'output!A:M'),
-            fetchRange(client, cfg.id, 'factor_calculation!A:G'),
-            fetchRange(client, cfg.id, 'enterprise_details!A:D'),
-            fetchRange(client, cfg.id, 'remove_users!A:E'),
-          ]);
-          return { cfg, outputRows, factorRows, entRows, removedRows };
-        })
-      ),
-      // Metabase CSV: max 5s, non-blocking
+      fetchInBatches(SHEETS, 3),
       Promise.race([fetchMetabaseCSV(), metaDeadline]),
     ]);
 
