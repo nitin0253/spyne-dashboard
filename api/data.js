@@ -671,8 +671,6 @@ function computeMonth(config, outputRows, factorRows, enterpriseRows, removedRow
     },
   };
 
-  console.log(`[${config.month}] outputRows=${outputRows.length} enriched=${enriched.length} units=${Math.round(totalUnits)} cost=Rs${Math.round(effectiveTotalCost)} excludeSet=${excludeSet.size}`);
-
   return {
     month: config.month,
     key:   config.key,
@@ -735,8 +733,6 @@ module.exports = async function handler(req, res) {
       // Metabase CSV: max 5s, non-blocking
       Promise.race([fetchMetabaseCSV(), metaDeadline]),
     ]);
-
-    console.log('[data.js] metabase entries:', Object.keys(enterpriseMeta).length);
 
     // Step 3: Build index and compute months
     const metaIndex = buildMetaIndex(enterpriseMeta);
