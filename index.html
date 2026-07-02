@@ -1756,9 +1756,14 @@ function renderChart3(months){
 function renderChart4(months){
   const labels=months.map(m=>m.month.replace('-26','')),pp=CF.prod,pm=CF.prodm;
   const allPN=[...new Set(months.flatMap(function(m){return m.productBreakdown.map(function(p){return p.name;});}))].filter(function(n){if(pp==='all')return true;if(pp==='image')return /image/i.test(n);if(pp==='360')return /360|spin/i.test(n);if(pp==='video')return /video/i.test(n);return true;});
-  function pVal(p,m){if(m==='units')return p?p.units||0:0;if(m==='costPerUnit')return p?p.costPerUnit||0:0;return p?Math.round((p.costSharePct||0)/100*(months[months.length-1].summary.totalCost||0)):0;}
+  function pVal(p,m,monthObj){
+    if(m==='units')return p?p.units||0:0;
+    if(m==='costPerUnit')return p?p.costPerUnit||0:0;
+    // Use the pre-computed cost field from productBreakdown (set in data.js)
+    return p?p.cost||0:0;
+  }
   const pmFmt=pm==='cost'?function(v){return'\u20b9'+f.short(v);}:pm==='costPerUnit'?function(v){return'\u20b9'+Number(v).toFixed(2);}:function(v){return f.short(v);};
-  const pDS=allPN.map(function(pn,i){return{label:pn,data:months.map(function(m){return pVal(getFilteredProducts(m).find(function(x){return x.name===pn;}),pm);}),backgroundColor:pc(pn,i),borderRadius:3,barPercentage:.8,categoryPercentage:.8,maxBarThickness:80,order:2,yAxisID:'y',datalabels:{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:'#FFFFFF',font:{size:13,weight:'600'},anchor:'end',align:'top',offset:2,clamp:true,formatter:function(v){return pmFmt(v);}}};});
+  const pDS=allPN.map(function(pn,i){return{label:pn,data:months.map(function(m){return pVal(getFilteredProducts(m).find(function(x){return x.name===pn;}),pm,m);}),backgroundColor:pc(pn,i),borderRadius:3,barPercentage:.8,categoryPercentage:.8,maxBarThickness:80,order:2,yAxisID:'y',datalabels:{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:'#FFFFFF',font:{size:13,weight:'600'},anchor:'end',align:'top',offset:2,clamp:true,formatter:function(v){return pmFmt(v);}}};});
 
   // Existing total trend line (sum/avg across all products)
   const trendData=months.map(function(m){
@@ -1768,7 +1773,7 @@ function renderChart4(months){
       var totalCost=prods.reduce(function(s,p){return s+(p.costPerUnit||0)*(p.units||0);},0);
       return totalUnits>0?+(totalCost/totalUnits).toFixed(2):0;
     }
-    return prods.reduce(function(s,p){return s+pVal(p,pm);},0);
+    return prods.reduce(function(s,p){return s+pVal(p,pm,m);},0);
   });
   var trendColor='#ffffff';
   var trendLabel=pm==='costPerUnit'?'Avg \u20b9/Unit (all products)':pm==='cost'?'Total Cost (all products)':'Total Volume (all products)';
@@ -1795,7 +1800,7 @@ function renderChart4(months){
       return (alloc.video||0)*83;
     }
     function getProdCost(m,rx){
-      return (getFilteredProducts(m)||[]).filter(function(p){return rx.test(p.name);}).reduce(function(s,p){return s+pVal(p,'cost');},0);
+      return (getFilteredProducts(m)||[]).filter(function(p){return rx.test(p.name);}).reduce(function(s,p){return s+pVal(p,'cost',m);},0);
     }
     // Build one % line per product type (not per raw product name)
     var prodTypeLines=[
