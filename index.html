@@ -1756,9 +1756,9 @@ function renderChart4(months){
   const allPN=[...new Set(months.flatMap(function(m){return m.productBreakdown.map(function(p){return p.name;});}))].filter(function(n){if(pp==='all')return true;if(pp==='image')return /image/i.test(n);if(pp==='360')return /360|spin/i.test(n);if(pp==='video')return /video/i.test(n);return true;});
   function pVal(p,m){if(m==='units')return p?p.units||0:0;if(m==='costPerUnit')return p?p.costPerUnit||0:0;return p?Math.round((p.costSharePct||0)/100*(months[months.length-1].summary.totalCost||0)):0;}
   const pmFmt=pm==='cost'?function(v){return'\u20b9'+f.short(v);}:pm==='costPerUnit'?function(v){return'\u20b9'+Number(v).toFixed(2);}:function(v){return f.short(v);};
-  const pDS=allPN.map(function(pn,i){return{label:pn,data:months.map(function(m){return pVal(getFilteredProducts(m).find(function(x){return x.name===pn;}),pm);}),backgroundColor:pc(pn,i),borderRadius:3,barPercentage:.8,categoryPercentage:.8,maxBarThickness:80,order:2,datalabels:{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:'#FFFFFF',font:{size:13,weight:'600'},anchor:'end',align:'top',offset:2,clamp:true,formatter:function(v){return pmFmt(v);}}};});
+  const pDS=allPN.map(function(pn,i){return{label:pn,data:months.map(function(m){return pVal(getFilteredProducts(m).find(function(x){return x.name===pn;}),pm);}),backgroundColor:pc(pn,i),borderRadius:3,barPercentage:.8,categoryPercentage:.8,maxBarThickness:80,order:2,yAxisID:'y',datalabels:{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:'#FFFFFF',font:{size:13,weight:'600'},anchor:'end',align:'top',offset:2,clamp:true,formatter:function(v){return pmFmt(v);}}};});
 
-  // Trend line: sum (Volume/Cost) or avg (Cost-per-Unit) across all visible products, per month
+  // Existing total trend line (sum/avg across all products)
   const trendData=months.map(function(m){
     var prods=allPN.map(function(pn){return getFilteredProducts(m).find(function(x){return x.name===pn;});}).filter(Boolean);
     if(pm==='costPerUnit'){
@@ -1772,11 +1772,78 @@ function renderChart4(months){
   var trendLabel=pm==='costPerUnit'?'Avg \u20b9/Unit (all products)':pm==='cost'?'Total Cost (all products)':'Total Volume (all products)';
   var trendDS={
     label:trendLabel,data:trendData,type:'line',borderColor:trendColor,borderWidth:2.5,borderDash:[6,3],
-    tension:.3,pointBackgroundColor:trendColor,pointRadius:4,pointHoverRadius:6,fill:false,order:1,
+    tension:.3,pointBackgroundColor:trendColor,pointRadius:4,pointHoverRadius:6,fill:false,order:1,yAxisID:'y',
     datalabels:{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:trendColor,font:{size:11,weight:'700'},anchor:'end',align:'top',offset:14,clamp:true,formatter:function(v){return pmFmt(v);}}
   };
 
-  mk('ch-prod-trend',{type:'bar',data:{labels,datasets:pDS.concat([trendDS])},options:{onClick:function(evt,els){if(els.length)showMonthDetail(months[els[0].index],'product',allPN[els[0].datasetIndex]);},plugins:{legend:{position:'bottom',labels:{color:'#F3F4F6',font:{size:14},boxWidth:10,padding:10}},tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){return ctx.dataset.label+': '+pmFmt(ctx.raw);},footer:function(items){const t=items.filter(function(i){return i.dataset.label!==trendLabel;}).reduce(function(s,i){return s+i.raw;},0);return t>0?'Total: '+pmFmt(t):'';}}},scales:{x:{ticks:{color:'#F3F4F6',font:{size:14}},grid:{color:'rgba(60,60,60,.5)'}},y:{ticks:{color:'#F3F4F6',font:{size:13},callback:pmFmt},grid:{color:'rgba(60,60,60,.5)'}}}}}});
+  // Cost / Revenue % per product — uses productMrrAlloc from backend
+  // MRR is allocated per product by splitting each enterprise's MRR equally 
+  // across the product types it had active production in that month.
+  // Only shown when metric is Cost (the other metrics don't have a revenue denominator).
+  var datasets=pDS.concat([trendDS]);
+  var showCostRevLine=(pm==='cost');
+  var costRevDS=null;
+  if(showCostRevLine){
+    // Per-product type: get alloc MRR (USD → INR) and actual delivery cost
+    var imgRx=/image/i, s360Rx=/360|spin/i, vidRx=/video/i;
+    function getProdMrr(m,rx){
+      var alloc=m.productMrrAlloc||{};
+      if(rx===imgRx) return (alloc.image||0)*83;
+      if(rx===s360Rx) return (alloc.s360||0)*83;
+      return (alloc.video||0)*83;
+    }
+    function getProdCost(m,rx){
+      return (getFilteredProducts(m)||[]).filter(function(p){return rx.test(p.name);}).reduce(function(s,p){return s+pVal(p,'cost');},0);
+    }
+    // Build one % line per product type (not per raw product name)
+    var prodTypeLines=[
+      {label:'Images Cost/Rev%',rx:imgRx,color:'#4f78ff'},
+      {label:'360 Cost/Rev%',rx:s360Rx,color:'#f5a42a'},
+      {label:'Video Cost/Rev%',rx:vidRx,color:'#e85d79'},
+    ].filter(function(pt){return allPN.some(function(n){return pt.rx.test(n);});});
+
+    var crLineDSs=prodTypeLines.map(function(pt){
+      var crData=months.map(function(m){
+        var mrr=getProdMrr(m,pt.rx);
+        var cost=getProdCost(m,pt.rx);
+        return mrr>0?+(cost/mrr*100).toFixed(2):0;
+      });
+      return{
+        label:pt.label,
+        data:crData,
+        type:'line',
+        borderColor:pt.color,
+        backgroundColor:pt.color,
+        borderWidth:2,
+        borderDash:[4,2],
+        tension:.3,
+        pointBackgroundColor:pt.color,
+        pointRadius:4,
+        pointHoverRadius:6,
+        fill:false,
+        order:0,
+        yAxisID:'y2',
+        datalabels:{
+          display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},
+          color:pt.color,
+          font:{size:11,weight:'700'},
+          anchor:'end',
+          align:'top',
+          offset:4,
+          clamp:true,
+          formatter:function(v){return v>0?v.toFixed(2)+'%':'';}
+        }
+      };
+    });
+    datasets=pDS.concat([trendDS]).concat(crLineDSs);
+  }
+
+  var y2Axis=showCostRevLine?{y2:{type:'linear',position:'right',ticks:{color:'#f5a42a',font:{size:12},callback:function(v){return v.toFixed(1)+'%';}},grid:{display:false},title:{display:true,text:'Cost / Revenue %',color:'#aaa',font:{size:11}}}}:{};
+  var scalesBase={x:{ticks:{color:'#F3F4F6',font:{size:14}},grid:{color:'rgba(60,60,60,.5)'}},y:{ticks:{color:'#F3F4F6',font:{size:13},callback:pmFmt},grid:{color:'rgba(60,60,60,.5)'}}};
+  var scales=Object.assign({},scalesBase,y2Axis);
+
+  var COST_REV_LABELS=['Images Cost/Rev%','360 Cost/Rev%','Video Cost/Rev%'];
+  mk('ch-prod-trend',{type:'bar',data:{labels,datasets:datasets},options:{onClick:function(evt,els){if(els.length)showMonthDetail(months[els[0].index],'product',allPN[els[0].datasetIndex]);},plugins:{legend:{position:'bottom',labels:{color:'#F3F4F6',font:{size:14},boxWidth:10,padding:10}},tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){if(COST_REV_LABELS.indexOf(ctx.dataset.label)>-1)return ctx.dataset.label+': '+ctx.raw.toFixed(2)+'%';return ctx.dataset.label+': '+pmFmt(ctx.raw);},footer:function(items){const t=items.filter(function(i){return i.dataset.label!==trendLabel&&COST_REV_LABELS.indexOf(i.dataset.label)===-1;}).reduce(function(s,i){return s+i.raw;},0);return t>0?'Total: '+pmFmt(t):'';}}},scales:scales}}});
 }
 
 // ── RENDER USER SUMMARY ───────────────────────────────────────────────────────
