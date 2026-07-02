@@ -63,8 +63,6 @@ function parseEnterpriseMeta(csvText) {
     contractedArr: headers.findIndex(h => /contracted arr/i.test(h)),
     stage:         headers.findIndex(h => /^stage$/i.test(h.trim())),
   };
-  console.log('[metabase] headers:', headers.slice(0, 8), 'idx:', idx);
-
   lines.slice(1).forEach(line => {
     if (!line.trim()) return;
     const cols = parseLine(line);
