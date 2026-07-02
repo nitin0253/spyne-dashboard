@@ -269,26 +269,6 @@ function parseFactorCalc(rows, excludeSet) {
   return { totalCost, inhouseCost, osCost, employees: editors, excludedEmployees: excludedEditors };
 }
 
-// enterprise_details: A=ID B=Name C=InvVersion D=CustomerSegment
-function parseEnterprise(rows) {
-  const map = {};
-  (rows || []).slice(1).forEach(r => {
-    if (r && r[1]) {
-      const name = r[1].trim();
-      map[name.toLowerCase()] = { originalKey: name, segment: r[3] || 'Unknown', inventoryVersion: r[2] || '' };
-    }
-  });
-  return map;
-}
-
-// Lookup enterprise_details info by output enterprise name — case-insensitive,
-// mirrors lookupMeta() so a row like "Teton solution Group" (output sheet)
-// still matches "Teton Solution Group" (enterprise_details sheet).
-function lookupEnt(entMap, outputName) {
-  if (!outputName) return null;
-  return entMap[outputName.toLowerCase().trim()] || null;
-}
-
 // ── Aggregation ───────────────────────────────────────────────────────────────
 function groupSum(rows, keyFn) {
   const acc = {};
@@ -361,7 +341,7 @@ function enrichGroup(name, g, allocatedCost) {
 }
 
 // ── Per-month compute ─────────────────────────────────────────────────────────
-function computeMonth(config, outputRows, factorRows, enterpriseRows, removedRows, metaIndex) {
+function computeMonth(config, outputRows, factorRows, removedRows, metaIndex) {
   const sheetExcluded = parseRemovedUsers(removedRows);
   const excludeSet    = buildExcludeSet(sheetExcluded);
 
@@ -370,8 +350,6 @@ function computeMonth(config, outputRows, factorRows, enterpriseRows, removedRow
     totalCost, inhouseCost, osCost,
     employees, excludedEmployees,
   } = parseFactorCalc(factorRows, excludeSet);
-  const entMap = parseEnterprise(enterpriseRows);
-
   // Editor cost lookup: email → { totalCost, inhouseCost, osCost, teamType, factor }
   // Keys are normalized (lowercase+trim) so lookups by qcEditor (which may have
   // different casing in the output sheet) still match.
@@ -387,16 +365,11 @@ function computeMonth(config, outputRows, factorRows, enterpriseRows, removedRow
   });
 
   const enriched = output.map(r => {
-    const entInfo  = lookupEnt(entMap, r.enterprise);
-    // Prefer enterprise_details sheet segment, fall back to Metabase metaIndex
-    const metaInfo = (!entInfo?.segment || entInfo.segment === 'Unknown')
-      ? lookupMeta(metaIndex, r.enterprise)
-      : null;
-    const segment = entInfo?.segment || metaInfo?.segment || 'Unknown';
+    // Segment comes entirely from Metabase metaIndex (enterprise_details sheet removed)
+    const segment = lookupMeta(metaIndex, r.enterprise)?.segment || 'Unknown';
     return {
       ...r,
       segment,
-      inventoryVersion: entInfo?.inventoryVersion || '',
       // Editor team type from factor_calculation
       teamType: editorCostMap[(r.qcEditor || '').toLowerCase().trim()]?.teamType || 'Unknown',
     };
@@ -520,7 +493,7 @@ function computeMonth(config, outputRows, factorRows, enterpriseRows, removedRow
     const entGroups2 = groupSumNormalized(segRows, r => r.enterprise);
     const topEnterprises = Object.entries(entGroups2).map(([eName, eg]) => {
       const eCost = totalActMins > 0 ? (eg.actualMins / totalActMins) * effectiveTotalCost : 0;
-      return { ...enrichGroup(eName, eg, eCost), inventoryVersion: lookupEnt(entMap, eName)?.inventoryVersion || '' };
+      return { ...enrichGroup(eName, eg, eCost) };
     }).sort((a, b) => b.units - a.units).slice(0, 10);
 
     return {
@@ -616,8 +589,7 @@ function computeMonth(config, outputRows, factorRows, enterpriseRows, removedRow
       ...enrichGroup(name, g, cost),
       byProduct,
       byEditor,
-      segment:          lookupEnt(entMap, name)?.segment          || meta?.segment || 'Unknown',
-      inventoryVersion: lookupEnt(entMap, name)?.inventoryVersion || '',
+      segment:          meta?.segment || 'Unknown',
       // Metabase enrichment fields
       entId:   meta?.entId   || '',
       csPoc:   meta?.csPoc   || '',
@@ -718,13 +690,12 @@ module.exports = async function handler(req, res) {
     // 7 sheets × 4 ranges = 28 concurrent calls was causing 504 timeouts.
     // Batching keeps concurrent calls to 12 max (3 sheets × 4 ranges).
     async function fetchSheet(cfg) {
-      const [outputRows, factorRows, entRows, removedRows] = await Promise.all([
+      const [outputRows, factorRows, removedRows] = await Promise.all([
         fetchRange(client, cfg.id, 'output!A:M'),
         fetchRange(client, cfg.id, 'factor_calculation!A:G'),
-        fetchRange(client, cfg.id, 'enterprise_details!A:D'),
         fetchRange(client, cfg.id, 'remove_users!A:E'),
       ]);
-      return { cfg, outputRows, factorRows, entRows, removedRows };
+      return { cfg, outputRows, factorRows, removedRows };
     }
 
     async function fetchInBatches(sheets, batchSize) {
@@ -748,8 +719,8 @@ module.exports = async function handler(req, res) {
     // Step 3: Build index and compute months
     const metaIndex = buildMetaIndex(enterpriseMeta);
     const sheetsResults = await Promise.allSettled(
-      rawSheetsData.map(({ cfg, outputRows, factorRows, entRows, removedRows }) =>
-        Promise.resolve(computeMonth(cfg, outputRows, factorRows, entRows, removedRows, metaIndex))
+      rawSheetsData.map(({ cfg, outputRows, factorRows, removedRows }) =>
+        Promise.resolve(computeMonth(cfg, outputRows, factorRows, removedRows, metaIndex))
       )
     );
     const months = sheetsResults.filter(r => r.status === 'fulfilled').map(r => r.value);
