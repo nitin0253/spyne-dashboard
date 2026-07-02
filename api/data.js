@@ -631,6 +631,31 @@ function computeMonth(config, outputRows, factorRows, enterpriseRows, removedRow
   }).sort((a, b) => b.units - a.units);
 
   // ── Inhouse vs OS breakdown
+  // ── Product-level MRR allocation ─────────────────────────────────────────
+  // For each enterprise, split its monthly MRR equally across the product types
+  // (Image / 360 / Video) it had active production in this month.
+  // Enterprises active in 1 product → 100% to that product
+  // Enterprises active in 2 products → 50% each
+  // Enterprises active in 3 products → 33.3% each
+  const productMrrAlloc = { image: 0, s360: 0, video: 0 };
+  enterpriseBreakdown.forEach(ent => {
+    const monthlyMRR = (ent.contractedArr || 0) / 12;   // USD
+    if (!monthlyMRR) return;
+    const hasImage = Object.keys(ent.byProduct || {}).some(p => isImage(p));
+    const has360   = Object.keys(ent.byProduct || {}).some(p => is360(p));
+    const hasVideo = Object.keys(ent.byProduct || {}).some(p => isVideo(p));
+    const count = (hasImage ? 1 : 0) + (has360 ? 1 : 0) + (hasVideo ? 1 : 0);
+    if (!count) return;
+    const share = monthlyMRR / count;
+    if (hasImage) productMrrAlloc.image += share;
+    if (has360)   productMrrAlloc.s360  += share;
+    if (hasVideo) productMrrAlloc.video += share;
+  });
+  // Round to 2dp (USD)
+  productMrrAlloc.image = +productMrrAlloc.image.toFixed(2);
+  productMrrAlloc.s360  = +productMrrAlloc.s360.toFixed(2);
+  productMrrAlloc.video = +productMrrAlloc.video.toFixed(2);
+
   const teamBreakdown = {
     inhouse: {
       cost:        Math.round(inhouseCost),
@@ -671,6 +696,7 @@ function computeMonth(config, outputRows, factorRows, enterpriseRows, removedRow
     },
     teamBreakdown,
     productBreakdown,
+    productMrrAlloc,
     editorBreakdown,
     segmentBreakdown,
     dealerBreakdown,
