@@ -424,7 +424,7 @@ function computeMonth(config, outputRows, factorRows, enterpriseRows, removedRow
       effectiveInhouseCost = Math.round(factorBasedCost); // conservative: treat all as inhouse
     }
   }
-  const efficiency     = totalActMins > 0 ? +((totalTarget / totalActMins) * 100).toFixed(2) : 0;
+  console.log(`[${config.month}] outputRows=${outputRows.length}, enriched=${enriched.length}, totalUnits=${Math.round(totalUnits)}, totalCost=${Math.round(effectiveTotalCost)}, excludeSetSize=${excludeSet.size}`);
   const costPerUnit    = totalUnits > 0 ? +(effectiveTotalCost / totalUnits).toFixed(2) : 0;
   const costPerSku     = totalSkus  > 0 ? +(effectiveTotalCost / totalSkus).toFixed(2)  : 0;
   const costPerVin     = totalVins  > 0 ? +(effectiveTotalCost / totalVins).toFixed(2)  : 0;
