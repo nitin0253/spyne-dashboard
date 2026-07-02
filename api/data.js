@@ -177,16 +177,6 @@ function getSheetsClient() {
   return google.sheets({ version: 'v4', auth });
 }
 
-async function fetchRange(client, sheetId, range) {
-  try {
-    const res = await client.spreadsheets.values.get({ spreadsheetId: sheetId, range });
-    return res.data.values || [];
-  } catch (e) {
-    console.error(`fetchRange failed [${sheetId}][${range}]:`, e.message);
-    return [];
-  }
-}
-
 // ── Parsers ───────────────────────────────────────────────────────────────────
 
 function parseRemovedUsers(rows) {
@@ -686,33 +676,33 @@ module.exports = async function handler(req, res) {
   try {
     const client = getSheetsClient();
 
-    // Fetch sheets in batches of 3 to avoid Google Sheets API rate limits.
-    // 7 sheets × 4 ranges = 28 concurrent calls was causing 504 timeouts.
-    // Batching keeps concurrent calls to 12 max (3 sheets × 4 ranges).
+    // Fetch all ranges for each sheet in ONE batchGet call per sheet,
+    // then run all 7 sheet fetches concurrently.
+    // batchGet = 7 API calls total (vs 21 before), each returning 3 ranges at once.
     async function fetchSheet(cfg) {
-      const [outputRows, factorRows, removedRows] = await Promise.all([
-        fetchRange(client, cfg.id, 'output!A:M'),
-        fetchRange(client, cfg.id, 'factor_calculation!A:G'),
-        fetchRange(client, cfg.id, 'remove_users!A:E'),
-      ]);
-      return { cfg, outputRows, factorRows, removedRows };
-    }
-
-    async function fetchInBatches(sheets, batchSize) {
-      const results = [];
-      for (let i = 0; i < sheets.length; i += batchSize) {
-        const batch = sheets.slice(i, i + batchSize);
-        const batchResults = await Promise.all(batch.map(fetchSheet));
-        results.push(...batchResults);
+      try {
+        const res = await client.spreadsheets.values.batchGet({
+          spreadsheetId: cfg.id,
+          ranges: ['output!A:M', 'factor_calculation!A:G', 'remove_users!A:E'],
+        });
+        const vrs = res.data.valueRanges || [];
+        return {
+          cfg,
+          outputRows:  vrs[0]?.values || [],
+          factorRows:  vrs[1]?.values || [],
+          removedRows: vrs[2]?.values || [],
+        };
+      } catch (e) {
+        console.error(`[${cfg.month}] batchGet failed:`, e.message);
+        return { cfg, outputRows: [], factorRows: [], removedRows: [] };
       }
-      return results;
     }
 
     // Metabase deadline: tight 5s — non-blocking, best-effort enrichment
     const metaDeadline = new Promise(resolve => setTimeout(() => resolve({}), 5000));
 
     const [rawSheetsData, enterpriseMeta] = await Promise.all([
-      fetchInBatches(SHEETS, 3),
+      Promise.all(SHEETS.map(fetchSheet)),
       Promise.race([fetchMetabaseCSV(), metaDeadline]),
     ]);
 
