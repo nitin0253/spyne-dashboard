@@ -215,8 +215,7 @@ function parseOutput(rows, excludeSet) {
       actualMins: +r[11] || 0,
       factor:     +r[12] || 0,
     }))
-    .filter(r => !excludeSet.has((r.qcEditor || '').toLowerCase().trim()))
-    .filter(r => isVideo(r.product) ? r.type === 'reqc' : true);
+    .filter(r => !excludeSet.has((r.qcEditor || '').toLowerCase().trim()));
 }
 
 // factor_calculation sheet:
@@ -402,9 +401,16 @@ function computeMonth(config, outputRows, factorRows, removedRows, metaIndex) {
   const osActMins      = osRows.reduce((s, r) => s + r.actualMins, 0);
 
   // ── Product breakdown
+  // Cost per product = Σ(actualMins × factor) per row — matches the sheet pivot exactly.
+  // Using time-proration (product_mins/total_mins × totalSalary) was wrong because
+  // different editors working on different products have different salary rates.
   const prodGroups = groupSum(enriched, r => r.product);
   const productBreakdown = Object.entries(prodGroups).map(([name, g]) => {
-    const costShare = totalActMins > 0 ? (g.actualMins / totalActMins) * effectiveTotalCost : 0;
+    // Sum row-level cost for this product
+    const rowCost = enriched
+      .filter(r => r.product === name)
+      .reduce((s, r) => s + (r.actualMins || 0) * (r.factor || 0), 0);
+    const costShare = rowCost;
     return {
       ...enrichGroup(name, g, costShare),
       cost:         Math.round(costShare),
@@ -454,8 +460,8 @@ function computeMonth(config, outputRows, factorRows, removedRows, metaIndex) {
   // ── Segment breakdown
   const segGroups = groupSum(enriched, r => r.segment);
   const segmentBreakdown = Object.entries(segGroups).map(([segName, g]) => {
-    const segCost = totalActMins > 0 ? (g.actualMins / totalActMins) * effectiveTotalCost : 0;
     const segRows = enriched.filter(r => r.segment === segName);
+    const segCost = segRows.reduce((s, r) => s + (r.actualMins || 0) * (r.factor || 0), 0);
 
     const byProduct = {};
     segRows.forEach(r => {
@@ -468,8 +474,10 @@ function computeMonth(config, outputRows, factorRows, removedRows, metaIndex) {
       byProduct[p].actualMins += r.actualMins;
       byProduct[p].sumTarget  += r.sumTarget;
     });
-    Object.entries(byProduct).forEach(([, pd]) => {
-      const pCost = totalActMins > 0 ? (pd.actualMins / totalActMins) * effectiveTotalCost : 0;
+    Object.entries(byProduct).forEach(([pname, pd]) => {
+      const pCost = segRows
+        .filter(r => r.product === pname)
+        .reduce((s, r) => s + (r.actualMins || 0) * (r.factor || 0), 0);
       pd.costPerUnit = pd.units > 0 ? +(pCost / pd.units).toFixed(2) : 0;
       pd.efficiency  = pd.actualMins > 0 ? +((pd.sumTarget / pd.actualMins) * 100).toFixed(2) : 0;
       pd.units = Math.round(pd.units); pd.skus = Math.round(pd.skus);
@@ -483,7 +491,10 @@ function computeMonth(config, outputRows, factorRows, removedRows, metaIndex) {
 
     const entGroups2 = groupSumNormalized(segRows, r => r.enterprise);
     const topEnterprises = Object.entries(entGroups2).map(([eName, eg]) => {
-      const eCost = totalActMins > 0 ? (eg.actualMins / totalActMins) * effectiveTotalCost : 0;
+      const eNameNorm = eName.toLowerCase().trim();
+      const eCost = segRows
+        .filter(r => (r.enterprise || '').toLowerCase().trim() === eNameNorm)
+        .reduce((s, r) => s + (r.actualMins || 0) * (r.factor || 0), 0);
       return { ...enrichGroup(eName, eg, eCost) };
     }).sort((a, b) => b.units - a.units).slice(0, 10);
 
@@ -500,16 +511,18 @@ function computeMonth(config, outputRows, factorRows, removedRows, metaIndex) {
   // ── Dealer breakdown
   const dealerGroups = groupSum(enriched, r => r.dealerType);
   const dealerBreakdown = Object.entries(dealerGroups).map(([name, g]) => {
-    const cost = totalActMins > 0 ? (g.actualMins / totalActMins) * effectiveTotalCost : 0;
+    const cost = enriched
+      .filter(r => r.dealerType === name)
+      .reduce((s, r) => s + (r.actualMins || 0) * (r.factor || 0), 0);
     return enrichGroup(name, g, cost);
   }).sort((a, b) => b.units - a.units);
 
-  // ── Enterprise breakdown (top 25)
+  // ── Enterprise breakdown
   const entGroups = groupSumNormalized(enriched, r => r.enterprise);
   const enterpriseBreakdown = Object.entries(entGroups).map(([name, g]) => {
-    const cost = totalActMins > 0 ? (g.actualMins / totalActMins) * effectiveTotalCost : 0;
     const nameNorm = name.toLowerCase().trim();
     const entRows = enriched.filter(r => (r.enterprise || '').toLowerCase().trim() === nameNorm);
+    const cost = entRows.reduce((s, r) => s + (r.actualMins || 0) * (r.factor || 0), 0);
     const byProduct = {};
     entRows.forEach(r => {
       const p = r.product;
@@ -522,8 +535,10 @@ function computeMonth(config, outputRows, factorRows, removedRows, metaIndex) {
       byProduct[p].sumTarget  += r.sumTarget;
       byProduct[p].rows++;
     });
-    Object.entries(byProduct).forEach(([, pd]) => {
-      const pCost = totalActMins > 0 ? (pd.actualMins / totalActMins) * effectiveTotalCost : 0;
+    Object.entries(byProduct).forEach(([pname, pd]) => {
+      const pCost = entRows
+        .filter(r => r.product === pname)
+        .reduce((s, r) => s + (r.actualMins || 0) * (r.factor || 0), 0);
       pd.cost = Math.round(pCost);
       pd.costPerUnit = pd.units > 0 ? +(pCost / pd.units).toFixed(2) : 0;
       pd.efficiency  = pd.actualMins > 0 ? +((pd.sumTarget / pd.actualMins) * 100).toFixed(2) : 0;
@@ -559,11 +574,14 @@ function computeMonth(config, outputRows, factorRows, removedRows, metaIndex) {
       let beCost;
       if (ec && ec.totalCost > 0) {
         // Editor's salary cost, scaled by the share of THEIR OWN total minutes
-        // that went into this specific enterprise (not the global total).
+        // that went into this specific enterprise.
         const editorAllMins = editorGroups[email]?.actualMins || be.actualMins || 1;
         beCost = ec.totalCost * (be.actualMins / editorAllMins);
       } else {
-        beCost = totalActMins > 0 ? (be.actualMins / totalActMins) * totalCost : 0;
+        // Fallback: use row-level factor for editors with no salary record
+        beCost = entRows
+          .filter(r => (r.qcEditor || '').toLowerCase().trim() === email)
+          .reduce((s, r) => s + (r.actualMins || 0) * (r.factor || 0), 0);
       }
       be.cost = Math.round(beCost);
       be.costPerUnit = be.units > 0 ? +(beCost / be.units).toFixed(2) : 0;
