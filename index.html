@@ -625,7 +625,7 @@ const f={
 
 // ── COLOURS ──────────────────────────────────────────────────────────────────
 const SEG_C={Ent:'#4f78ff',Enterprise:'#4f78ff',Mid:'#a07cff',SMB:'#22d4a0',Resellers:'#f5a42a',Unknown:'#E6E6E6'};
-const PROD_C={Images:'#4f78ff','360':'#22d4a0',Video:'#f5a42a',Spin:'#22d4a0'};
+const PROD_C={Images:'#4f78ff','360':'#22d4a0',Video:'#e85d79',Spin:'#22d4a0'};
 const PAL=['#4f78ff','#22d4a0','#f5a42a','#a07cff','#f0566a','#38c4f0','#f07832'];
 function pc(name,i=0){for(const k of Object.keys(PROD_C))if(name?.toLowerCase().includes(k.toLowerCase()))return PROD_C[k];return PAL[i%PAL.length];}
 function sc(name){return SEG_C[name]||PAL[4];}
@@ -1804,9 +1804,9 @@ function renderChart4(months){
     }
     // Build one % line per product type (not per raw product name)
     var prodTypeLines=[
-      {label:'Images Cost/Rev%',rx:imgRx,color:'#4f78ff'},
-      {label:'360 Cost/Rev%',rx:s360Rx,color:'#f5a42a'},
-      {label:'Video Cost/Rev%',rx:vidRx,color:'#e85d79'},
+      {label:'Images Cost/Rev%',rx:imgRx,color:pc('Images')},
+      {label:'360 Cost/Rev%',rx:s360Rx,color:pc('360')},
+      {label:'Video Cost/Rev%',rx:vidRx,color:pc('Video')},
     ].filter(function(pt){return allPN.some(function(n){return pt.rx.test(n);});});
 
     var crLineDSs=prodTypeLines.map(function(pt){
