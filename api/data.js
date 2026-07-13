@@ -105,17 +105,37 @@ function parseEnterpriseMeta(csvText) {
   });
   return map;
 }
-// Build normalized lookup index from enterpriseMeta map
+// Build normalized lookup index from enterpriseMeta map.
+// Dual-keyed: by enterprise name (lowercase) AND by entId (lowercase).
+// From Jun-26 onwards, output rows carry enterpriseId so we prefer ID lookup
+// for accuracy. For older months (no enterpriseId), name lookup still works.
 function buildMetaIndex(metaMap) {
   const index = {};
+  // Primary keys: by name
   Object.entries(metaMap).forEach(([name, val]) => {
     index[name.toLowerCase().trim()] = { originalKey: name, ...val };
+  });
+  // Secondary keys: by entId — prefixed with 'id:' to avoid collisions with names
+  Object.entries(metaMap).forEach(([name, val]) => {
+    if (val.entId) {
+      const idKey = 'id:' + val.entId.toLowerCase().trim();
+      if (!index[idKey]) index[idKey] = { originalKey: name, ...val };
+    }
   });
   return index;
 }
 
-// Lookup enterprise meta by output enterprise name (normalized match)
-function lookupMeta(metaIndex, outputName) {
+// Lookup enterprise meta.
+// - New months (hasEntId=true): caller passes enterpriseId → ID-only lookup, no name fallback.
+//   This ensures old name-based entries never accidentally match a different enterprise.
+// - Old months (hasEntId=false): caller passes null → name-only lookup (original behaviour).
+function lookupMeta(metaIndex, outputName, enterpriseId) {
+  if (!metaIndex) return null;
+  if (enterpriseId) {
+    // ID-based lookup only — no name fallback for new months
+    return metaIndex['id:' + enterpriseId.toLowerCase().trim()] || null;
+  }
+  // Name-based lookup only — for months without enterprise_id column
   if (!outputName) return null;
   return metaIndex[outputName.toLowerCase().trim()] || null;
 }
@@ -135,10 +155,10 @@ const SHEETS = [
   { month: 'Mar-26', key: 'mar26', id: '1_2xlqYzD15vhZ4qfsH-3kGHj8LXljpdUjdgFIfS5-Iw' },
   { month: 'Apr-26', key: 'apr26', id: '1cKEaxHNOqU2vpnCsnHbf1PfQdVnReg3MsGIgqgE1UhE' },
   { month: 'May-26', key: 'may26', id: '1_3d_XJmSbBziSCicauYEiP1J5N4RRW6pGco49uWuh84' },
-  { month: 'Jun-26', key: 'jun26', id: '1bNs5JvqzZ0HifsSy4fcu0-z-s11NRY8kTH9t9yLeKGA' },
-  { month: 'Jul-26', key: 'jul26', id: '1i3KqktELNb-ykpZeHaMh3wk3FBBV-eHNAw6736oaXbI' },
-  // ↓ ADD NEW MONTHS HERE ↓
-  // { month: 'Aug-26', key: 'aug26', id: 'PASTE_SHEET_ID_HERE' },
+  { month: 'Jun-26', key: 'jun26', id: '1bNs5JvqzZ0HifsSy4fcu0-z-s11NRY8kTH9t9yLeKGA', hasEntId: true },
+  { month: 'Jul-26', key: 'jul26', id: '1i3KqktELNb-ykpZeHaMh3wk3FBBV-eHNAw6736oaXbI', hasEntId: true },
+  // ↓ ADD NEW MONTHS HERE — include hasEntId: true for all months from Jun-26 onwards ↓
+  // { month: 'Aug-26', key: 'aug26', id: 'PASTE_SHEET_ID_HERE', hasEntId: true },
 ];
 
 // Always-excluded emails
@@ -202,18 +222,19 @@ function parseOutput(rows, excludeSet) {
     .filter(r => r && r[0])
     .map(r => ({
       date:       r[0]  || '',
-      product:    r[1]  || '',
-      verticle:   r[2]  || '',
-      type:       (r[3] || '').toLowerCase().trim(),
-      enterprise: r[4]  || '',
-      dealerType: r[5]  || '',
-      qcEditor:   (r[6] || '').toLowerCase().trim(),
-      skus:       +r[7]  || 0,
-      images:     +r[8]  || 0,
-      tools:      +r[9]  || 0,
-      sumTarget:  +r[10] || 0,
-      actualMins: +r[11] || 0,
-      factor:     +r[12] || 0,
+      product:      r[1]  || '',
+      verticle:     r[2]  || '',
+      type:         (r[3] || '').toLowerCase().trim(),
+      enterprise:   r[4]  || '',
+      dealerType:   r[5]  || '',
+      qcEditor:     (r[6] || '').toLowerCase().trim(),
+      skus:         +r[7]  || 0,
+      images:       +r[8]  || 0,
+      tools:        +r[9]  || 0,
+      sumTarget:    +r[10] || 0,
+      actualMins:   +r[11] || 0,
+      factor:       +r[12] || 0,
+      enterpriseId: (r[13] || '').trim(),   // col N — new from Jun-26 onwards
     }))
     .filter(r => !excludeSet.has((r.qcEditor || '').toLowerCase().trim()));
 }
@@ -331,6 +352,9 @@ function enrichGroup(name, g, allocatedCost) {
 
 // ── Per-month compute ─────────────────────────────────────────────────────────
 function computeMonth(config, outputRows, factorRows, removedRows, metaIndex) {
+  // Jun-26+ sheets have enterprise_id column (col N). For these months we match
+  // Metabase by ID (precise). For older months we match by name only.
+  const useEntId = !!config.hasEntId;
   const sheetExcluded = parseRemovedUsers(removedRows);
   const excludeSet    = buildExcludeSet(sheetExcluded);
 
@@ -354,8 +378,8 @@ function computeMonth(config, outputRows, factorRows, removedRows, metaIndex) {
   });
 
   const enriched = output.map(r => {
-    // Segment comes entirely from Metabase metaIndex (enterprise_details sheet removed)
-    const segment = lookupMeta(metaIndex, r.enterprise)?.segment || 'Unknown';
+    // Segment lookup: ID-based for Jun-26+ (hasEntId), name-based for older months
+    const segment = lookupMeta(metaIndex, r.enterprise, useEntId ? r.enterpriseId : null)?.segment || 'Unknown';
     return {
       ...r,
       segment,
@@ -592,8 +616,9 @@ function computeMonth(config, outputRows, factorRows, removedRows, metaIndex) {
       be.actualMins = Math.round(be.actualMins); be.sumTarget = Math.round(be.sumTarget);
       Object.values(be.byProduct).forEach(pd => { pd.units = Math.round(pd.units); });
     });
-    // Look up Metabase meta by normalized name match
-    const meta = metaIndex ? lookupMeta(metaIndex, name) : null;
+    // Metabase lookup: ID-based for Jun-26+ (hasEntId), name-based for older months
+    const rowEntId = useEntId ? (entRows.find(r => r.enterpriseId)?.enterpriseId || '') : '';
+    const meta = metaIndex ? lookupMeta(metaIndex, name, rowEntId) : null;
     return {
       ...enrichGroup(name, g, cost),
       byProduct,
@@ -702,7 +727,7 @@ module.exports = async function handler(req, res) {
       try {
         const res = await client.spreadsheets.values.batchGet({
           spreadsheetId: cfg.id,
-          ranges: ['output!A:M', 'factor_calculation!A:G', 'remove_users!A:E'],
+          ranges: ['output!A:N', 'factor_calculation!A:G', 'remove_users!A:E'],
         });
         const vrs = res.data.valueRanges || [];
         return {
