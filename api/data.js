@@ -179,7 +179,7 @@ const ALWAYS_EXCLUDE = new Set([
   'swati.sharma+1@cariotauto.com', 'mohit.10@cars24.com', 'vijender.kumar@cariotauto.com',
   'anuj.1@cariotauto.com', 'rohit.chauhan@spyne.ai', 'saloni.sharma2@cars24.com',
   'mohit.sharma11@cars24.com', 'saurabh.pandey@spyne.ai', 'barkha.rawat@cars24.com',
-  'raj.tripathi@spyne.ai',
+  'raj.tripathi@spyne.ai', 'ajay.dev@spyne.co.in', 'abhinav.sinha@spyne.ai', 'dharmendra.kumar@spyne.co.in'
 ]);
 
 // ── Product helpers ───────────────────────────────────────────────────────────
