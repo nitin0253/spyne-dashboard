@@ -709,29 +709,65 @@ function computeMonth(config, outputRows, factorRows, removedRows, metaIndex) {
   };
 }
 
+// ── Cache ─────────────────────────────────────────────────────────────────────
+// Two-tier cache: in-process memory (fastest) + /tmp file (survives cold starts).
+// TTL = 25 minutes. Force-refresh via ?refresh=1.
+const fs = require('fs');
+const CACHE_TTL_MS = 25 * 60 * 1000;
+const CACHE_FILE   = '/tmp/spyne_dashboard_cache.json';
+let _memCache = null; // { data, ts }
+
+function readDiskCache() {
+  try {
+    const raw = fs.readFileSync(CACHE_FILE, 'utf8');
+    const c = JSON.parse(raw);
+    if (c && c.ts && (Date.now() - c.ts) < CACHE_TTL_MS) return c;
+  } catch (_) {}
+  return null;
+}
+
+function writeDiskCache(data) {
+  try { fs.writeFileSync(CACHE_FILE, JSON.stringify({ data, ts: Date.now() })); } catch (_) {}
+}
+
 // ── Handler ───────────────────────────────────────────────────────────────────
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  // Cache aggressively: 30 min fresh, serve stale for 2 hrs while revalidating
   res.setHeader('Cache-Control', 's-maxage=1800, stale-while-revalidate=7200');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET')     return res.status(405).json({ error: 'Method not allowed' });
+
+  const forceRefresh = (req.query || {}).refresh === '1';
+
+  // 1. Memory cache (same warm instance — instant)
+  if (!forceRefresh && _memCache && (Date.now() - _memCache.ts) < CACHE_TTL_MS) {
+    res.setHeader('X-Cache', 'MEM');
+    return res.status(200).json(_memCache.data);
+  }
+
+  // 2. Disk cache (survived a cold start within same Vercel instance)
+  if (!forceRefresh) {
+    const disk = readDiskCache();
+    if (disk) {
+      _memCache = disk;
+      res.setHeader('X-Cache', 'DISK');
+      return res.status(200).json(disk.data);
+    }
+  }
+
+  // 3. Full recompute — fetch sheets sequentially to avoid rate limiting
   try {
     const client = getSheetsClient();
 
-    // Fetch all ranges for each sheet in ONE batchGet call per sheet,
-    // then run all 7 sheet fetches concurrently.
-    // batchGet = 7 API calls total (vs 21 before), each returning 3 ranges at once.
     async function fetchSheet(cfg) {
-      // Only fetch col N (enterprise_id) for months that have it (Jul-26 onwards)
       const outputRange = cfg.hasEntId ? 'output!A:N' : 'output!A:M';
       try {
-        const res = await client.spreadsheets.values.batchGet({
+        const result = await client.spreadsheets.values.batchGet({
           spreadsheetId: cfg.id,
           ranges: [outputRange, 'factor_calculation!A:G', 'remove_users!A:E'],
         });
-        const vrs = res.data.valueRanges || [];
+        const vrs = result.data.valueRanges || [];
         return {
           cfg,
           outputRows:  vrs[0]?.values || [],
@@ -744,21 +780,24 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    // Metabase deadline: tight 5s — non-blocking, best-effort enrichment
-    const metaDeadline = new Promise(resolve => setTimeout(() => resolve({}), 5000));
+    // Fetch sheets sequentially — one at a time, no rate limit risk.
+    // Each batchGet is 1 API call returning 3 ranges, so total = 7 calls.
+    const rawSheetsData = [];
+    for (const cfg of SHEETS) {
+      rawSheetsData.push(await fetchSheet(cfg));
+    }
 
-    const [rawSheetsData, enterpriseMeta] = await Promise.all([
-      Promise.all(SHEETS.map(fetchSheet)),
-      Promise.race([fetchMetabaseCSV(), metaDeadline]),
-    ]);
+    // Metabase: best-effort 5s, runs after sheets
+    const metaDeadline  = new Promise(resolve => setTimeout(() => resolve({}), 5000));
+    const enterpriseMeta = await Promise.race([fetchMetabaseCSV(), metaDeadline]);
 
-    // Step 3: Build index and compute months
     const metaIndex = buildMetaIndex(enterpriseMeta);
     const sheetsResults = await Promise.allSettled(
       rawSheetsData.map(({ cfg, outputRows, factorRows, removedRows }) =>
         Promise.resolve(computeMonth(cfg, outputRows, factorRows, removedRows, metaIndex))
       )
     );
+
     const months = sheetsResults.filter(r => r.status === 'fulfilled').map(r => r.value);
     const errors = sheetsResults
       .map((r, i) => r.status === 'rejected'
@@ -769,12 +808,14 @@ module.exports = async function handler(req, res) {
     if (months.length === 0)
       return res.status(500).json({ error: 'All sheet fetches failed', details: errors });
 
-    res.status(200).json({
-      months,
-      errors,
-      enterpriseMeta,   // ← included in every response
-      fetchedAt: new Date().toISOString(),
-    });
+    const payload = { months, errors, enterpriseMeta, fetchedAt: new Date().toISOString() };
+
+    // Store in both caches
+    _memCache = { data: payload, ts: Date.now() };
+    writeDiskCache(payload);
+
+    res.setHeader('X-Cache', 'MISS');
+    return res.status(200).json(payload);
   } catch (err) {
     console.error('[data.js error]', err);
     res.status(500).json({ error: err.message });
