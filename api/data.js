@@ -126,16 +126,17 @@ function buildMetaIndex(metaMap) {
 }
 
 // Lookup enterprise meta.
-// - New months (hasEntId=true): caller passes enterpriseId → ID-only lookup, no name fallback.
-//   This ensures old name-based entries never accidentally match a different enterprise.
-// - Old months (hasEntId=false): caller passes null → name-only lookup (original behaviour).
+// Tries ID-based lookup first (precise, no name-mismatch risk for Jul-26+),
+// then always falls back to name-based lookup in case the Metabase CSV doesn't
+// have an Enterprise ID column or the ID isn't found.
 function lookupMeta(metaIndex, outputName, enterpriseId) {
   if (!metaIndex) return null;
+  // Try ID-based lookup first
   if (enterpriseId) {
-    // ID-based lookup only — no name fallback for new months
-    return metaIndex['id:' + enterpriseId.toLowerCase().trim()] || null;
+    const byId = metaIndex['id:' + enterpriseId.toLowerCase().trim()];
+    if (byId) return byId;
   }
-  // Name-based lookup only — for months without enterprise_id column
+  // Fall back to name-based lookup
   if (!outputName) return null;
   return metaIndex[outputName.toLowerCase().trim()] || null;
 }
