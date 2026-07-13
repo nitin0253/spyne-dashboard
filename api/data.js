@@ -155,9 +155,9 @@ const SHEETS = [
   { month: 'Mar-26', key: 'mar26', id: '1_2xlqYzD15vhZ4qfsH-3kGHj8LXljpdUjdgFIfS5-Iw' },
   { month: 'Apr-26', key: 'apr26', id: '1cKEaxHNOqU2vpnCsnHbf1PfQdVnReg3MsGIgqgE1UhE' },
   { month: 'May-26', key: 'may26', id: '1_3d_XJmSbBziSCicauYEiP1J5N4RRW6pGco49uWuh84' },
-  { month: 'Jun-26', key: 'jun26', id: '1bNs5JvqzZ0HifsSy4fcu0-z-s11NRY8kTH9t9yLeKGA', hasEntId: true },
+  { month: 'Jun-26', key: 'jun26', id: '1bNs5JvqzZ0HifsSy4fcu0-z-s11NRY8kTH9t9yLeKGA' },
   { month: 'Jul-26', key: 'jul26', id: '1i3KqktELNb-ykpZeHaMh3wk3FBBV-eHNAw6736oaXbI', hasEntId: true },
-  // ↓ ADD NEW MONTHS HERE — include hasEntId: true for all months from Jun-26 onwards ↓
+  // ↓ ADD NEW MONTHS HERE — include hasEntId: true for Jul-26 onwards ↓
   // { month: 'Aug-26', key: 'aug26', id: 'PASTE_SHEET_ID_HERE', hasEntId: true },
 ];
 
@@ -216,7 +216,7 @@ function buildExcludeSet(sheetEmails) {
 
 // Output: A=Date B=Product C=Verticle D=Type E=Enterprise
 //         F=DealerType G=QCEditor H=SKU_Count I=Images J=Tools K=SumTarget L=ActualMins M=factor
-function parseOutput(rows, excludeSet) {
+function parseOutput(rows, excludeSet, hasEntId) {
   if (!rows || rows.length < 2) return [];
   return rows.slice(1)
     .filter(r => r && r[0])
@@ -234,7 +234,7 @@ function parseOutput(rows, excludeSet) {
       sumTarget:    +r[10] || 0,
       actualMins:   +r[11] || 0,
       factor:       +r[12] || 0,
-      enterpriseId: (r[13] || '').trim(),   // col N — new from Jun-26 onwards
+      enterpriseId: hasEntId ? (r[13] || '').trim() : '',   // col N — Jul-26 onwards only
     }))
     .filter(r => !excludeSet.has((r.qcEditor || '').toLowerCase().trim()));
 }
@@ -358,7 +358,7 @@ function computeMonth(config, outputRows, factorRows, removedRows, metaIndex) {
   const sheetExcluded = parseRemovedUsers(removedRows);
   const excludeSet    = buildExcludeSet(sheetExcluded);
 
-  const output = parseOutput(outputRows, excludeSet);
+  const output = parseOutput(outputRows, excludeSet, useEntId);
   const {
     totalCost, inhouseCost, osCost,
     employees, excludedEmployees,
@@ -724,10 +724,12 @@ module.exports = async function handler(req, res) {
     // then run all 7 sheet fetches concurrently.
     // batchGet = 7 API calls total (vs 21 before), each returning 3 ranges at once.
     async function fetchSheet(cfg) {
+      // Only fetch col N (enterprise_id) for months that have it (Jul-26 onwards)
+      const outputRange = cfg.hasEntId ? 'output!A:N' : 'output!A:M';
       try {
         const res = await client.spreadsheets.values.batchGet({
           spreadsheetId: cfg.id,
-          ranges: ['output!A:N', 'factor_calculation!A:G', 'remove_users!A:E'],
+          ranges: [outputRange, 'factor_calculation!A:G', 'remove_users!A:E'],
         });
         const vrs = res.data.valueRanges || [];
         return {
