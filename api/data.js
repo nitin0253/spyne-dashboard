@@ -3,11 +3,77 @@
 
 const { google } = require('googleapis');
 const https = require('https');
+const fs = require('fs');
+const path = require('path');
 
 // ── Vercel function config — extend timeout ───────────────────────────────────
 module.exports.config = { maxDuration: 60 };
 
 const METABASE_CSV_URL = 'https://metabase.spyne.ai/public/question/84265073-fe7b-4ee1-81d7-5eb37a7e9b2f.csv';
+
+// ── AI Accuracy data (per enterprise per month) ───────────────────────────────
+// Read once at module load from committed CSV. To swap to a live Metabase URL
+// later, replace this block with a fetch (see fetchMetabaseCSV for reference).
+const AI_ACCURACY_CSV_PATH = path.join(__dirname, '..', 'data', 'ai_accuracy.csv');
+// AI_ACCURACY_CSV_URL = 'https://metabase.spyne.ai/public/question/<id>.csv';
+// If you get a public link, comment out the block below and use fetchCSVFromUrl instead.
+
+let _aiAccuracyIndex = null;   // { 'entId|month': { trueAccuracy, postQcToolAccuracy, totalImages, ... } }
+let _aiAccuracyByEnt = null;   // { entId: [{ month, trueAccuracy, ... }, ...] } — for date-range aggregation
+
+function loadAiAccuracy() {
+  if (_aiAccuracyIndex) return { byKey: _aiAccuracyIndex, byEnt: _aiAccuracyByEnt };
+  const byKey = {};
+  const byEnt = {};
+  try {
+    const raw = fs.readFileSync(AI_ACCURACY_CSV_PATH, 'utf8');
+    const lines = raw.trim().split('\n');
+    if (lines.length < 2) return { byKey, byEnt };
+    const headers = parseLine(lines[0]).map(h => h.trim().toLowerCase());
+    const iMonth       = headers.indexOf('month');
+    const iEntId       = headers.indexOf('enterprise_id');
+    const iTotalImages = headers.indexOf('total images');
+    const iQcedImages  = headers.indexOf('qced_images');
+    const iIncorrect   = headers.indexOf('incorrect_images');
+    const iTrueAcc     = headers.indexOf('true_accuracy');
+    const iToolAcc     = headers.indexOf('post_qc_tool_accuracy');
+    if (iMonth < 0 || iEntId < 0 || iTrueAcc < 0) {
+      console.error('[ai_accuracy] required columns missing');
+      return { byKey, byEnt };
+    }
+    lines.slice(1).forEach(line => {
+      if (!line.trim()) return;
+      const cols = parseLine(line);
+      const month = (cols[iMonth] || '').trim();
+      const entId = (cols[iEntId] || '').trim().toLowerCase();
+      if (!month || !entId) return;
+      const parsePct = (s) => {
+        const n = parseFloat(String(s || '').replace(/[^\d.]/g, ''));
+        return isFinite(n) ? +n.toFixed(2) : 0;
+      };
+      const parseNum = (s) => {
+        const n = parseFloat(String(s || '').replace(/,/g, ''));
+        return isFinite(n) ? n : 0;
+      };
+      const entry = {
+        month,
+        trueAccuracy:       parsePct(cols[iTrueAcc]),
+        postQcToolAccuracy: iToolAcc     >= 0 ? parsePct(cols[iToolAcc])     : 0,
+        totalImages:        iTotalImages >= 0 ? parseNum(cols[iTotalImages]) : 0,
+        qcedImages:         iQcedImages  >= 0 ? parseNum(cols[iQcedImages])  : 0,
+        incorrectImages:    iIncorrect   >= 0 ? parseNum(cols[iIncorrect])   : 0,
+      };
+      byKey[entId + '|' + month] = entry;
+      if (!byEnt[entId]) byEnt[entId] = [];
+      byEnt[entId].push(entry);
+    });
+  } catch (e) {
+    console.error('[ai_accuracy] load failed:', e.message);
+  }
+  _aiAccuracyIndex = byKey;
+  _aiAccuracyByEnt = byEnt;
+  return { byKey, byEnt };
+}
 
 // ── Fetch & parse Metabase enterprise CSV ─────────────────────────────────────
 function fetchMetabaseCSV() {
@@ -179,7 +245,7 @@ const ALWAYS_EXCLUDE = new Set([
   'swati.sharma+1@cariotauto.com', 'mohit.10@cars24.com', 'vijender.kumar@cariotauto.com',
   'anuj.1@cariotauto.com', 'rohit.chauhan@spyne.ai', 'saloni.sharma2@cars24.com',
   'mohit.sharma11@cars24.com', 'saurabh.pandey@spyne.ai', 'barkha.rawat@cars24.com',
-  'raj.tripathi@spyne.ai', 'ajay.dev@spyne.co.in', 'abhinav.sinha@spyne.ai'
+  'raj.tripathi@spyne.ai',
 ]);
 
 // ── Product helpers ───────────────────────────────────────────────────────────
@@ -361,7 +427,7 @@ function enrichGroup(name, g, allocatedCost) {
 }
 
 // ── Per-month compute ─────────────────────────────────────────────────────────
-function computeMonth(config, outputRows, factorRows, removedRows, metaIndex) {
+function computeMonth(config, outputRows, factorRows, removedRows, metaIndex, aiAccuracyIndex) {
   // Jun-26+ sheets have enterprise_id column (col N). For these months we match
   // Metabase by ID (precise). For older months we match by name only.
   const useEntId = !!config.hasEntId;
@@ -629,19 +695,27 @@ function computeMonth(config, outputRows, factorRows, removedRows, metaIndex) {
     // Metabase lookup: ID-based for Jun-26+ (hasEntId), name-based for older months
     const rowEntId = useEntId ? (entRows.find(r => r.enterpriseId)?.enterpriseId || '') : '';
     const meta = metaIndex ? lookupMeta(metaIndex, name, rowEntId) : null;
+    // AI accuracy: only mapped for months with enterprise_id in the sheet (Jul-26+).
+    // For older months, no AI accuracy data is shown.
+    const acc = (useEntId && rowEntId) ? aiAccuracyIndex[rowEntId.toLowerCase().trim() + '|' + config.month] : null;
     return {
       ...enrichGroup(name, g, cost),
       byProduct,
       byEditor,
       segment:          meta?.segment || 'Unknown',
       // Metabase enrichment fields
-      entId:   meta?.entId   || '',
+      entId:   meta?.entId   || rowEntId || '',
       csPoc:   meta?.csPoc   || '',
       obPoc:   meta?.obPoc   || '',
       liveArr: meta?.liveArr || '',
       contractedArr:  meta?.contractedArr  || 0,
       rooftopCount:   meta?.rooftopCount   || 0,
       activeRooftops: meta?.activeRooftops || 0,
+      // AI accuracy for this month (from committed CSV)
+      trueAccuracy:       acc?.trueAccuracy       || 0,
+      postQcToolAccuracy: acc?.postQcToolAccuracy || 0,
+      aiTotalImages:      acc?.totalImages        || 0,
+      aiIncorrectImages:  acc?.incorrectImages    || 0,
     };
   }).sort((a, b) => b.units - a.units);
 
@@ -722,7 +796,6 @@ function computeMonth(config, outputRows, factorRows, removedRows, metaIndex) {
 // ── Cache ─────────────────────────────────────────────────────────────────────
 // Two-tier cache: in-process memory (fastest) + /tmp file (survives cold starts).
 // TTL = 25 minutes. Force-refresh via ?refresh=1.
-const fs = require('fs');
 const CACHE_TTL_MS = 25 * 60 * 1000;
 const CACHE_FILE   = '/tmp/spyne_dashboard_cache.json';
 let _memCache = null; // { data, ts }
@@ -836,9 +909,11 @@ module.exports = async function handler(req, res) {
     const enterpriseMeta = await Promise.race([fetchMetabaseCSV(), metaDeadline]);
 
     const metaIndex = buildMetaIndex(enterpriseMeta);
+    // AI accuracy: load once from committed CSV (fast, from disk)
+    const { byKey: aiAccuracyIndex } = loadAiAccuracy();
     const sheetsResults = await Promise.allSettled(
       rawSheetsData.map(({ cfg, outputRows, factorRows, removedRows }) =>
-        Promise.resolve(computeMonth(cfg, outputRows, factorRows, removedRows, metaIndex))
+        Promise.resolve(computeMonth(cfg, outputRows, factorRows, removedRows, metaIndex, aiAccuracyIndex))
       )
     );
 
