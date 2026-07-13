@@ -150,14 +150,18 @@ function lookupMeta(metaIndex, outputName, enterpriseId) {
 // ║  4. Commit & push — Vercel auto-deploys                          ║
 // ╚══════════════════════════════════════════════════════════════════╝
 const SHEETS = [
-  { month: 'Jan-26', key: 'jan26', id: '1VI-9hxnFIynsTOl3aCdIiR-RRAfRssISOWnZdddCz4Q' },
-  { month: 'Feb-26', key: 'feb26', id: '1K2SMR34s0O21BKGpCX-EsUPgOdiAkiuUW8yDyyvFzQU' },
-  { month: 'Mar-26', key: 'mar26', id: '1_2xlqYzD15vhZ4qfsH-3kGHj8LXljpdUjdgFIfS5-Iw' },
-  { month: 'Apr-26', key: 'apr26', id: '1cKEaxHNOqU2vpnCsnHbf1PfQdVnReg3MsGIgqgE1UhE' },
-  { month: 'May-26', key: 'may26', id: '1_3d_XJmSbBziSCicauYEiP1J5N4RRW6pGco49uWuh84' },
+  // frozen:true = data won't change → fetch in parallel with other frozen months (fast)
+  { month: 'Jan-26', key: 'jan26', id: '1VI-9hxnFIynsTOl3aCdIiR-RRAfRssISOWnZdddCz4Q', frozen: true },
+  { month: 'Feb-26', key: 'feb26', id: '1K2SMR34s0O21BKGpCX-EsUPgOdiAkiuUW8yDyyvFzQU', frozen: true },
+  { month: 'Mar-26', key: 'mar26', id: '1_2xlqYzD15vhZ4qfsH-3kGHj8LXljpdUjdgFIfS5-Iw', frozen: true },
+  { month: 'Apr-26', key: 'apr26', id: '1cKEaxHNOqU2vpnCsnHbf1PfQdVnReg3MsGIgqgE1UhE', frozen: true },
+  { month: 'May-26', key: 'may26', id: '1_3d_XJmSbBziSCicauYEiP1J5N4RRW6pGco49uWuh84', frozen: true },
+  // frozen:false = active months, fetched sequentially to avoid rate limits
   { month: 'Jun-26', key: 'jun26', id: '1bNs5JvqzZ0HifsSy4fcu0-z-s11NRY8kTH9t9yLeKGA' },
   { month: 'Jul-26', key: 'jul26', id: '1i3KqktELNb-ykpZeHaMh3wk3FBBV-eHNAw6736oaXbI', hasEntId: true },
-  // ↓ ADD NEW MONTHS HERE — include hasEntId: true for Jul-26 onwards ↓
+  // ↓ ADD NEW MONTHS HERE ↓
+  // When a month is finalised (no more edits), add frozen: true to speed up future loads.
+  // Include hasEntId: true for Jul-26 onwards.
   // { month: 'Aug-26', key: 'aug26', id: 'PASTE_SHEET_ID_HERE', hasEntId: true },
 ];
 
@@ -218,27 +222,32 @@ function buildExcludeSet(sheetEmails) {
 //         F=DealerType G=QCEditor H=SKU_Count I=Images J=Tools K=SumTarget L=ActualMins M=factor
 function parseOutput(rows, excludeSet, hasEntId) {
   if (!rows || rows.length < 2) return [];
+  // Column layout:
+  // OLD (Jan-Jun, hasEntId=false): A=Date B=Product C=Verticle D=Type
+  //   E=Enterprise F=DealerType G=QC H=SKU I=Images J=Tools K=SumTarget L=ActualMins M=factor
+  // NEW (Jul-26+, hasEntId=true): A=Date B=Product C=Verticle D=Type E=Enterprise_id
+  //   F=Enterprise G=DealerType H=QC I=SKU J=Images K=Tools L=SumTarget M=ActualMins N=factor
+  const o = hasEntId ? 1 : 0; // offset: new layout shifts cols after D right by 1
   return rows.slice(1)
     .filter(r => r && r[0])
     .map(r => ({
-      date:       r[0]  || '',
+      date:         r[0]  || '',
       product:      r[1]  || '',
       verticle:     r[2]  || '',
       type:         (r[3] || '').toLowerCase().trim(),
-      enterprise:   r[4]  || '',
-      dealerType:   r[5]  || '',
-      qcEditor:     (r[6] || '').toLowerCase().trim(),
-      skus:         +r[7]  || 0,
-      images:       +r[8]  || 0,
-      tools:        +r[9]  || 0,
-      sumTarget:    +r[10] || 0,
-      actualMins:   +r[11] || 0,
-      factor:       +r[12] || 0,
-      enterpriseId: hasEntId ? (r[13] || '').trim() : '',   // col N — Jul-26 onwards only
+      enterpriseId: hasEntId ? (r[4] || '').trim() : '',   // col E — new layout only
+      enterprise:   r[4 + o]  || '',
+      dealerType:   r[5 + o]  || '',
+      qcEditor:     (r[6 + o] || '').toLowerCase().trim(),
+      skus:         +r[7 + o]  || 0,
+      images:       +r[8 + o]  || 0,
+      tools:        +r[9 + o]  || 0,
+      sumTarget:    +r[10 + o] || 0,
+      actualMins:   +r[11 + o] || 0,
+      factor:       +r[12 + o] || 0,
     }))
     .filter(r => !excludeSet.has((r.qcEditor || '').toLowerCase().trim()));
 }
-
 // factor_calculation sheet:
 //   Row 1: summary totals (C=totalMins, D=inhouseCostTotal, E=osCostTotal, F=totalCost)
 //   Row 2: headers (A=QC, B=Type, C=Total Mins, D=Inhouse, E=OS, F=Cost, G=Factor)
@@ -756,7 +765,13 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  // 3. Full recompute — fetch sheets sequentially to avoid rate limiting
+  // 3. Full recompute
+  // Strategy:
+  //   - frozen months (Jan-May): fetch ALL in parallel — they don't change so
+  //     Google's CDN serves them fast. Also cached to /tmp per-month so cold starts
+  //     after the first successful run skip them entirely.
+  //   - active months (Jun+): fetch sequentially — changing data, no per-month cache.
+  // This keeps total fetch time well under 60s.
   try {
     const client = getSheetsClient();
 
@@ -780,14 +795,42 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    // Fetch sheets sequentially — one at a time, no rate limit risk.
-    // Each batchGet is 1 API call returning 3 ranges, so total = 7 calls.
-    const rawSheetsData = [];
-    for (const cfg of SHEETS) {
-      rawSheetsData.push(await fetchSheet(cfg));
+    function monthCacheFile(key) { return `/tmp/spyne_month_${key}.json`; }
+
+    function readMonthCache(key) {
+      try { return JSON.parse(fs.readFileSync(monthCacheFile(key), 'utf8')); } catch(_) { return null; }
     }
 
-    // Metabase: best-effort 5s, runs after sheets
+    function writeMonthCache(key, data) {
+      try { fs.writeFileSync(monthCacheFile(key), JSON.stringify(data)); } catch(_) {}
+    }
+
+    const frozenSheets = SHEETS.filter(s => s.frozen);
+    const activeSheets = SHEETS.filter(s => !s.frozen);
+
+    // Frozen months: check per-month disk cache first, fetch missing ones in parallel
+    const frozenCached = frozenSheets.map(cfg => {
+      const cached = readMonthCache(cfg.key);
+      return cached ? { cfg, ...cached, fromCache: true } : null;
+    });
+    const frozenToFetch = frozenSheets.filter((_, i) => !frozenCached[i]);
+    const frozenFetched = await Promise.all(frozenToFetch.map(fetchSheet));
+    frozenFetched.forEach(d => writeMonthCache(d.cfg.key, {
+      outputRows: d.outputRows, factorRows: d.factorRows, removedRows: d.removedRows,
+    }));
+    const frozenData = frozenSheets.map((cfg, i) =>
+      frozenCached[i] || frozenFetched[frozenToFetch.indexOf(cfg)]
+    );
+
+    // Active months: always fetch fresh, one at a time
+    const activeData = [];
+    for (const cfg of activeSheets) {
+      activeData.push(await fetchSheet(cfg));
+    }
+
+    const rawSheetsData = [...frozenData, ...activeData];
+
+    // Metabase: run in parallel with active sheet fetches (already done above)
     const metaDeadline  = new Promise(resolve => setTimeout(() => resolve({}), 5000));
     const enterpriseMeta = await Promise.race([fetchMetabaseCSV(), metaDeadline]);
 
