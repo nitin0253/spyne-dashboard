@@ -2195,10 +2195,16 @@ function setPocMetric(metric, btn) {
 function buildPocData(months) {
   const numMonths = months.length || 1;
 
-  // Aggregate delivery cost per enterprise across filtered months
+  // Aggregate delivery cost + units per enterprise across filtered months.
+  // We only include enterprises that were ACTIVE in the filtered period —
+  // enterprises Metabase knows about but had no activity this range are excluded,
+  // otherwise the POC chart would show MRR for accounts that did nothing.
   const entCosts = {};
+  const entActive = new Set();
   months.forEach(function(m) {
     (m.enterpriseBreakdown || []).forEach(function(e) {
+      if (!e.units) return;
+      entActive.add(e.name);
       if (!entCosts[e.name]) entCosts[e.name] = 0;
       entCosts[e.name] += Math.round((e.costPerUnit || 0) * (e.units || 0));
     });
@@ -2211,6 +2217,9 @@ function buildPocData(months) {
   const pocMap = {};
   const pocLabelCounts = {}; // normKey -> { label: count } — resolves display casing
   Object.entries(ENT_META).forEach(function([entName, meta]) {
+    // Only enterprises active in the filtered date range
+    if (!entActive.has(entName)) return;
+
     const rawPoc = (meta.csPoc && meta.csPoc !== '') ? meta.csPoc : (meta.obPoc || '');
     if (!rawPoc) return;
     const poc = rawPoc.toLowerCase().trim();
@@ -2220,8 +2229,6 @@ function buildPocData(months) {
     const obOk = FILTERS.obpoc.selected.size === 0 || FILTERS.obpoc.selected.size === FILTERS.obpoc.all.length ||
                  (meta.obPoc && setHasCI(FILTERS.obpoc.selected,meta.obPoc));
     if (!csOk && !obOk) return;
-
-    if (!entCosts[entName] && (meta.contractedArr || 0) === 0) return;
 
     // MRR = ARR / 12, then multiply by number of selected months
     const mrrUSD = ((meta.contractedArr || 0) / 12) * numMonths;
