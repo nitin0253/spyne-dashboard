@@ -1157,13 +1157,19 @@ function showSegmentDetail(idx){
       if(!e.units)return;
       if((e.segment||'Unknown')!==segName)return;
       var n=e.name;
-      if(!entMap[n])entMap[n]={name:n,vins:0,units:0,actualMins:0,sumTarget:0,totalCost:0,costPerUnit_sum:0};
+      if(!entMap[n])entMap[n]={name:n,vins:0,units:0,actualMins:0,sumTarget:0,totalCost:0,costPerUnit_sum:0,accWeightSum:0,accWeightedSum:0};
       entMap[n].vins+=e.vins||0;
       entMap[n].units+=e.units||0;
       entMap[n].actualMins+=e.actualMins||0;
       entMap[n].sumTarget+=e.sumTarget||0;
       entMap[n].totalCost+=Math.round((e.costPerUnit||0)*(e.units||0));
       entMap[n].costPerUnit_sum+=(e.costPerUnit||0)*(e.units||0);
+      // AI accuracy: weighted by images scored this month
+      var imgs=+e.aiTotalImages||0;
+      if(imgs>0&&isFinite(+e.trueAccuracy)){
+        entMap[n].accWeightSum+=imgs;
+        entMap[n].accWeightedSum+=imgs*(+e.trueAccuracy||0);
+      }
     });
   });
 
@@ -1187,6 +1193,7 @@ function showSegmentDetail(idx){
       totalCost:  e.totalCost,
       contractedMRR,
       costMrrPct: costMrrPct!==null?costMrrPct:0,
+      trueAccuracy: e.accWeightSum>0?+(e.accWeightedSum/e.accWeightSum).toFixed(2):0,
     };
   }).sort(function(a,b){return b.totalCost-a.totalCost;});
 
@@ -1226,6 +1233,7 @@ function showSegmentDetail(idx){
       th('totalCost','Delivery Cost')+
       th('costPerUnit','₹/Unit')+
       th('costMrrPct','Cost/MRR %')+
+      th('trueAccuracy','AI Accuracy')+
       '</tr></thead>';
   }
 
@@ -1243,6 +1251,8 @@ function showSegmentDetail(idx){
         '<td class="r" style="color:var(--amber)">'+f.inr(e.costPerUnit)+'</td>'+
         '<td class="r" style="color:'+(e.costMrrPct>10?'#f0566a':e.costMrrPct>5?'#f5a42a':e.costMrrPct>0?'#22d4a0':'var(--muted)')+'">'+
           (e.contractedMRR>0?e.costMrrPct.toFixed(2)+'%':'—')+'</td>'+
+        '<td class="r" style="color:'+(e.trueAccuracy>=90?'#22d4a0':e.trueAccuracy>=80?'#f5a42a':e.trueAccuracy>0?'#f0566a':'var(--muted)')+'">'+
+          (e.trueAccuracy>0?e.trueAccuracy.toFixed(2)+'%':'—')+'</td>'+
         '</tr>';
     }).join('');
   }
@@ -2474,12 +2484,20 @@ function renderPocChart(months) {
 
 // ── POC DRILL-DOWN MODAL ──────────────────────────────────────────────────────
 function showPocDetail(pocRow, months) {
-  // Build account-wise breakdown for this POC
+  // Build account-wise breakdown for this POC — accumulate cost + accuracy across months
   const entCosts = {};
+  const entAcc = {};   // { entName: { weightSum, weightedSum } }
   months.forEach(function(m) {
     (m.enterpriseBreakdown || []).forEach(function(e) {
       if (!entCosts[e.name]) entCosts[e.name] = 0;
       entCosts[e.name] += Math.round((e.costPerUnit || 0) * (e.units || 0));
+      // AI accuracy: weighted by images scored
+      var imgs = +e.aiTotalImages || 0;
+      if (imgs > 0 && isFinite(+e.trueAccuracy)) {
+        if (!entAcc[e.name]) entAcc[e.name] = { weightSum: 0, weightedSum: 0 };
+        entAcc[e.name].weightSum   += imgs;
+        entAcc[e.name].weightedSum += imgs * (+e.trueAccuracy || 0);
+      }
     });
   });
 
@@ -2492,7 +2510,7 @@ function showPocDetail(pocRow, months) {
     var cost = entCosts[entName] || 0;
     var mrrINR = mrr * 83;
     var pct = (mrrINR && cost) ? +((cost / mrrINR) * 100).toFixed(2) : 0;
-    return { name: entName, entId: meta.entId || '—', mrr: mrr, cost: cost, pct: pct, segment: meta.segment || '—', activeRooftops: meta.activeRooftops || 0 };
+    return { name: entName, entId: meta.entId || '—', mrr: mrr, cost: cost, pct: pct, segment: meta.segment || '—', activeRooftops: meta.activeRooftops || 0, trueAccuracy: entAcc[entName] && entAcc[entName].weightSum > 0 ? +(entAcc[entName].weightedSum / entAcc[entName].weightSum).toFixed(2) : 0 };
   }).filter(function(a) { return a.mrr > 0 || a.cost > 0; });
 
   var pocName = pocRow.poc.split('@')[0].replace('.', ' ');
@@ -2528,6 +2546,7 @@ function showPocDetail(pocRow, months) {
         + '<td class="r" style="color:#4f78ff;font-weight:600">' + fmtMrr(a.mrr) + '</td>'
         + '<td class="r" style="color:#22d4a0">' + fmtCost(a.cost) + '</td>'
         + '<td class="r" style="color:' + (a.pct > 10 ? '#f0566a' : a.pct > 5 ? '#f5a42a' : '#aaaaaa') + '">' + (a.pct ? a.pct.toFixed(2) + '%' : '—') + pctBar + '</td>'
+        + '<td class="r" style="color:' + (a.trueAccuracy >= 90 ? '#22d4a0' : a.trueAccuracy >= 80 ? '#f5a42a' : a.trueAccuracy > 0 ? '#f0566a' : 'var(--muted)') + '">' + (a.trueAccuracy > 0 ? a.trueAccuracy.toFixed(2) + '%' : '—') + '</td>'
         + '</tr>';
     }).join('');
   }
@@ -2550,6 +2569,7 @@ function showPocDetail(pocRow, months) {
       + thSort('mrr', 'MRR (' + numMonths + 'mo) USD', '#4f78ff')
       + thSort('cost', 'Delivery Cost', '#22d4a0')
       + thSort('pct', '% Cost/MRR', '#f5a42a')
+      + thSort('trueAccuracy', 'AI Accuracy', null)
       + '</tr></thead>';
   }
 
