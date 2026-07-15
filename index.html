@@ -1248,6 +1248,7 @@ function showSegmentDetail(idx){
       entId:      e.entId||meta.entId||'—',
       segment:    meta.segment||segName,
       csPoc:      meta.csPoc||e.csPoc||'—',
+      obPoc:      meta.obPoc||e.obPoc||'—',
       rooftops:   meta.activeRooftops||meta.rooftopCount||0,
       vins:       e.vins,
       units:      e.units,
@@ -1290,6 +1291,7 @@ function showSegmentDetail(idx){
       '<th class="seg-modal-th" data-col="name" style="cursor:pointer">Account<span style="font-size:12px;color:var(--blue);margin-left:2px">'+arrowFor('name')+'</span></th>'+
       '<th class="seg-modal-th" data-col="entId" style="cursor:pointer">Enterprise ID<span style="font-size:12px;color:var(--blue);margin-left:2px">'+arrowFor('entId')+'</span></th>'+
       '<th class="seg-modal-th" data-col="csPoc" style="cursor:pointer">CS POC<span style="font-size:12px;color:var(--blue);margin-left:2px">'+arrowFor('csPoc')+'</span></th>'+
+      '<th class="seg-modal-th" data-col="obPoc" style="cursor:pointer">OB POC<span style="font-size:12px;color:var(--blue);margin-left:2px">'+arrowFor('obPoc')+'</span></th>'+
       th('rooftops','Rooftops')+
       th('vins','VINs')+th('units','Units')+
       th('contractedMRR','Contracted MRR')+
@@ -1306,6 +1308,7 @@ function showSegmentDetail(idx){
         '<td class="bright" style="max-width:220px;overflow:hidden;text-overflow:ellipsis" title="'+e.name+'">'+e.name+'</td>'+
         '<td style="font-size:12px;color:var(--muted);font-family:var(--mono)">'+e.entId+'</td>'+
         '<td style="font-size:13px;color:var(--sub)">'+e.csPoc+'</td>'+
+        '<td style="font-size:13px;color:var(--sub)">'+e.obPoc+'</td>'+
         '<td class="r">'+(e.rooftops||'—')+'</td>'+
         '<td class="r" style="color:var(--purple)">'+f.num(e.vins)+'</td>'+
         '<td class="r">'+f.num(e.units)+'</td>'+
