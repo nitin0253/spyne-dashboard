@@ -171,10 +171,22 @@ function getSheetsClient() {
   return google.sheets({ version: 'v4', auth });
 }
 
+// Strip control characters from a cell value (newlines, tabs, null bytes, etc.)
+// These cause JSON.stringify to produce malformed JSON
+function cleanCell(v) {
+  if (typeof v !== 'string') return v;
+  return v.replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/g, '') // control chars except \n(\x0A)
+           .replace(/\n/g, ' ')   // newline → space
+           .replace(/\r/g, '')    // carriage return → remove
+           .trim();
+}
+
 async function fetchRange(client, sheetId, range) {
   try {
     const res = await client.spreadsheets.values.get({ spreadsheetId: sheetId, range });
-    return res.data.values || [];
+    const rows = res.data.values || [];
+    // Clean every cell value at the source to prevent JSON serialization issues
+    return rows.map(row => row.map(cleanCell));
   } catch (e) {
     console.error(`fetchRange failed [${sheetId}][${range}]:`, e.message);
     return [];
