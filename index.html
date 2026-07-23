@@ -1657,8 +1657,19 @@ function renderKPIs(months){
     function d(k){if(!sp||!sp[k])return null;return((s[k]-sp[k])/sp[k])*100;}
     const tb=last.teamBreakdown||{},ih=tb.inhouse||{},os=tb.os||{};
     const segMap={};
-    // Use aggregated segments across all filtered months (not just last month)
-    (aggregateSegments(months,'all')||[]).forEach(function(sg){if(sg&&sg.name)segMap[sg.name]=sg;});
+    // Detect active product filter for segment KPI cards
+    var _psel=FILTERS.product.selected,_pall=FILTERS.product.all;
+    var _prodFiltered=_psel.size>0&&_psel.size<_pall.length;
+    var _kpiProd='all';
+    if(_prodFiltered){
+      var _hasImg=_pall.some(function(p){return /image/i.test(p)&&_psel.has(p);});
+      var _has360=_pall.some(function(p){return /360|spin/i.test(p)&&_psel.has(p);});
+      var _hasVid=_pall.some(function(p){return /video/i.test(p)&&_psel.has(p);});
+      // If only one product type selected, use that; else 'all'
+      var _count=(_hasImg?1:0)+(_has360?1:0)+(_hasVid?1:0);
+      if(_count===1)_kpiProd=_hasImg?'image':_has360?'360':'video';
+    }
+    (aggregateSegments(months,_kpiProd)||[]).forEach(function(sg){if(sg&&sg.name)segMap[sg.name]=sg;});
     function findSeg(kw){const k=kw.toLowerCase();const m=Object.keys(segMap).find(function(n){return n.toLowerCase().indexOf(k)>=0;});return m?segMap[m]:null;}
     const entSeg=findSeg('ent')||findSeg('enterprise'),midSeg=findSeg('mid'),smbSeg=findSeg('smb'),resSeg=findSeg('resell');
     const knownNames=new Set();[entSeg,midSeg,smbSeg,resSeg].forEach(function(sg){if(sg)knownNames.add(sg.name);});
@@ -1672,14 +1683,15 @@ function renderKPIs(months){
       kpi('Efficiency',f.pct(s.efficiency),'Target mins / actual mins',null,'#a07cff'),
       kpi('\u20b9 / Unit',f.inr(s.costPerUnit),'Overall \u00b7 \u20b9/unit',null,'#f5a42a'),
     ].join('');
-    // Compute overall % Cost/ARR from ENT_META + filtered months
-    var entCostsForKpi={};
-    months.forEach(function(m){(m.enterpriseBreakdown||[]).forEach(function(e){entCostsForKpi[e.name]=(entCostsForKpi[e.name]||0)+Math.round((e.costPerUnit||0)*(e.units||0));});});
-    var totalContractedARR=0,totalDeliveryCost=0;
-    Object.values(ENT_META).forEach(function(meta){if(meta.contractedArr)totalContractedARR+=meta.contractedArr;});
-    Object.values(entCostsForKpi).forEach(function(c){totalDeliveryCost+=c;});
-    var totalArrINR=(totalContractedARR/12)*83; // MRR = ARR/12, converted to INR
-    var pctCostArr=totalArrINR>0?((totalDeliveryCost/totalArrINR)*100).toFixed(2):'—';
+    // % Cost/MRR: use computeFilteredSummary (respects product filter) for cost,
+    // and ENT_META contractedArr for MRR (only enterprises active in filtered months)
+    var _kpiCost=isMulti?s.totalCost:computeFilteredSummary(last).totalCost;
+    var _activeEnts=new Set();
+    months.forEach(function(m){(m.enterpriseBreakdown||[]).forEach(function(e){if(e.units>0)_activeEnts.add(e.name);});});
+    var totalContractedARR=0;
+    _activeEnts.forEach(function(entName){var meta=entMeta(entName);if(meta&&meta.contractedArr)totalContractedARR+=meta.contractedArr;});
+    var totalArrINR=(totalContractedARR/12)*83;
+    var pctCostArr=totalArrINR>0?((_kpiCost/totalArrINR)*100).toFixed(2):'—';
     document.getElementById('ent-kpis').innerHTML=[
       kpi('% Cost / MRR',pctCostArr+(pctCostArr!=='—'?'%':''),'Delivery Cost ÷ MRR (ARR/12 × 83)',null,'#f5a42a'),
       kpi('₹ / Ent',f.inr(entSeg?entSeg.costPerUnit:0),(entSeg?entSeg.name:'Enterprise')+' · ₹/unit',null,'#4f78ff'),
