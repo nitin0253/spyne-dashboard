@@ -20,35 +20,35 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{height:100%}
-body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;min-height:100%;display:flex;flex-direction:column}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:16px;min-height:100%;display:flex;flex-direction:column}
 
 /* ── TOP BAR ── */
 #topbar{height:48px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:14px;flex-shrink:0;position:sticky;top:0;z-index:100}
-.logo-mark{width:28px;height:28px;background:var(--blue);border-radius:6px;display:grid;place-items:center;font-weight:800;font-size:12px;color:#fff;flex-shrink:0}
-.logo-name{font-weight:700;font-size:13px}
+.logo-mark{width:28px;height:28px;background:var(--blue);border-radius:6px;display:grid;place-items:center;font-weight:800;font-size:13px;color:#fff;flex-shrink:0}
+.logo-name{font-weight:700;font-size:15px}
 .tb-sep{width:1px;height:20px;background:var(--border)}
 .tb-right{margin-left:auto;display:flex;align-items:center;gap:8px}
 .view-toggle{display:flex;align-items:center;gap:2px;background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);padding:2px}
-.view-btn{border:0;background:transparent;color:var(--sub);font-family:var(--font);font-size:11px;font-weight:700;padding:5px 10px;border-radius:4px;cursor:pointer;transition:all .12s}
+.view-btn{border:0;background:transparent;color:var(--sub);font-family:var(--font);font-size:13px;font-weight:700;padding:6px 12px;border-radius:4px;cursor:pointer;transition:all .12s}
 .view-btn:hover{color:var(--text)}
 .view-btn.active{background:var(--blue);color:#fff}
-.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
 .pill-green{background:#0a2419;border:1px solid #143a25;color:var(--green)}
 .pill-dot{width:5px;height:5px;border-radius:50%;background:currentColor;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.tb-time{font-size:10px;color:var(--muted);font-family:var(--mono)}
-.refresh-btn{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:var(--r-sm);background:none;border:1px solid var(--border);color:var(--sub);cursor:pointer;font-size:11px;font-family:var(--font);transition:all .12s}
+.tb-time{font-size:12px;color:var(--muted);font-family:var(--mono)}
+.refresh-btn{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:var(--r-sm);background:none;border:1px solid var(--border);color:var(--sub);cursor:pointer;font-size:13px;font-family:var(--font);transition:all .12s}
 .refresh-btn:hover{border-color:var(--blue);color:var(--text)}
 .spinning svg{animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ── DATE RANGE PICKER ── */
-.dr-preset{display:block;width:100%;text-align:left;padding:7px 14px;background:none;border:none;color:var(--sub);font-size:12px;font-family:var(--font);cursor:pointer;transition:all .1s}
+.dr-preset{display:block;width:100%;text-align:left;padding:8px 14px;background:none;border:none;color:var(--sub);font-size:14px;font-family:var(--font);cursor:pointer;transition:all .1s}
 .dr-preset:hover{background:var(--hover);color:var(--text)}
 .dr-preset.active{color:var(--blue);font-weight:600;border-left:2px solid var(--blue);padding-left:12px}
 #dr-panel{display:none}
 #dr-panel.open{display:flex !important}
-.cal-day{padding:5px 2px;border-radius:5px;cursor:pointer;font-size:11px;color:var(--sub);transition:all .1s}
+.cal-day{padding:5px 2px;border-radius:5px;cursor:pointer;font-size:13px;color:var(--sub);transition:all .1s}
 .cal-day:hover{background:var(--hover);color:var(--text)}
 .cal-day.today{font-weight:700;color:var(--text)}
 .cal-day.today::after{content:'.';display:block;width:4px;height:4px;border-radius:50%;background:var(--blue);margin:-2px auto 0}
@@ -59,46 +59,46 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .cal-day.range-start.range-end{border-radius:5px}
 .cal-day.other-month{opacity:.3;cursor:default}
 .cal-day.other-month:hover{background:none}
-.cal-hdr{font-size:9px;font-weight:700;text-transform:uppercase;color:var(--muted);padding:4px 0}
+.cal-hdr{font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);padding:4px 0}
 
 /* ── FILTER BAR ── */
 #filterbar{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 24px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0;position:sticky;top:48px;z-index:99}
-.fb-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);white-space:nowrap}
+.fb-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);white-space:nowrap}
 .fb-sep{width:1px;height:20px;background:var(--border);margin:0 2px}
-.fb-clear{margin-left:auto;font-size:10px;font-weight:600;color:var(--sub);cursor:pointer;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:none;font-family:var(--font);transition:all .12s;white-space:nowrap}
+.fb-clear{margin-left:auto;font-size:12px;font-weight:600;color:var(--sub);cursor:pointer;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:none;font-family:var(--font);transition:all .12s;white-space:nowrap}
 .fb-clear:hover{color:var(--red);border-color:var(--red)}
 .ms-wrap{position:relative;flex-shrink:0}
-.ms-btn{display:flex;align-items:center;gap:6px;padding:5px 10px;background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;font-size:11px;font-weight:500;color:var(--sub);font-family:var(--font);white-space:nowrap;transition:all .12s;user-select:none;min-width:110px}
+.ms-btn{display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;font-size:13px;font-weight:500;color:var(--sub);font-family:var(--font);white-space:nowrap;transition:all .12s;user-select:none;min-width:110px}
 .ms-btn:hover,.ms-btn.open{border-color:var(--blue);color:var(--text)}
 .ms-btn.has-filter{border-color:var(--blue);background:rgba(79,120,255,.08);color:var(--blue)}
 .ms-btn-label{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis}
-.ms-btn-count{background:var(--blue);color:#fff;font-size:9px;font-weight:700;border-radius:10px;padding:1px 5px;flex-shrink:0}
+.ms-btn-count{background:var(--blue);color:#fff;font-size:11px;font-weight:700;border-radius:10px;padding:1px 5px;flex-shrink:0}
 .ms-caret{flex-shrink:0;transition:transform .15s}
 .ms-btn.open .ms-caret{transform:rotate(180deg)}
 .ms-dropdown{position:absolute;top:calc(100% + 4px);left:0;min-width:200px;max-width:280px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:0 8px 32px rgba(0,0,0,.6);z-index:300;overflow:hidden}
 .date-dropdown{min-width:560px;max-width:min(720px,calc(100vw - 48px));display:grid;grid-template-columns:190px 1fr;padding:0}
 .date-quick{border-right:1px solid var(--border);padding:14px 0;background:rgba(17,17,17,.35)}
 .date-panel{padding:14px}
-.date-group{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.16em;color:var(--muted);padding:10px 18px 6px}
-.date-option{width:100%;border:0;background:transparent;color:var(--sub);font-family:var(--font);font-size:13px;text-align:left;padding:8px 18px;cursor:pointer}
+.date-group{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.16em;color:var(--muted);padding:10px 18px 6px}
+.date-option{width:100%;border:0;background:transparent;color:var(--sub);font-family:var(--font);font-size:15px;text-align:left;padding:8px 18px;cursor:pointer}
 .date-option:hover{background:var(--hover);color:var(--text)}
 .date-option.active{background:rgba(79,120,255,.12);color:var(--blue);box-shadow:inset 3px 0 0 var(--blue)}
-.date-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.16em;color:var(--muted);margin-bottom:10px}
-.date-help{font-size:12px;color:var(--muted);margin-bottom:14px}
+.date-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.16em;color:var(--muted);margin-bottom:10px}
+.date-help{font-size:14px;color:var(--muted);margin-bottom:14px}
 .date-inputs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
-.date-inputs label{display:flex;flex-direction:column;gap:6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
-.date-inputs input{background:#121212;border:1px solid var(--border);border-radius:var(--r-sm);padding:9px 10px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none}
+.date-inputs label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.date-inputs input{background:#121212;border:1px solid var(--border);border-radius:var(--r-sm);padding:9px 10px;color:var(--text);font-family:var(--mono);font-size:14px;outline:none}
 .date-inputs input:focus{border-color:var(--blue)}
 .date-actions{display:flex;gap:8px;justify-content:flex-end}
-.date-apply,.date-clear{border:1px solid var(--border);border-radius:var(--r-sm);padding:7px 12px;font-family:var(--font);font-size:11px;font-weight:700;cursor:pointer}
+.date-apply,.date-clear{border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 14px;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer}
 .date-apply{background:var(--blue);border-color:var(--blue);color:#fff}
 .date-clear{background:transparent;color:var(--sub)}
 .date-clear:hover{color:var(--text)}
 .ms-search{padding:8px;border-bottom:1px solid var(--border)}
-.ms-search input{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);padding:5px 8px;color:var(--text);font-size:11px;font-family:var(--font);outline:none}
+.ms-search input{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);padding:6px 10px;color:var(--text);font-size:13px;font-family:var(--font);outline:none}
 .ms-search input:focus{border-color:var(--blue)}
 .ms-actions{display:flex;gap:6px;padding:6px 8px;border-bottom:1px solid var(--border)}
-.ms-act{flex:1;padding:4px 0;text-align:center;font-size:10px;font-weight:600;cursor:pointer;border-radius:4px;transition:all .12s;border:1px solid var(--border);background:none;font-family:var(--font);color:var(--sub)}
+.ms-act{flex:1;padding:5px 0;text-align:center;font-size:12px;font-weight:600;cursor:pointer;border-radius:4px;transition:all .12s;border:1px solid var(--border);background:none;font-family:var(--font);color:var(--sub)}
 .ms-act:hover{background:var(--hover);color:var(--text)}
 .ms-act.sel-all{color:var(--green);border-color:rgba(34,212,160,.3)}
 .ms-act.sel-all:hover{background:rgba(34,212,160,.08)}
@@ -108,9 +108,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .ms-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:var(--r-sm);cursor:pointer;transition:background .1s;user-select:none}
 .ms-item:hover{background:var(--hover)}
 .ms-item input[type=checkbox]{width:13px;height:13px;accent-color:var(--blue);cursor:pointer;flex-shrink:0}
-.ms-item-label{font-size:11px;color:var(--sub);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ms-item-label{font-size:13px;color:var(--sub);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ms-item:hover .ms-item-label,.ms-item input:checked~.ms-item-label{color:var(--text)}
-.ms-empty{padding:12px;text-align:center;font-size:11px;color:var(--muted)}
+.ms-empty{padding:12px;text-align:center;font-size:13px;color:var(--muted)}
 
 /* ── CONTENT ── */
 #content{flex:1;overflow-y:auto;padding:20px 24px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
@@ -122,9 +122,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .dash-section{margin-bottom:8px}
 .dash-section-header{display:flex;align-items:center;gap:10px;margin:24px 0 12px;cursor:pointer;user-select:none}
 .dash-section-header:first-child{margin-top:0}
-.dash-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+.dash-section-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
 .dash-section-line{flex:1;height:1px;background:var(--border)}
-.dash-section-toggle{font-size:10px;color:var(--muted);transition:transform .2s}
+.dash-section-toggle{font-size:12px;color:var(--muted);transition:transform .2s}
 .dash-section-body{overflow:hidden;transition:opacity .2s}
 .dash-section-body.collapsed{display:none}
 
@@ -133,16 +133,19 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;position:relative;overflow:hidden;transition:border-color .15s}
 .kpi:hover{border-color:rgba(79,120,255,.35)}
 .kpi-accent{width:3px;position:absolute;left:0;top:0;bottom:0;border-radius:10px 0 0 10px}
-.kpi-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--sub);margin-bottom:5px}
-.kpi-value{font-size:22px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-.5px}
-.kpi-sub{font-size:10px;color:var(--muted);margin-top:5px}
-.kpi-delta{font-size:10px;font-weight:600;margin-top:3px}
+.kpi-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--sub);margin-bottom:5px}
+.kpi-value{font-size:26px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-.5px}
+.kpi-sub{font-size:12px;color:var(--muted);margin-top:5px}
+.kpi-delta{font-size:12px;font-weight:600;margin-top:3px}
 .kpi-delta.up{color:var(--green)}.kpi-delta.down{color:var(--red)}
 
 /* ── CARDS & GRIDS ── */
 .section{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px}
 .sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;flex-wrap:nowrap}
-.sec-title{font-weight:700;font-size:14px}.sec-sub{font-size:11px;color:var(--sub);margin-top:3px}
+.sec-title{font-weight:700;font-size:16px}.sec-sub{font-size:13px;color:var(--sub);margin-top:3px}
+.dl-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:5px 10px;border-radius:6px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:all .15s;font-family:inherit}
+.dl-btn:hover{border-color:var(--blue);color:var(--blue);background:rgba(79,120,255,.08)}
+.dl-btn svg{width:12px;height:12px}
 .sec-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;flex-shrink:0}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
@@ -153,29 +156,29 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 
 /* ── TABLE ── */
 .tbl-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:13px}
-thead th{padding:0 10px 10px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--sub);white-space:nowrap;border-bottom:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:15px}
+thead th{padding:0 10px 10px;text-align:left;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--sub);white-space:nowrap;border-bottom:1px solid var(--border)}
 thead th.r{text-align:right}
 tbody tr{border-bottom:1px solid rgba(26,37,64,.5);transition:background .1s}
 tbody tr:hover{background:var(--hover)}
-tbody td{padding:9px 10px;color:var(--text);white-space:nowrap;font-size:12px}
-tbody td.r{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:12px}
+tbody td{padding:10px 12px;color:var(--text);white-space:nowrap;font-size:14px}
+tbody td.r{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:14px}
 tbody td.bright{color:var(--text);font-weight:500}
 .eff-hi{color:var(--green);font-weight:600}.eff-md{color:var(--amber);font-weight:600}.eff-lo{color:var(--red);font-weight:600}
-.rank-num{color:var(--muted);font-size:10px;font-family:var(--mono)}
+.rank-num{color:var(--muted);font-size:12px;font-family:var(--mono)}
 .mini-bar{display:inline-block;height:3px;border-radius:2px;background:var(--blue);vertical-align:middle;margin-left:6px;opacity:.6}
-.seg{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600}
-.prod-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600}
-.excl-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;background:rgba(240,86,106,.12);border:1px solid rgba(240,86,106,.3);color:var(--red)}
-.search{background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);padding:5px 10px;color:var(--text);font-size:11px;font-family:var(--font);outline:none;width:180px;transition:border-color .15s}
+.seg{display:inline-block;padding:3px 9px;border-radius:10px;font-size:12px;font-weight:600}
+.prod-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:4px;font-size:12px;font-weight:600}
+.excl-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:4px;font-size:12px;font-weight:600;background:rgba(240,86,106,.12);border:1px solid rgba(240,86,106,.3);color:var(--red)}
+.search{background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);padding:6px 12px;color:var(--text);font-size:13px;font-family:var(--font);outline:none;width:180px;transition:border-color .15s}
 .search:focus{border-color:var(--blue)}.search::placeholder{color:var(--muted)}
 select.sel{background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);padding:5px 8px;color:var(--sub);font-size:11px;font-family:var(--font);outline:none;cursor:pointer}
 select.sel:focus{border-color:var(--blue)}
 .ch{position:relative}
 /* ── CHART INLINE FILTERS ── */
 .cf-row{display:flex;align-items:center;gap:4px;flex-wrap:nowrap;margin-bottom:0}
-.cf-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-right:2px}
-.cf-pill{padding:4px 11px;border-radius:5px;border:1px solid var(--border);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);background:transparent;color:var(--sub);transition:all .12s;user-select:none}
+.cf-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-right:2px}
+.cf-pill{padding:5px 13px;border-radius:5px;border:1px solid var(--border);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);background:transparent;color:var(--sub);transition:all .12s;user-select:none}
 .cf-pill:hover{color:var(--text);border-color:var(--sub)}
 .cf-pill.active{background:var(--blue);border-color:var(--blue);color:#fff}
 .cf-pill.active-green{background:var(--green);border-color:var(--green);color:#0a0f1a}
@@ -229,26 +232,26 @@ select.sel:focus{border-color:var(--blue)}
   <div class="ms-wrap" id="fw-daterange" style="position:relative">
     <div class="ms-btn" onclick="toggleDatePicker()" id="dr-btn" style="min-width:160px;gap:8px">
       <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="flex-shrink:0;opacity:.7"><rect x="1" y="2" width="11" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M1 5h11M4 1v2M9 1v2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-      <span id="dr-label" style="font-size:11px;font-weight:600">This month</span>
+      <span id="dr-label" style="font-size:13px;font-weight:600">This month</span>
       <svg class="ms-caret" width="10" height="10" viewBox="0 0 10 10" fill="none" style="margin-left:auto"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
     </div>
     <div id="dr-panel" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:400;background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.5);width:560px;flex-direction:row;overflow:hidden">
       <!-- Quick presets -->
       <div id="dr-presets" style="width:150px;flex-shrink:0;border-right:1px solid var(--border);padding:12px 0">
-        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:0 14px 8px">Quick Select</div>
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:0 14px 8px">Quick Select</div>
         <button class="dr-preset" onclick="applyPreset('all')">All time</button>
-        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:10px 14px 6px">Months</div>
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:10px 14px 6px">Months</div>
         <button class="dr-preset active" id="dr-p-thismonth" onclick="applyPreset('thismonth')">This month</button>
         <button class="dr-preset" id="dr-p-lastmonth" onclick="applyPreset('lastmonth')">Last month</button>
         <button class="dr-preset" id="dr-p-last3" onclick="applyPreset('last3')">Last 3 months</button>
         <button class="dr-preset" id="dr-p-last6" onclick="applyPreset('last6')">Last 6 months</button>
-        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:10px 14px 6px">Custom</div>
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:10px 14px 6px">Custom</div>
         <button class="dr-preset" id="dr-p-custom" onclick="showCustomCal()">Custom range</button>
       </div>
       <!-- Calendar -->
       <div id="dr-cal-pane" style="flex:1;padding:16px">
-        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px">Custom Date Range</div>
-        <div style="font-size:11px;color:var(--sub);margin-bottom:12px">Click a date to set start, click another to set end and apply.</div>
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px">Custom Date Range</div>
+        <div style="font-size:13px;color:var(--sub);margin-bottom:12px">Click a date to set start, click another to set end and apply.</div>
         <!-- Cal nav -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
           <button onclick="calNav(-1)" style="background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center">‹</button>
@@ -257,8 +260,8 @@ select.sel:focus{border-color:var(--blue)}
         </div>
         <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;font-size:12px"></div>
         <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-          <span id="cal-range-label" style="font-size:11px;color:var(--sub);font-family:var(--mono)">Select a date</span>
-          <button onclick="clearDateRange()" style="font-size:10px;color:var(--sub);background:none;border:none;cursor:pointer;text-decoration:underline">Clear</button>
+          <span id="cal-range-label" style="font-size:13px;color:var(--sub);font-family:var(--mono)">Select a date</span>
+          <button onclick="clearDateRange()" style="font-size:12px;color:var(--sub);background:none;border:none;cursor:pointer;text-decoration:underline">Clear</button>
         </div>
       </div>
     </div>
@@ -399,12 +402,12 @@ select.sel:focus{border-color:var(--blue)}
         <button class="cf-pill" data-chart="prodm" onclick="setChartFilter('prodm','cost',this)">Cost</button>
       </div>
     </div>
-    <div class="ch"><canvas id="ch-prod-trend" height="140"></canvas></div>
+    <div class="ch"><canvas id="ch-prod-trend" height="112"></canvas></div>
   </div>
 
   <!-- USER SUMMARY -->
   <div style="margin-top:16px;margin-bottom:8px;display:flex;align-items:center;gap:10px">
-    <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)">👤 User Summary</span>
+    <span style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)">👤 User Summary</span>
     <div style="flex:1;height:1px;background:var(--border)"></div>
   </div>
   <div class="section">
@@ -420,23 +423,24 @@ select.sel:focus{border-color:var(--blue)}
           <option value="vidUnits">Sort: Video</option>
           <option value="costPerUnit">Sort: ₹/Unit</option>
         </select>
+        <button class="dl-btn" onclick="downloadCSV('#us-tbl-full','user_wise_volume_'+(new Date().toISOString().slice(0,10)))" title="Download CSV">⬇ CSV</button>
       </div>
     </div>
-    <div class="tbl-wrap" style="max-height:420px;overflow-y:auto"><table>
+    <div class="tbl-wrap" style="max-height:420px;overflow-y:auto"><table id="us-tbl-full">
       <thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr>
         <th>#</th>
-        <th onclick="cycleSortUS('email')" style="cursor:pointer">Editor<span id="su-email" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th onclick="cycleSortUS('email')" style="cursor:pointer">Editor<span id="su-email" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
         <th>Team</th>
-        <th class="r" onclick="cycleSortUS('imgUnits')" style="cursor:pointer">Img Units<span id="su-imgUnits" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-        <th class="r" onclick="cycleSortUS('imgCost')" style="cursor:pointer">Img Cost<span id="su-imgCost" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-        <th class="r" onclick="cycleSortUS('s360Units')" style="cursor:pointer">360 Units<span id="su-s360Units" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-        <th class="r" onclick="cycleSortUS('s360Cost')" style="cursor:pointer">360 Cost<span id="su-s360Cost" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-        <th class="r" onclick="cycleSortUS('vidUnits')" style="cursor:pointer">Vid Units<span id="su-vidUnits" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-        <th class="r" onclick="cycleSortUS('vidCost')" style="cursor:pointer">Vid Cost<span id="su-vidCost" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-        <th class="r" onclick="cycleSortUS('totalUnits')" style="cursor:pointer">Total Units<span id="su-totalUnits" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortUS('imgUnits')" style="cursor:pointer">Img Units<span id="su-imgUnits" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortUS('imgCost')" style="cursor:pointer">Img Cost<span id="su-imgCost" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortUS('s360Units')" style="cursor:pointer">360 Units<span id="su-s360Units" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortUS('s360Cost')" style="cursor:pointer">360 Cost<span id="su-s360Cost" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortUS('vidUnits')" style="cursor:pointer">Vid Units<span id="su-vidUnits" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortUS('vidCost')" style="cursor:pointer">Vid Cost<span id="su-vidCost" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortUS('totalUnits')" style="cursor:pointer">Total Units<span id="su-totalUnits" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
 
-        <th class="r" onclick="cycleSortUS('costPerUnit')" style="cursor:pointer">₹/Unit<span id="su-costPerUnit" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-        <th class="r" onclick="cycleSortUS('totalCost')" style="cursor:pointer">Total Cost<span id="su-totalCost" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortUS('costPerUnit')" style="cursor:pointer">₹/Unit<span id="su-costPerUnit" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortUS('totalCost')" style="cursor:pointer">Total Cost<span id="su-totalCost" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
       </tr></thead>
       <tbody id="us-tbl"></tbody>
     </table></div>
@@ -452,12 +456,6 @@ select.sel:focus{border-color:var(--blue)}
     <div class="sec-head">
       <div><div class="sec-title">POC — Contracted ARR vs Delivery Cost</div>
       <div class="sec-sub">CS POC (OB POC where CS unavailable) · MRR × filtered months · Cost in INR · Live &amp; Onboarding · % Cost/MRR</div></div>
-      <div class="cf-row">
-        <span class="cf-label">Metric:</span>
-        <button class="cf-pill active" data-chart="poc" onclick="setPocMetric('arr',this)">ARR (USD)</button>
-        <button class="cf-pill" data-chart="poc" onclick="setPocMetric('cost',this)">Delivery Cost</button>
-        <button class="cf-pill" data-chart="poc" onclick="setPocMetric('both',this)">Both</button>
-      </div>
     </div>
     <div class="ch" style="cursor:pointer"><canvas id="ch-poc-arr" height="110"></canvas></div>
   </div>
@@ -483,42 +481,48 @@ select.sel:focus{border-color:var(--blue)}
 
   <div class="section" style="margin-bottom:12px">
     <div class="sec-head">
-      <div><div class="sec-title">Segment Summary</div><div class="sec-sub">Segment-wise Cost%, Cost/MRR% · filterable by product</div></div>
-      <div class="cf-row">
-        <span class="cf-label">Product:</span>
-        <button class="cf-pill active" data-chart="segsum" onclick="setSegSumProduct('all',this)">All</button>
-        <button class="cf-pill" data-chart="segsum" onclick="setSegSumProduct('image',this)">Images</button>
-        <button class="cf-pill" data-chart="segsum" onclick="setSegSumProduct('360',this)">360</button>
-        <button class="cf-pill" data-chart="segsum" onclick="setSegSumProduct('video',this)">Video</button>
-      </div>
+      <div><div class="sec-title">Segment Summary</div><div class="sec-sub" id="seg-summary-sub">Filtered months · VINs · Units · ARR · ₹/Unit · Cost %</div></div>
+      <button class="dl-btn" onclick="downloadCSV('#seg-summary-table','segment_summary_'+(new Date().toISOString().slice(0,10)))" title="Download CSV">⬇ CSV</button>
     </div>
-    <div class="tbl-wrap"><table>
-      <thead><tr>
+    <div class="tbl-wrap"><table id="seg-summary-table">
+      <thead id="seg-summary-thead"><tr>
         <th>Segment</th>
-        <th class="r" onclick="cycleSortSeg('vins')" style="cursor:pointer">VINs<span id="ss-vins" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-        <th class="r" onclick="cycleSortSeg('units')" style="cursor:pointer">Units<span id="ss-units" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-        <th class="r" onclick="cycleSortSeg('costPerUnit')" style="cursor:pointer">₹/Unit<span id="ss-costPerUnit" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-        <th class="r" onclick="cycleSortSeg('costShare')" style="cursor:pointer">Cost%<span id="ss-costShare" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-        <th class="r" onclick="cycleSortSeg('costMrrPct')" style="cursor:pointer">Cost/MRR%<span id="ss-costMrrPct" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-        <th class="r" onclick="cycleSortSeg('efficiency')" style="cursor:pointer">Efficiency<span id="ss-efficiency" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortSeg('vins')" style="cursor:pointer">VINs<span id="ss-vins" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortSeg('units')" style="cursor:pointer">Units<span id="ss-units" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortSeg('volumeShare')" style="cursor:pointer">Volume %<span id="ss-volumeShare" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortSeg('contractedArrMonthly')" style="cursor:pointer" id="seg-contracted-hdr">Contracted MRR (USD)<span id="ss-contractedArrMonthly" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortSeg('arrShare')" style="cursor:pointer">ARR Share %<span id="ss-arrShare" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortSeg('costPerUnit')" style="cursor:pointer">₹/Unit<span id="ss-costPerUnit" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r" onclick="cycleSortSeg('costShare')" style="cursor:pointer">Cost %<span id="ss-costShare" style="font-size:12px;color:var(--blue);margin-left:2px"> ▼</span></th>
       </tr></thead>
       <tbody id="sg-summary-tbl"></tbody>
     </table></div>
   </div>
 
-  <!-- Top Enterprises — full width -->
+  <!-- Enterprise List Breakdown — full width -->
   <div class="section" style="margin-bottom:12px">
     <div class="sec-head">
-      <div class="sec-title">Top Enterprises</div>
-      <div style="font-size:10px;color:var(--muted)">Click any row for details</div>
+      <div>
+        <div class="sec-title">Enterprise List Breakdown</div>
+        <div style="font-size:12px;color:var(--muted)">All enterprises · filtered date range · click any row for details · click column headers to sort</div>
+      </div>
+      <button class="dl-btn" onclick="downloadCSV('#ent-list-table','enterprise_list_'+(new Date().toISOString().slice(0,10)))" title="Download CSV">⬇ CSV</button>
     </div>
-    <div class="tbl-wrap" style="max-height:460px;overflow-y:auto"><table>
+    <div class="tbl-wrap" style="max-height:460px;overflow-y:auto"><table id="ent-list-table">
       <thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr>
-        <th>#</th><th>Enterprise</th><th>Segment</th><th>CS POC</th>
-        <th class="r">Live ARR</th>
-        <th class="r" onclick="cycleSortEnt('vins')" style="cursor:pointer">VINs<span id="se-vins" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-        <th class="r" onclick="cycleSortEnt('units')" style="cursor:pointer">Units<span id="se-units" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
-        <th class="r" onclick="cycleSortEnt('costPerUnit')" style="cursor:pointer">₹/Unit<span id="se-costPerUnit" style="font-size:9px;color:var(--blue);margin-left:2px"></span></th>
+        <th>#</th>
+        <th class="sortable-ent" data-col="enterprise" style="cursor:pointer">Enterprise<span id="se-enterprise" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="sortable-ent" data-col="entId" style="cursor:pointer">Enterprise ID<span id="se-entId" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="sortable-ent" data-col="segment" style="cursor:pointer">Segment<span id="se-segment" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="sortable-ent" data-col="csPoc" style="cursor:pointer">CS POC<span id="se-csPoc" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="sortable-ent" data-col="obPoc" style="cursor:pointer">OB POC<span id="se-obPoc" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r sortable-ent" data-col="contractedArrNum" style="cursor:pointer" id="ent-contracted-hdr">Contracted MRR<span id="se-contractedArrNum" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r sortable-ent" data-col="vins" style="cursor:pointer">VINs<span id="se-vins" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r sortable-ent" data-col="units" style="cursor:pointer">Units<span id="se-units" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r sortable-ent" data-col="totalCost" style="cursor:pointer">Delivery Cost<span id="se-totalCost" style="font-size:12px;color:var(--blue);margin-left:2px"> ▼</span></th>
+        <th class="r sortable-ent" data-col="costPerUnit" style="cursor:pointer">₹/Unit<span id="se-costPerUnit" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r sortable-ent" data-col="costMrrPct" style="cursor:pointer">Cost/MRR %<span id="se-costMrrPct" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
+        <th class="r sortable-ent" data-col="trueAccuracy" style="cursor:pointer">AI Accuracy<span id="se-trueAccuracy" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
       </tr></thead>
       <tbody id="co-ent-tbl"></tbody>
     </table></div>
@@ -543,6 +547,62 @@ function entMeta(name){
   const origKey=ENT_META_NORM[norm];
   return origKey?ENT_META[origKey]:{};
 }
+
+// Populate ENT_META + ENT_META_NORM from the enterpriseMeta payload returned
+// by /api/data or /api/meta. Also rebuilds the CS POC and OB POC dropdowns
+// and triggers a re-render so any UI that depended on the late-arriving meta
+// (POC table, % Cost/MRR, segment fallbacks, etc.) refreshes.
+function applyEntMeta(rawMeta){
+  ENT_META={};
+  ENT_META_NORM={};
+  if(!rawMeta||typeof rawMeta!=='object')return;
+
+  // rawMeta is keyed by enterprise name (originalName). Each value has:
+  //   { segment, csPoc, obPoc, poc, liveArr, contractedArr, rooftopCount, activeRooftops }
+  Object.entries(rawMeta).forEach(function(kv){
+    var name=kv[0],meta=kv[1];
+    if(!name||!meta)return;
+    ENT_META[name]=meta;
+    ENT_META_NORM[name.toLowerCase().trim()]=name;
+  });
+
+  // Build CS POC + OB POC filter dropdowns (these were declared in HTML but
+  // never populated — applyEntMeta is what fills them once meta is available).
+  // Deduplicated case-insensitively — the Metabase CSV may have the same
+  // person's email typed with inconsistent casing across different rows.
+  function dedupeCaseInsensitive(values){
+    var seen={}; // normKey -> {label, count}
+    values.forEach(function(v){
+      var k=v.toLowerCase().trim();
+      if(!seen[k])seen[k]={label:v,count:0};
+      seen[k].count++;
+      // Prefer all-lowercase-looking emails as the canonical display form when tied,
+      // otherwise keep whichever casing appeared most often.
+      if(v.toLowerCase().trim()===v.trim())seen[k].label=v;
+    });
+    return Object.values(seen).map(function(s){return s.label;});
+  }
+  var csPocsRaw=[],obPocsRaw=[];
+  Object.values(ENT_META).forEach(function(m){
+    if(m.csPoc)csPocsRaw.push(m.csPoc);
+    if(m.obPoc)obPocsRaw.push(m.obPoc);
+  });
+  var csPocs=dedupeCaseInsensitive(csPocsRaw);
+  var obPocs=dedupeCaseInsensitive(obPocsRaw);
+  if(typeof buildDropdown==='function'){
+    if(FILTERS&&FILTERS.cspoc)buildDropdown('cspoc',csPocs.sort());
+    if(FILTERS&&FILTERS.obpoc)buildDropdown('obpoc',obPocs.sort());
+  }
+
+  console.log('[applyEntMeta] populated',Object.keys(ENT_META).length,'enterprises,',
+              csPocs.size,'CS POCs,',obPocs.size,'OB POCs');
+
+  // Re-render so any view using ENT_META (POC chart, enterprise table, etc.)
+  // picks up the new data. Guard against being called before DATA is loaded.
+  if(DATA&&typeof renderAll==='function'){
+    try{renderAll();}catch(e){console.warn('[applyEntMeta] renderAll failed:',e.message);}
+  }
+}
 let CURRENT_VIEW='dashboard';
 
 function setDashboardView(view){
@@ -559,18 +619,22 @@ function toggleSection(id){const body=document.getElementById(id);const tog=docu
 
 // ── FORMAT ───────────────────────────────────────────────────────────────────
 const f={
-  num:  v=>v==null?'—':Number(v).toLocaleString('en-IN'),
-  inr:  v=>{if(v==null)return'—';const n=Number(v);if(n===0)return'₹0.00';return'₹'+n.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});},
-  inr0: v=>v==null?'—':'₹'+Math.round(v).toLocaleString('en-IN'),
-  pct:  v=>v==null?'—':Number(v).toFixed(2)+'%',
+  num:  v=>v==null||!isFinite(v)?'—':Number(v).toLocaleString('en-IN'),
+  inr:  v=>{if(v==null||!isFinite(v))return'—';const n=Number(v);if(n===0)return'₹0.00';return'₹'+n.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});},
+  inr0: v=>(v==null||!isFinite(v))?'—':'₹'+Math.round(v).toLocaleString('en-IN'),
+  pct:  v=>(v==null||!isFinite(v))?'—':Number(v).toFixed(2)+'%',
   mins: v=>{if(!v)return'—';const h=Math.floor(v/60),m=Math.round(v%60);return h?`${f.num(h)}h ${m}m`:`${m}m`;},
   short:v=>{if(!v&&v!==0)return'—';if(v>=1e7)return(v/1e7).toFixed(2)+'Cr';if(v>=1e5)return(v/1e5).toFixed(2)+'L';if(v>=1e3)return(v/1e3).toFixed(2)+'K';return Number(v).toLocaleString('en-IN');},
   email:e=>e?e.split('@')[0]:'—',
+  // Shared USD formatter (MRR / ARR) — always 2dp
+  usd:  v=>{v=+v||0;if(!v)return'—';if(v>=1e6)return'$'+(v/1e6).toFixed(2)+'M';if(v>=1e3)return'$'+(v/1e3).toFixed(2)+'K';return'$'+v.toFixed(2);},
+  // Shared INR large-value formatter (delivery cost) — always 2dp
+  inrL: v=>{v=+v||0;if(!v)return'—';if(v>=1e7)return'₹'+(v/1e7).toFixed(2)+'Cr';if(v>=1e5)return'₹'+(v/1e5).toFixed(2)+'L';if(v>=1e3)return'₹'+(v/1e3).toFixed(2)+'K';return'₹'+v.toFixed(2);},
 };
 
 // ── COLOURS ──────────────────────────────────────────────────────────────────
 const SEG_C={Ent:'#4f78ff',Enterprise:'#4f78ff',Mid:'#a07cff',SMB:'#22d4a0',Resellers:'#f5a42a',Unknown:'#E6E6E6'};
-const PROD_C={Images:'#4f78ff','360':'#22d4a0',Video:'#f5a42a',Spin:'#22d4a0'};
+const PROD_C={Images:'#4f78ff','360':'#22d4a0',Video:'#e85d79',Spin:'#22d4a0'};
 const PAL=['#4f78ff','#22d4a0','#f5a42a','#a07cff','#f0566a','#38c4f0','#f07832'];
 function pc(name,i=0){for(const k of Object.keys(PROD_C))if(name?.toLowerCase().includes(k.toLowerCase()))return PROD_C[k];return PAL[i%PAL.length];}
 function sc(name){return SEG_C[name]||PAL[4];}
@@ -579,24 +643,77 @@ function prodTag(name){const c=pc(name,0);return'<span class="prod-tag" style="b
 
 // ── CHART ENGINE ─────────────────────────────────────────────────────────────
 if(typeof ChartDataLabels!=='undefined')Chart.register(ChartDataLabels);
+// ── CSV export helper ────────────────────────────────────────────────────────
+// Extracts text from a table's headers + body rows and triggers a CSV download.
+// Handles commas/quotes/newlines by wrapping cells in quotes and escaping quotes.
+// `filename` is the base name (without .csv). Passing a <table> element directly
+// avoids duplicating table structure — the function reads the current DOM state,
+// so any sort order or filter applied by the user is preserved in the export.
+function csvEscape(s) {
+  const str = String(s == null ? '' : s).trim();
+  return /[",\n]/.test(str) ? '"' + str.replace(/"/g, '""') + '"' : str;
+}
+function tableToCSV(tableEl) {
+  if (!tableEl) return '';
+  const rows = [];
+  tableEl.querySelectorAll('thead tr').forEach(function(tr) {
+    rows.push(Array.from(tr.querySelectorAll('th')).map(function(th) {
+      // Strip sort-arrow span content from header labels
+      const clone = th.cloneNode(true);
+      clone.querySelectorAll('span').forEach(function(s) {
+        if (/^[▲▼↑↓⇅]?$/.test(s.textContent.trim())) s.remove();
+      });
+      return csvEscape(clone.textContent.trim().replace(/\s+/g, ' '));
+    }).join(','));
+  });
+  tableEl.querySelectorAll('tbody tr').forEach(function(tr) {
+    const cells = tr.querySelectorAll('td');
+    if (!cells.length) return;
+    rows.push(Array.from(cells).map(function(td) {
+      return csvEscape(td.textContent.trim().replace(/\s+/g, ' '));
+    }).join(','));
+  });
+  return rows.join('\n');
+}
+function downloadTableCSV(tableEl, filename) {
+  const csv = tableToCSV(tableEl);
+  if (!csv) return;
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }); // BOM for Excel
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = (filename || 'export') + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function() { URL.revokeObjectURL(url); }, 100);
+}
+// Convenience: pass a table selector instead of an element
+window.downloadCSV = function(sel, filename) {
+  const t = typeof sel === 'string' ? document.querySelector(sel) : sel;
+  downloadTableCSV(t, filename);
+};
+
 const BASE={
   responsive:true,maintainAspectRatio:true,animation:{duration:300},
   plugins:{
-    legend:{labels:{color:'#F3F4F6',font:{size:11},boxWidth:10,padding:14}},
+    legend:{labels:{color:'#F3F4F6',font:{size:14},boxWidth:10,padding:14}},
     tooltip:{backgroundColor:'#1a1a1a',borderColor:'#333333',borderWidth:1,titleColor:'#F3F4F6',bodyColor:'#FFFFFF',titleFont:{size:11},bodyFont:{size:11},padding:10},
     datalabels:{display:false},
   },
   scales:{
-    x:{ticks:{color:'#F3F4F6',font:{size:11}},grid:{color:'rgba(60,60,60,.5)'}},
-    y:{ticks:{color:'#F3F4F6',font:{size:11}},grid:{color:'rgba(60,60,60,.5)'}},
+    x:{ticks:{color:'#F3F4F6',font:{size:14}},grid:{color:'rgba(60,60,60,.5)'}},
+    y:{ticks:{color:'#F3F4F6',font:{size:14}},grid:{color:'rgba(60,60,60,.5)'}},
   },
 };
 function mk(id,cfg){
   if(CHARTS[id]){CHARTS[id].destroy();delete CHARTS[id];}
   const el=document.getElementById(id);if(!el)return;
+  // Deep-clone BASE first so renderChart4's y2 axis (or any other chart-specific scale)
+  // never leaks into subsequently rendered charts via BASE mutation.
   const opts=deepMerge(JSON.parse(JSON.stringify(BASE)),cfg.options||{});
   if(['bar','line'].includes(cfg.type)){if(!opts.layout)opts.layout={};if(!opts.layout.padding)opts.layout.padding={};opts.layout.padding.top=opts.layout.padding.top||(id==='ch-prod-trend'||id==='ch-seg-trend'?20:40);}
-  if(cfg._lf&&cfg.data?.datasets){cfg.data.datasets.forEach(ds=>{if(!ds.datalabels)ds.datalabels={display:ctx=>{const v=ctx.dataset.data[ctx.dataIndex];return v!=null&&v!==0;},color:'#FFFFFF',font:{size:10,weight:'500'},anchor:'end',align:'top',offset:3,clamp:true,formatter:cfg._lf};});}
+  if(cfg._lf&&cfg.data?.datasets){cfg.data.datasets.forEach(ds=>{if(!ds.datalabels)ds.datalabels={display:ctx=>{const v=ctx.dataset.data[ctx.dataIndex];return v!=null&&v!==0;},color:'#FFFFFF',font:{size:13,weight:'500'},anchor:'end',align:'top',offset:3,clamp:true,formatter:cfg._lf};});}
   CHARTS[id]=new Chart(el,{...cfg,options:opts});
 }
 function deepMerge(b,o){for(const k in o){if(o[k]&&typeof o[k]==='object'&&!Array.isArray(o[k]))b[k]=deepMerge(b[k]||{},o[k]);else b[k]=o[k];}return b;}
@@ -604,6 +721,26 @@ function deepMerge(b,o){for(const k in o){if(o[k]&&typeof o[k]==='object'&&!Arra
 // ── FILTERS ──────────────────────────────────────────────────────────────────
 const FILTERS={month:{all:[],selected:new Set()},segment:{all:[],selected:new Set()},product:{all:[],selected:new Set()},user:{all:[],selected:new Set()},cspoc:{all:[],selected:new Set()},obpoc:{all:[],selected:new Set()}};
 function passesFilter(key,value){const f=FILTERS[key];if(!f||f.selected.size===0||f.selected.size===f.all.length)return true;return f.selected.has(value);}
+// Case-insensitive membership check — CS POC / OB POC values may have inconsistent
+// casing across rows in the source CSV even though the dropdown shows deduped labels.
+function setHasCI(set,value){
+  if(!value)return false;
+  if(set.has(value))return true;
+  var vNorm=value.toLowerCase().trim();
+  for(var item of set){if(item.toLowerCase().trim()===vNorm)return true;}
+  return false;
+}
+
+// Global Esc-to-close for any detail modal. All modals are appended directly
+// to document.body as position:fixed overlays with z-index 999 — find and
+// remove the most recently opened one when Escape is pressed.
+document.addEventListener('keydown',function(ev){
+  if(ev.key!=='Escape')return;
+  var overlays=Array.from(document.body.children).filter(function(el){
+    return el.tagName==='DIV'&&el.style&&el.style.position==='fixed'&&el.style.zIndex==='999';
+  });
+  if(overlays.length){overlays[overlays.length-1].remove();}
+});
 // DATE RANGE STATE
 // DR.start and DR.end are Date objects (or null = no filter)
 const DR={start:null,end:null,preset:'thismonth'};
@@ -669,12 +806,15 @@ function getFilteredProducts(m){
   segs.forEach(sg=>{Object.entries(sg.byProduct||{}).forEach(([pName,pd])=>{if(!passesFilter('product',pName))return;if(!byProd[pName])byProd[pName]={name:pName,images:0,skus:0,units:0,vins:0,actualMins:0,sumTarget:0};const bp=byProd[pName];bp.images+=pd.images||0;bp.skus+=pd.skus||0;bp.units+=pd.units||0;bp.vins+=pd.vins||0;bp.actualMins+=pd.actualMins||0;bp.sumTarget+=pd.sumTarget||0;});});
   const totalActMins=Object.values(byProd).reduce((s,p)=>s+p.actualMins,0)||1;
   const totalCost=m.summary.totalCost*(Object.values(byProd).reduce((s,p)=>s+p.actualMins,0)/(m.summary.totalActMins||1));
-  return Object.values(byProd).map(p=>{const pCost=totalCost*(p.actualMins/totalActMins);const orig=m.productBreakdown.find(x=>x.name===p.name)||{};return{...p,efficiency:p.actualMins>0?+((p.sumTarget/p.actualMins)*100).toFixed(2):0,costPerUnit:p.units>0?+(pCost/p.units).toFixed(2):0,costPerSku:p.skus>0?+(pCost/p.skus).toFixed(2):0,costSharePct:totalCost>0?+((pCost/totalCost)*100).toFixed(1):0,unitLabel:orig.unitLabel||''};}).filter(p=>p.units>0);
+  return Object.values(byProd).map(p=>{const pCost=totalCost*(p.actualMins/totalActMins);const orig=m.productBreakdown.find(x=>x.name===p.name)||{};return{...p,efficiency:p.actualMins>0?+((p.sumTarget/p.actualMins)*100).toFixed(2):0,costPerUnit:p.units>0?+(pCost/p.units).toFixed(2):0,costPerSku:p.skus>0?+(pCost/p.skus).toFixed(2):0,costSharePct:totalCost>0?+((pCost/totalCost)*100).toFixed(2):0,unitLabel:orig.unitLabel||''};}).filter(p=>p.units>0);
 }
 function prodFilteredSummary(m,prodKey){
   if(prodKey==='all')return computeFilteredSummary(m);
-  const matchNames=m.productBreakdown.map(p=>p.name).filter(n=>{if(prodKey==='image')return /image/i.test(n);if(prodKey==='360')return /360|spin/i.test(n);if(prodKey==='video')return /video/i.test(n);return true;});
-  if(!matchNames.length)return computeFilteredSummary(m);
+  const matchNames=m.productBreakdown.map(p=>p.name).filter(n=>productKeyMatches(n,prodKey));
+  if(!matchNames.length){
+    // No products of this type this month — return a zeroed summary, not the unfiltered total
+    return{totalCost:0,inhouseCost:0,osCost:0,totalImages:0,total360Skus:0,totalVideoSkus:0,totalVins:0,totalUnits:0,totalSkus:0,totalActMins:0,totalTarget:0,efficiency:0,costPerUnit:0,costPerSku:0,costPerVin:0,employees:m.summary.employees};
+  }
   const prevSel=new Set(FILTERS.product.selected);const prevAll=FILTERS.product.all.slice();
   FILTERS.product.selected=new Set(matchNames);FILTERS.product.all=matchNames;
   const result=computeFilteredSummary(m);
@@ -767,8 +907,21 @@ function updateFilterBtn(key){
 function initFilters(){
   if(!DATA)return;
   const months=DATA.months;
-  // Date range: initialize to "this month" preset
-  applyPreset('thismonth',true); // true = silent (no re-render yet)
+  // Default to the latest month that has actual data — avoids "No data matches filter"
+  // when the calendar month hasn't started yet (e.g. data ends June but today is July).
+  const lastMonth=months[months.length-1];
+  const lastKey=lastMonth?lastMonth.key:'';
+  const parsed=lastKey?parseMonthKey(lastKey):null;
+  if(parsed){
+    const start=new Date(parsed.year,parsed.month,1);
+    const end=new Date(parsed.year,parsed.month+1,0);
+    DR.start=start;DR.end=end;DR.preset='lastmonth';
+    document.querySelectorAll('.dr-preset').forEach(b=>b.classList.remove('active'));
+    const btn=document.getElementById('dr-p-lastmonth');if(btn)btn.classList.add('active');
+    setDRLabel(lastMonth.month.replace('-',' '));
+  }else{
+    applyPreset('all',true);
+  }
   const segs=[...new Set(months.flatMap(m=>m.segmentBreakdown.map(s=>s.name)))].sort();
   buildDropdown('segment',segs);
   const prods=[...new Set(months.flatMap(m=>m.productBreakdown.map(p=>p.name)))];
@@ -789,7 +942,13 @@ function toggleDatePicker(){
   else{panel.classList.add('open');renderCal();}
 }
 document.addEventListener('click',function(e){
-  if(!e.target.closest('#fw-daterange'))document.getElementById('dr-panel').classList.remove('open');
+  // Keep the date panel open if the click was inside the date-range widget
+  // OR inside the panel itself. We need both checks because calClickDay() calls
+  // renderCal() which replaces the grid innerHTML — the original day-cell element
+  // is removed from the DOM before the event reaches here, so .closest('#fw-daterange')
+  // returns null even though the click was genuinely inside the panel.
+  if(e.target.closest('#fw-daterange')||e.target.closest('#dr-panel'))return;
+  document.getElementById('dr-panel').classList.remove('open');
 });
 
 function applyPreset(preset,silent){
@@ -814,6 +973,36 @@ function applyPreset(preset,silent){
   }else if(preset==='last6'){
     DR.start=new Date(y,mo-5,1);DR.end=new Date(y,mo+1,0);
     setDRLabel('Last 6 months');
+  }
+  // Clamp to actual data range so presets like "This month" never produce empty results
+  // when the calendar month is ahead of the latest available data month.
+  if(DATA&&(DR.start||DR.end)){
+    const dataMonths=DATA.months;
+    if(dataMonths&&dataMonths.length){
+      const firstParsed=parseMonthKey(dataMonths[0].key);
+      const lastParsed=parseMonthKey(dataMonths[dataMonths.length-1].key);
+      if(firstParsed&&lastParsed){
+        const dataStart=new Date(firstParsed.year,firstParsed.month,1);
+        const dataEnd=new Date(lastParsed.year,lastParsed.month+1,0);
+        // If computed range is entirely after data ends, snap to last data month
+        if(DR.start&&DR.start>dataEnd){
+          DR.start=new Date(lastParsed.year,lastParsed.month,1);
+          DR.end=dataEnd;
+          setDRLabel(dataMonths[dataMonths.length-1].month.replace('-',' '));
+        }
+        // If computed range is entirely before data starts, snap to first data month
+        else if(DR.end&&DR.end<dataStart){
+          DR.start=dataStart;
+          DR.end=new Date(firstParsed.year,firstParsed.month+1,0);
+          setDRLabel(dataMonths[0].month.replace('-',' '));
+        }
+        // Otherwise clamp the boundaries into the data range
+        else{
+          if(DR.start&&DR.start<dataStart)DR.start=dataStart;
+          if(DR.end&&DR.end>dataEnd)DR.end=dataEnd;
+        }
+      }
+    }
   }
   calPickStep=0;calTempStart=null;
   if(!silent){document.getElementById('dr-panel').classList.remove('open');renderAll();}
@@ -877,7 +1066,7 @@ function renderCal(){
       else if(date.getTime()===e.getTime())cls+=' range-end';
       else if(date>s&&date<e)cls+=' in-range';
     }
-    html+='<div class="'+cls+'" onclick="calClickDay('+y+','+mo+','+d+')">'+d+'</div>';
+    html+='<div class="'+cls+'" onclick="calClickDay(event,'+y+','+mo+','+d+')">'+d+'</div>';
   }
   // Next month padding
   const totalCells=Math.ceil((firstDay+daysInMonth)/7)*7;
@@ -889,7 +1078,12 @@ function renderCal(){
   updateCalLabel();
 }
 
-function calClickDay(y,mo,d){
+function calClickDay(ev,y,mo,d){
+  // Stop propagation so the global "click outside to close" listener doesn't
+  // fire while we're mid-selection (step 0 → picking start date).
+  // On step 1 we intentionally let the panel stay open until end-date is picked,
+  // and closing happens explicitly inside this function after the range is set.
+  if(ev&&ev.stopPropagation)ev.stopPropagation();
   const clicked=new Date(y,mo,d);
   if(calPickStep===0){
     calTempStart=clicked;calPickStep=1;
@@ -942,34 +1136,31 @@ function applySortArr(arr,col,dir){
   if(!col||!arr)return arr;
   return[...arr].sort((a,b)=>{const av=a[col]??0,bv=b[col]??0;return typeof av==='number'?((av-bv)*dir):String(av).localeCompare(String(bv))*dir;});
 }
-let _segData=[],_segSort={col:'units',dir:-1};
-let _segSumProduct='all'; // current product filter for segment summary
-function setSegSumProduct(prod,btn){
-  _segSumProduct=prod;
-  document.querySelectorAll('.cf-pill[data-chart="segsum"]').forEach(function(b){b.classList.remove('active');});
-  if(btn)btn.classList.add('active');
-  if(!DATA)return;
-  const months=filteredMonths();
-  if(months.length){_segData=aggregateSegments(months,_segSumProduct);renderSegTable();}
-}
-window.cycleSortSeg=mkSorter('ss',['vins','units','efficiency','costPerUnit','costShare','costMrrPct'],function(col,dir){_segSort={col,dir};renderSegTable();});
+let _segData=[],_segSort={col:'costShare',dir:-1};
+window.cycleSortSeg=mkSorter('ss',['vins','units','volumeShare','contractedArrMonthly','arrShare','costPerUnit','costShare'],function(col,dir){_segSort={col,dir};renderSegTable();});
 function renderSegTable(){
   const rows=applySortArr(_segData,_segSort.col,_segSort.dir);
   const el=document.getElementById('sg-summary-tbl');if(!el)return;
-  el.innerHTML=rows.map(function(s){
-    // Color-code Cost/MRR% — green <5%, amber 5-15%, red >15%
-    var mrrColor=s.costMrrPct>15?'var(--red)':s.costMrrPct>5?'var(--amber)':'var(--green)';
-    var mrrBar=s.costMrrPct>0?'<span style="display:inline-block;width:'+Math.min(s.costMrrPct*3,60)+'px;height:4px;background:'+mrrColor+';border-radius:2px;vertical-align:middle;margin-left:5px;opacity:.7"></span>':'';
-    return'<tr>'
-      +'<td class="bright"><span class="seg" style="background:'+sc(s.name)+'22;color:'+sc(s.name)+'">'+s.name+'</span></td>'
-      +'<td class="r" style="color:var(--purple)">'+f.num(s.vins)+'</td>'
-      +'<td class="r">'+f.num(s.units)+'</td>'
-      +'<td class="r" style="color:var(--amber)">'+f.inr(s.costPerUnit)+'</td>'
-      +'<td class="r"><span style="font-weight:600">'+f.pct(s.costShare)+'</span></td>'
-      +'<td class="r" style="color:'+mrrColor+';font-weight:600">'+f.pct(s.costMrrPct)+mrrBar+'</td>'
-      +'<td class="r"><span class="'+effCls(s.efficiency)+'">'+f.pct(s.efficiency)+'</span></td>'
-      +'</tr>';
+  const numMonths=(rows[0]&&rows[0].numMonths)||1;
+  // Update header label with numMonths context
+  var ctrHdr=document.getElementById('seg-contracted-hdr');
+  if(ctrHdr)ctrHdr.childNodes[0].textContent=numMonths===1?'Contracted MRR (USD)':'Contracted MRR \u00d7'+numMonths+' (USD)';
+  var sub=document.getElementById('seg-summary-sub');
+  if(sub)sub.textContent=(numMonths===1?'1 month':numMonths+' months')+' \u00b7 VINs \u00b7 Units \u00b7 MRR (scaled by months) \u00b7 \u20b9/Unit \u00b7 Cost %';
+  var fmtUSD=f.usd;
+  el.innerHTML=rows.map(function(s,i){
+    return'<tr style="cursor:pointer" onclick="showSegmentDetail('+i+')" title="Click for account breakdown">'+
+      '<td class="bright"><span class="seg" style="background:'+sc(s.name)+'22;color:'+sc(s.name)+'">'+s.name+'</span></td>'+
+      '<td class="r" style="color:var(--purple)">'+f.num(s.vins)+'</td>'+
+      '<td class="r">'+f.num(s.units)+'</td>'+
+      '<td class="r" style="color:var(--cyan)">'+f.pct(s.volumeShare)+'</td>'+
+      '<td class="r" style="color:#38c4f0">'+fmtUSD(s.contractedArrMonthly)+'</td>'+
+      '<td class="r" style="color:var(--muted)">'+f.pct(s.arrShare)+'</td>'+
+      '<td class="r" style="color:var(--amber)">'+f.inr(s.costPerUnit)+'</td>'+
+      '<td class="r" style="font-weight:600">'+f.pct(s.costShare)+'</td>'+
+      '</tr>';
   }).join('');
+  window._segList=rows;
 }
 let _prodData=[],_prodSort={col:'units',dir:-1};
 window.cycleSortProd=mkSorter('sp',['units','efficiency','costPerUnit','costSharePct'],function(col,dir){_prodSort={col,dir};renderProdTable();});
@@ -1011,45 +1202,334 @@ function renderAll(){
 
 window._entList=window._entList||[];
 function _showEnt(i){var item=window._entList[i];if(item)showEnterpriseDetail(item.name,item);}
+function showSegmentDetail(idx){
+  var seg=window._segList&&window._segList[idx];
+  if(!seg)return;
+  var months=filteredMonths();
+  var numMonths=months.length||1;
+  var segName=seg.name;
+  var safeSegName=segName.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+
+  // Collect all enterprises in this segment active in the filtered months
+  var entMap={};
+  months.forEach(function(m){
+    (m.enterpriseBreakdown||[]).forEach(function(e){
+      if(!e.units)return;
+      if((e.segment||'Unknown')!==segName)return;
+      var n=e.name;
+      if(!entMap[n])entMap[n]={name:n,entId:'',csPoc:'',vins:0,units:0,actualMins:0,sumTarget:0,totalCost:0,costPerUnit_sum:0,accWeightSum:0,accWeightedSum:0};
+      // Prefer sheet-derived entId (Jul-26+ has this from enterprise_id column)
+      if(!entMap[n].entId&&e.entId)entMap[n].entId=e.entId;
+      if(!entMap[n].csPoc&&e.csPoc)entMap[n].csPoc=e.csPoc;
+      entMap[n].vins+=e.vins||0;
+      entMap[n].units+=e.units||0;
+      entMap[n].actualMins+=e.actualMins||0;
+      entMap[n].sumTarget+=e.sumTarget||0;
+      entMap[n].totalCost+=Math.round((e.costPerUnit||0)*(e.units||0));
+      entMap[n].costPerUnit_sum+=(e.costPerUnit||0)*(e.units||0);
+      // AI accuracy: weighted by images scored this month
+      var imgs=+e.aiTotalImages||0;
+      if(imgs>0&&isFinite(+e.trueAccuracy)){
+        entMap[n].accWeightSum+=imgs;
+        entMap[n].accWeightedSum+=imgs*(+e.trueAccuracy||0);
+      }
+    });
+  });
+
+  // Enrich with ENT_META ARR + rooftop count + entId
+  var accounts=Object.values(entMap).map(function(e){
+    var meta=entMeta(e.name);
+    var annualContracted=meta.contractedArr||0;
+    var contractedMRR=Math.round((annualContracted/12)*numMonths);
+    var contractedMRRinr=contractedMRR*83;
+    var costMrrPct=contractedMRRinr>0?+((e.totalCost/contractedMRRinr)*100).toFixed(2):null;
+    return{
+      name:       e.name,
+      entId:      e.entId||meta.entId||'—',
+      segment:    meta.segment||segName,
+      csPoc:      meta.csPoc||e.csPoc||'—',
+      obPoc:      meta.obPoc||e.obPoc||'—',
+      rooftops:   meta.activeRooftops||meta.rooftopCount||0,
+      vins:       e.vins,
+      units:      e.units,
+      efficiency: e.actualMins>0?+((e.sumTarget/e.actualMins)*100).toFixed(2):0,
+      costPerUnit:e.units>0?+(e.costPerUnit_sum/e.units).toFixed(2):0,
+      totalCost:  e.totalCost,
+      contractedMRR,
+      costMrrPct: costMrrPct!==null?costMrrPct:0,
+      trueAccuracy: e.accWeightSum>0?+(e.accWeightedSum/e.accWeightSum).toFixed(2):0,
+    };
+  }).sort(function(a,b){return b.totalCost-a.totalCost;});
+
+  // Summary totals
+  var totalVins=accounts.reduce(function(s,e){return s+e.vins;},0);
+  var totalUnits=accounts.reduce(function(s,e){return s+e.units;},0);
+  var totalCost=accounts.reduce(function(s,e){return s+e.totalCost;},0);
+  var totalContracted=accounts.reduce(function(s,e){return s+e.contractedMRR;},0);
+  var totalRooftops=accounts.reduce(function(s,e){return s+(e.rooftops||0);},0);
+
+  var fmtUSD=f.usd;var fmtInr=f.inrL;
+
+  // Modal sort state
+  var msort={col:'totalCost',dir:-1};
+
+  function sortedRows(){
+    return[...accounts].sort(function(a,b){
+      var av=a[msort.col]!=null?a[msort.col]:0;
+      var bv=b[msort.col]!=null?b[msort.col]:0;
+      return typeof av==='string'?av.localeCompare(bv)*msort.dir:(av-bv)*msort.dir;
+    });
+  }
+
+  function arrowFor(col){return msort.col===col?(msort.dir===-1?' ▼':' ▲'):''; }
+
+  function buildHead(){
+    function th(col,label,cls){
+      return'<th class="r seg-modal-th'+(cls?' '+cls:'')+'" data-col="'+col+'" style="cursor:pointer">'+label+'<span style="font-size:12px;color:var(--blue);margin-left:2px">'+arrowFor(col)+'</span></th>';
+    }
+    return'<thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr>'+
+      '<th class="seg-modal-th" data-col="name" style="cursor:pointer">Account<span style="font-size:12px;color:var(--blue);margin-left:2px">'+arrowFor('name')+'</span></th>'+
+      '<th class="seg-modal-th" data-col="entId" style="cursor:pointer">Enterprise ID<span style="font-size:12px;color:var(--blue);margin-left:2px">'+arrowFor('entId')+'</span></th>'+
+      '<th class="seg-modal-th" data-col="csPoc" style="cursor:pointer">CS POC<span style="font-size:12px;color:var(--blue);margin-left:2px">'+arrowFor('csPoc')+'</span></th>'+
+      '<th class="seg-modal-th" data-col="obPoc" style="cursor:pointer">OB POC<span style="font-size:12px;color:var(--blue);margin-left:2px">'+arrowFor('obPoc')+'</span></th>'+
+      th('rooftops','Rooftops')+
+      th('vins','VINs')+th('units','Units')+
+      th('contractedMRR','Contracted MRR')+
+      th('totalCost','Delivery Cost')+
+      th('costPerUnit','₹/Unit')+
+      th('costMrrPct','Cost/MRR %')+
+      th('trueAccuracy','AI Accuracy')+
+      '</tr></thead>';
+  }
+
+  function buildRows(){
+    return sortedRows().map(function(e,i){
+      return'<tr>'+
+        '<td class="bright" style="max-width:220px;overflow:hidden;text-overflow:ellipsis" title="'+e.name+'">'+e.name+'</td>'+
+        '<td style="font-size:12px;color:var(--muted);font-family:var(--mono)">'+e.entId+'</td>'+
+        '<td style="font-size:13px;color:var(--sub)">'+e.csPoc+'</td>'+
+        '<td style="font-size:13px;color:var(--sub)">'+e.obPoc+'</td>'+
+        '<td class="r">'+(e.rooftops||'—')+'</td>'+
+        '<td class="r" style="color:var(--purple)">'+f.num(e.vins)+'</td>'+
+        '<td class="r">'+f.num(e.units)+'</td>'+
+        '<td class="r" style="color:#38c4f0">'+fmtUSD(e.contractedMRR)+'</td>'+
+        '<td class="r" style="color:var(--blue)">'+fmtInr(e.totalCost)+'</td>'+
+        '<td class="r" style="color:var(--amber)">'+f.inr(e.costPerUnit)+'</td>'+
+        '<td class="r" style="color:'+(e.costMrrPct>10?'#f0566a':e.costMrrPct>5?'#f5a42a':e.costMrrPct>0?'#22d4a0':'var(--muted)')+'">'+
+          (e.contractedMRR>0?e.costMrrPct.toFixed(2)+'%':'—')+'</td>'+
+        '<td class="r" style="color:'+(e.trueAccuracy>=90?'#22d4a0':e.trueAccuracy>=80?'#f5a42a':e.trueAccuracy>0?'#f0566a':'var(--muted)')+'">'+
+          (e.trueAccuracy>0?e.trueAccuracy.toFixed(2)+'%':'—')+'</td>'+
+        '</tr>';
+    }).join('');
+  }
+
+  var modal=document.createElement('div');
+  modal.style.cssText='position:fixed;inset:0;background:rgba(10,10,10,.9);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
+
+  var inner=document.createElement('div');
+  inner.style.cssText='background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:1480px;max-width:97vw;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.7)';
+
+  var moLabel=numMonths===1?'1 month':numMonths+' months';
+  inner.innerHTML=
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;flex-shrink:0">'+
+      '<div>'+
+        '<div style="font-weight:700;font-size:16px;color:var(--text)">'+
+          '<span class="seg" style="background:'+sc(segName)+'22;color:'+sc(segName)+';margin-right:8px">'+segName+'</span>Segment — Account Breakdown'+
+        '</div>'+
+        '<div style="font-size:13px;color:var(--muted);margin-top:4px">'+moLabel+' · '+accounts.length+' accounts · click column headers to sort</div>'+
+      '</div>'+
+      '<div style="display:flex;gap:8px;align-items:center">'+
+        '<button class="dl-btn" data-seg="'+safeSegName+'" onclick="downloadCSV(\'#seg-modal-tbl\', \'segment_\'+this.dataset.seg+\'_accounts_\'+(new Date().toISOString().slice(0,10)))" title="Download CSV">⬇ CSV</button>'+
+        '<button id="seg-modal-close" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;line-height:1;padding:4px 8px">✕</button>'+
+      '</div>'+
+    '</div>'+
+    '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:20px;flex-shrink:0">'+
+      kpi('Accounts',accounts.length,'in this segment',null,'var(--blue)')+
+      kpi('Rooftops',f.num(totalRooftops),'active locations',null,'var(--cyan)')+
+      kpi('VINs',f.num(totalVins),'unique vehicles',null,'var(--purple)')+
+      kpi('Units',f.num(totalUnits),moLabel,null,'var(--green)')+
+      kpi('Contracted MRR',fmtUSD(totalContracted),'×'+numMonths+' mo (USD)',null,'#38c4f0')+
+      kpi('Delivery Cost',fmtInr(totalCost),moLabel,null,'var(--blue)')+
+    '</div>'+
+    '<div class="tbl-wrap" id="seg-modal-tbl-wrap" style="overflow-y:auto;flex:1;min-height:0">'+
+      '<table id="seg-modal-tbl">'+buildHead()+'<tbody id="seg-modal-tbody">'+buildRows()+'</tbody></table>'+
+    '</div>';
+
+  modal.appendChild(inner);
+  inner.querySelector('#seg-modal-close').onclick=function(){modal.remove();};
+  modal.addEventListener('click',function(e){if(e.target===modal)modal.remove();});
+
+  // Sort on header click
+  inner.addEventListener('click',function(e){
+    var th=e.target.closest('.seg-modal-th');
+    if(!th)return;
+    var col=th.dataset.col;
+    if(!col)return;
+    if(msort.col===col)msort.dir*=-1; else{msort.col=col;msort.dir=-1;}
+    inner.querySelector('#seg-modal-tbl thead').outerHTML=buildHead();
+    inner.querySelector('#seg-modal-tbody').innerHTML=buildRows();
+  });
+
+  document.body.appendChild(modal);
+}
+
 function showEnterpriseDetail(name,e){
   const meta=entMeta(name);
   const seg=e.segment||meta.segment||'';
+  const rag=meta.rag||'';
+  const ragColor=rag==='Green'?'#22d4a0':rag==='Amber'?'#f5a42a':rag==='Red'?'#f0566a':rag.includes('Churn')?'#a07cff':'#666';
+  const ragBadgeHtml=rag?'<span style="font-size:11px;padding:1px 6px;border-radius:3px;background:'+ragColor+'22;color:'+ragColor+'">'+rag+'</span>':'';
   const months=filteredMonths();
+  const nameNorm=name.toLowerCase().trim();
+  const safeName=name.replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_+|_+$/g,'').toLowerCase();
+
   const monthRows=months.map(function(m){
     const eb=enterpriseProdData(m).find(function(x){return x.name===name;});
-    return eb?{month:m.month,units:eb.units,vins:eb.vins,efficiency:eb.efficiency,costPerUnit:eb.costPerUnit}:null;
+    return eb?{month:m.month,units:eb.units,vins:eb.vins,efficiency:eb.efficiency,costPerUnit:eb.costPerUnit,trueAccuracy:eb.trueAccuracy||0}:null;
   }).filter(Boolean);
-  const trendRows=monthRows.map(function(r){
+  const trendRowsData=monthRows; // used below after contractedMRRinr is computed
+
+  // ── Aggregate byProduct + byEditor (with per-product split) across the filtered months
+  const prodAcc={},editorAcc={};
+  let allProductNames=new Set();
+  months.forEach(function(m){
+    const raw=(m.enterpriseBreakdown||[]).find(function(x){return (x.name||'').toLowerCase().trim()===nameNorm;});
+    if(!raw)return;
+    Object.entries(raw.byProduct||{}).forEach(function(kv){
+      var pname=kv[0],pd=kv[1];
+      allProductNames.add(pname);
+      if(!prodAcc[pname])prodAcc[pname]={name:pname,units:0,skus:0,images:0,vins:0,actualMins:0,sumTarget:0,cost:0};
+      var a=prodAcc[pname];
+      a.units+=pd.units||0;a.skus+=pd.skus||0;a.images+=pd.images||0;a.vins+=pd.vins||0;
+      a.actualMins+=pd.actualMins||0;a.sumTarget+=pd.sumTarget||0;a.cost+=pd.cost||0;
+    });
+    Object.entries(raw.byEditor||{}).forEach(function(kv){
+      var email=kv[0],bd=kv[1];
+      if(!editorAcc[email])editorAcc[email]={email:email,units:0,vins:0,actualMins:0,sumTarget:0,cost:0,teamType:bd.teamType||'Unknown',byProduct:{}};
+      var a=editorAcc[email];
+      a.units+=bd.units||0;a.vins+=bd.vins||0;a.actualMins+=bd.actualMins||0;
+      a.sumTarget+=bd.sumTarget||0;a.cost+=bd.cost||0;
+      if(bd.teamType&&bd.teamType!=='Unknown')a.teamType=bd.teamType;
+      Object.entries(bd.byProduct||{}).forEach(function(pkv){
+        var pname=pkv[0],pu=pkv[1].units||0;
+        allProductNames.add(pname);
+        a.byProduct[pname]=(a.byProduct[pname]||0)+pu;
+      });
+    });
+  });
+  const prodRows=Object.values(prodAcc).map(function(p){
+    p.costPerUnit=p.units>0?+(p.cost/p.units).toFixed(2):0;
+    p.efficiency=p.actualMins>0?+((p.sumTarget/p.actualMins)*100).toFixed(2):0;
+    return p;
+  }).sort(function(a,b){return b.cost-a.cost;});
+  const editorRows=Object.values(editorAcc).map(function(ed){
+    ed.costPerUnit=ed.units>0?+(ed.cost/ed.units).toFixed(2):0;
+    ed.efficiency=ed.actualMins>0?+((ed.sumTarget/ed.actualMins)*100).toFixed(2):0;
+    return ed;
+  }).sort(function(a,b){return b.cost-a.cost;});
+
+  // Resolve up to 3 product columns to show: Images / 360 / Video (in that priority order)
+  const prodCols=[];
+  if([...allProductNames].some(function(n){return/image/i.test(n);}))prodCols.push({key:'image',label:'Image Units',rx:/image/i});
+  if([...allProductNames].some(function(n){return/360|spin/i.test(n);}))prodCols.push({key:'360',label:'360 Units',rx:/360|spin/i});
+  if([...allProductNames].some(function(n){return/video/i.test(n);}))prodCols.push({key:'video',label:'Video Units',rx:/video/i});
+  function prodUnitsFor(byProduct,rx){
+    return Object.entries(byProduct||{}).filter(function(kv){return rx.test(kv[0]);}).reduce(function(s,kv){return s+kv[1];},0);
+  }
+
+  const numMonths=months.length||1;
+  const contractedAnnual=meta.contractedArr||0;
+  const contractedMRR=(contractedAnnual/12)*numMonths;
+  const contractedMRRinr=contractedMRR*83; // convert USD to INR for % calc
+  const mrrLabel=numMonths===1?'Contracted MRR':'Contracted MRR \u00d7'+numMonths;
+
+  // Shared helper: formats Cost/MRR % cell with colour coding + mini bar
+  function costMrrCell(cost){
+    if(!contractedMRRinr)return'<td class="r" style="color:var(--muted)">—</td>';
+    var pct=+((cost/contractedMRRinr)*100).toFixed(2);
+    var color=pct>10?'#f0566a':pct>5?'#f5a42a':'#22d4a0';
+    var bar='<div style="display:inline-block;width:'+Math.min(pct*2,80)+'px;height:4px;background:'+color+';border-radius:2px;vertical-align:middle;margin-left:4px"></div>';
+    return'<td class="r" style="color:'+color+';white-space:nowrap">'+pct.toFixed(2)+'%'+bar+'</td>';
+  }
+
+  const trendRows=trendRowsData.map(function(r){
+    var monthCost=r.units&&e.costPerUnit?(r.units*e.costPerUnit):0;
+    var accColor=r.trueAccuracy>=90?'#22d4a0':r.trueAccuracy>=80?'#f5a42a':r.trueAccuracy>0?'#f0566a':'var(--muted)';
     return'<tr><td class="bright">'+r.month+'</td><td class="r">'+f.num(r.units)+'</td>'+
       '<td class="r" style="color:var(--purple)">'+f.num(r.vins)+'</td>'+
       '<td class="r"><span class="'+effCls(r.efficiency)+'">'+f.pct(r.efficiency)+'</span></td>'+
-      '<td class="r" style="color:var(--amber)">'+f.inr(r.costPerUnit)+'</td></tr>';
+      '<td class="r" style="color:var(--amber)">'+f.inr(r.costPerUnit)+'</td>'+
+      costMrrCell(r.units*(r.costPerUnit||0))+
+      '<td class="r" style="color:'+accColor+'">'+(r.trueAccuracy>0?r.trueAccuracy.toFixed(2)+'%':'—')+'</td>'+
+      '</tr>';
   }).join('');
-  const rawArr=e.liveArr||meta.liveArr||'';
-  const arrVal=rawArr?Number(rawArr.replace(/[^0-9.]/g,'')):0;
+
+  const prodBody=prodRows.length?prodRows.map(function(p){
+    return'<tr><td>'+prodTag(p.name)+'</td>'+
+      '<td class="r">'+f.num(p.units)+'</td>'+
+      '<td class="r" style="color:var(--purple)">'+f.num(p.vins)+'</td>'+
+      '<td class="r"><span class="'+effCls(p.efficiency)+'">'+f.pct(p.efficiency)+'</span></td>'+
+      '<td class="r" style="color:var(--amber)">'+f.inr(p.costPerUnit)+'</td>'+
+      '<td class="r" style="color:var(--blue)">'+f.inr0(p.cost)+'</td>'+
+      costMrrCell(p.cost)+
+      '</tr>';
+  }).join(''):'<tr><td colspan="7" style="color:var(--muted);padding:14px;text-align:center">No product data for this period</td></tr>';
+
+  const editorBody=editorRows.length?editorRows.map(function(ed){
+    const teamBadge=/payroll/i.test(ed.teamType)?
+      '<span style="background:rgba(34,212,160,.15);color:#22d4a0;padding:1px 6px;border-radius:4px;font-size:12px;font-weight:600">Inhouse</span>':
+      '<span style="background:rgba(245,164,42,.15);color:#f5a42a;padding:1px 6px;border-radius:4px;font-size:12px;font-weight:600">OS</span>';
+    const prodCells=prodCols.map(function(pc){return'<td class="r">'+f.num(prodUnitsFor(ed.byProduct,pc.rx))+'</td>';}).join('');
+    return'<tr><td><div style="color:var(--text);font-weight:500">'+f.email(ed.email)+'</div>'+
+      '<div style="font-size:12px;color:var(--muted)">'+ed.email+'</div></td>'+
+      '<td>'+teamBadge+'</td>'+
+      prodCells+
+      '<td class="r" style="color:var(--text);font-weight:600">'+f.num(ed.units)+'</td>'+
+      '<td class="r"><span class="'+effCls(ed.efficiency)+'">'+f.pct(ed.efficiency)+'</span></td>'+
+      '<td class="r" style="color:var(--amber)">'+f.inr(ed.costPerUnit)+'</td>'+
+      '<td class="r" style="color:var(--blue)">'+f.inr0(ed.cost)+'</td>'+
+      costMrrCell(ed.cost)+
+      '</tr>';
+  }).join(''):'<tr><td colspan="'+(7+prodCols.length)+'" style="color:var(--muted);padding:14px;text-align:center">No editor data for this period</td></tr>';
+
+  const editorHeadCols=prodCols.map(function(pc){return'<th class="r">'+pc.label+'</th>';}).join('');
   const modal=document.createElement('div');
   modal.style.cssText='position:fixed;inset:0;background:rgba(17,17,17,.92);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
   const inner=document.createElement('div');
-  inner.style.cssText='background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;min-width:520px;max-width:680px;max-height:85vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.7)';
+  inner.style.cssText='background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:980px;max-width:97vw;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.7)';
   const closeBtn=document.createElement('button');
   closeBtn.textContent='✕';
   closeBtn.style.cssText='background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;line-height:1;float:right';
   closeBtn.onclick=function(){modal.remove();};
-  inner.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">'
+  inner.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-shrink:0">'
     +'<div><div style="font-weight:700;font-size:16px;color:var(--text)">'+name+'</div>'
     +'<div style="margin-top:4px;display:flex;gap:8px;align-items:center">'
     +(seg?'<span class="seg" style="background:'+sc(seg)+'22;color:'+sc(seg)+'">'+seg+'</span>':'')+ragBadgeHtml
-    +(arrVal?'<span style="font-size:11px;color:var(--green);font-weight:600">Live ARR: ₹'+arrVal.toLocaleString('en-IN')+'</span>':'')
+    +(contractedMRR?'<span style="font-size:13px;color:#38c4f0;font-weight:600">'+mrrLabel+': $'+Math.round(contractedMRR).toLocaleString('en-IN')+'</span>':'')
     +'</div></div><span id="_modal_close_ent"></span></div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:20px;flex-shrink:0">'
     +'<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px">'
-    +'<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">CS POC</div>'
+    +'<div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Enterprise ID</div>'
+    +'<div style="font-size:13px;color:var(--text);font-family:var(--mono)">'+(e.entId||meta.entId||'—')+'</div></div>'
+    +'<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px">'
+    +'<div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">CS POC</div>'
     +'<div style="font-size:13px;color:var(--text)">'+(e.csPoc||meta.csPoc||'—')+'</div></div>'
-
+    +'<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px">'
+    +'<div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Rooftops</div>'
+    +'<div style="font-size:13px;color:var(--text)">'+(meta.activeRooftops||meta.rooftopCount||'—')+'</div></div>'
+    +'<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px">'
+    +'<div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">AI Accuracy</div>'
+    +'<div style="font-size:13px;color:'+(e.trueAccuracy>=90?'#22d4a0':e.trueAccuracy>=80?'#f5a42a':e.trueAccuracy>0?'#f0566a':'var(--muted)')+';font-weight:600">'+(e.trueAccuracy>0?e.trueAccuracy.toFixed(2)+'%':'—')+'</div></div>'
     +'</div>'
-    +'<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px">Month-on-Month Performance</div>'
-    +'<div class="tbl-wrap"><table><thead><tr><th>Month</th><th class="r">Units</th><th class="r">VINs</th><th class="r">Efficiency</th><th class="r">₹/Unit</th></tr></thead>'
-    +'<tbody>'+trendRows+'</tbody></table></div>';
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-shrink:0"><div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)">Month-on-Month Performance</div><button class="dl-btn" data-name="'+safeName+'" onclick="downloadCSV(\'#ent-mom-tbl\', \'enterprise_\'+this.dataset.name+\'_mom_\'+(new Date().toISOString().slice(0,10)))" title="Download CSV">⬇ CSV</button></div>'
+    +'<div class="tbl-wrap" style="max-height:160px;overflow-y:auto;flex-shrink:0;margin-bottom:20px"><table id="ent-mom-tbl"><thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr><th>Month</th><th class="r">Units</th><th class="r">VINs</th><th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r" style="color:#f5a42a">Cost/MRR %</th><th class="r">AI Accuracy</th></tr></thead>'
+    +'<tbody>'+trendRows+'</tbody></table></div>'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-shrink:0"><div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)">Cost Breakdown by Product</div><button class="dl-btn" data-name="'+safeName+'" onclick="downloadCSV(\'#ent-prod-tbl\', \'enterprise_\'+this.dataset.name+\'_by_product_\'+(new Date().toISOString().slice(0,10)))" title="Download CSV">⬇ CSV</button></div>'
+    +'<div class="tbl-wrap" style="max-height:200px;overflow-y:auto;flex-shrink:0;margin-bottom:20px"><table id="ent-prod-tbl"><thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr><th>Product</th><th class="r">Units</th><th class="r">VINs</th><th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r">Cost</th><th class="r" style="color:#f5a42a">Cost/MRR %</th></tr></thead>'
+    +'<tbody>'+prodBody+'</tbody></table></div>'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-shrink:0"><div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)">Cost Breakdown by User</div><button class="dl-btn" data-name="'+safeName+'" onclick="downloadCSV(\'#ent-user-tbl\', \'enterprise_\'+this.dataset.name+\'_by_user_\'+(new Date().toISOString().slice(0,10)))" title="Download CSV">⬇ CSV</button></div>'
+    +'<div class="tbl-wrap" style="flex:1;min-height:0;overflow-y:auto"><table id="ent-user-tbl"><thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr><th>Editor</th><th>Team</th>'+editorHeadCols+'<th class="r">Total Units</th><th class="r">Efficiency</th><th class="r">₹/Unit</th><th class="r">Cost</th><th class="r" style="color:#f5a42a">Cost/MRR %</th></tr></thead>'
+    +'<tbody>'+editorBody+'</tbody></table></div>';
   inner.querySelector('#_modal_close_ent').replaceWith(closeBtn);
   modal.appendChild(inner);
   modal.addEventListener('click',function(ev){if(ev.target===modal)modal.remove();});
@@ -1100,13 +1580,13 @@ function showEditorDetail(e){
   const team=/payroll/i.test(e.teamType)?'<span style="color:#22d4a0">Inhouse</span>':'<span style="color:#f5a42a">OS</span>';
   modal.innerHTML='<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;min-width:360px;max-width:500px;box-shadow:0 20px 60px rgba(0,0,0,.6)">'
     +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">'
-    +'<div><div style="font-weight:700;font-size:15px;color:var(--text)">'+f.email(e.email)+'</div><div style="font-size:11px;color:var(--sub);margin-top:3px">'+e.email+' · '+team+'</div></div>'
+    +'<div><div style="font-weight:700;font-size:15px;color:var(--text)">'+f.email(e.email)+'</div><div style="font-size:13px;color:var(--sub);margin-top:3px">'+e.email+' · '+team+'</div></div>'
     +'<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:2px 6px">✕</button>'
     +'</div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">'
-    +'<div style="text-align:center"><div style="font-size:18px;font-weight:700;color:var(--text)">'+f.num(e.units)+'</div><div style="font-size:10px;color:var(--muted);margin-top:2px">Total Units</div></div>'
-    +'<div style="text-align:center"><div style="font-size:18px;font-weight:700;color:var(--amber)">'+f.inr(e.costPerUnit)+'</div><div style="font-size:10px;color:var(--muted);margin-top:2px">₹/Unit</div></div>'
-    +'<div style="text-align:center"><div style="font-size:18px;font-weight:700;color:var(--green)">'+f.pct(e.efficiency)+'</div><div style="font-size:10px;color:var(--muted);margin-top:2px">Efficiency</div></div>'
+    +'<div style="text-align:center"><div style="font-size:18px;font-weight:700;color:var(--text)">'+f.num(e.units)+'</div><div style="font-size:12px;color:var(--muted);margin-top:2px">Total Units</div></div>'
+    +'<div style="text-align:center"><div style="font-size:18px;font-weight:700;color:var(--amber)">'+f.inr(e.costPerUnit)+'</div><div style="font-size:12px;color:var(--muted);margin-top:2px">₹/Unit</div></div>'
+    +'<div style="text-align:center"><div style="font-size:18px;font-weight:700;color:var(--green)">'+f.pct(e.efficiency)+'</div><div style="font-size:12px;color:var(--muted);margin-top:2px">Efficiency</div></div>'
     +'</div>'
     +'<table style="width:100%"><thead><tr><th>Product</th><th class="r">Units</th></tr></thead><tbody>'+rows.join('')+'</tbody></table>'
     +'</div>';
@@ -1156,7 +1636,7 @@ function renderKPIs(months){
     const tb=last.teamBreakdown||{},ih=tb.inhouse||{},os=tb.os||{};
     const segMap={};
     // Use aggregated segments across all filtered months (not just last month)
-    (aggregateSegments(months,'all')||[]).forEach(function(sg){if(sg&&sg.name)segMap[sg.name]=sg;});
+    (aggregateSegments(months)||[]).forEach(function(sg){if(sg&&sg.name)segMap[sg.name]=sg;});
     function findSeg(kw){const k=kw.toLowerCase();const m=Object.keys(segMap).find(function(n){return n.toLowerCase().indexOf(k)>=0;});return m?segMap[m]:null;}
     const entSeg=findSeg('ent')||findSeg('enterprise'),midSeg=findSeg('mid'),smbSeg=findSeg('smb'),resSeg=findSeg('resell');
     const knownNames=new Set();[entSeg,midSeg,smbSeg,resSeg].forEach(function(sg){if(sg)knownNames.add(sg.name);});
@@ -1186,7 +1666,7 @@ function renderKPIs(months){
       kpi('₹ / Resellers',f.inr(resSeg?resSeg.costPerUnit:0),(resSeg?resSeg.name:'Resellers')+' · ₹/unit',null,'#f5a42a'),
       kpi('₹ / Other',f.inr(segCPU(otherArr)),'Other · ₹/unit',null,'#38c4f0'),
     ].join('');
-  }catch(err){console.error('[renderKPIs]',err);document.getElementById('ov-kpis').innerHTML='<div style="color:#f0566a;font-size:11px;padding:8px">KPI error: '+err.message+'</div>';}
+  }catch(err){console.error('[renderKPIs]',err);document.getElementById('ov-kpis').innerHTML='<div style="color:#f0566a;font-size:13px;padding:8px">KPI error: '+err.message+'</div>';}
 }
 
 // ── CHART FILTER STATE ────────────────────────────────────────────────────────
@@ -1199,8 +1679,8 @@ function setChartFilter(chartKey,value,btn){
   const allMonths=DATA?DATA.months:months;
   const chartMap={
     cost:function(){renderChart1(allMonths);},
-    seg:function(){renderChart2(months);},
-    segp:function(){renderChart2(months);},
+    seg:function(){renderChart2(allMonths);},
+    segp:function(){renderChart2(allMonths);},
     ed:function(){renderChart3(months);},
     edp:function(){renderChart3(months);},
     prod:function(){renderChart4(allMonths);},
@@ -1209,15 +1689,15 @@ function setChartFilter(chartKey,value,btn){
   const fn=chartMap[chartKey];if(fn)fn();else renderCharts(months);
 }
 function renderCharts(months){
-  // Charts 1 and 4 always show ALL months (not filtered by date range)
-  const allMonths=DATA?DATA.months:months;
+  // Cost Trend, Segment Breakdown, Product Breakdown always show ALL months
+  const allMonths = DATA ? DATA.months : months;
   if(CURRENT_VIEW==='enterprise'){
-    renderChart2(months);
+    renderChart2(allMonths);
     renderPocChart(months);
     return;
   }
   renderChart1(allMonths);
-  renderChart2(months);
+  renderChart2(allMonths);
   renderChart3(months);
   renderChart4(allMonths);
 }
@@ -1225,12 +1705,12 @@ function renderCharts(months){
 function renderChart1(months){
   const labels=months.map(m=>m.month.replace('-26','')),cp=CF.cost;
   const cms=months.map(m=>prodFilteredSummary(m,cp));
-  const dl=function(fmt,clr){return{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:clr||'#FFFFFF',font:{size:10,weight:'600'},anchor:'end',align:'top',offset:3,clamp:true,formatter:fmt};};
+  const dl=function(fmt,clr){return{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:clr||'#FFFFFF',font:{size:13,weight:'600'},anchor:'end',align:'top',offset:3,clamp:true,formatter:fmt};};
   mk('ch-cost-trend',{type:'bar',data:{labels,datasets:[
-    {label:'Overall Cost',data:cms.map(s=>s.totalCost),backgroundColor:'rgba(79,120,255,.75)',borderRadius:3,yAxisID:'y',order:2,barPercentage:.45,categoryPercentage:.8,datalabels:dl(function(v){return'\u20b9'+f.short(v);})},
-    {label:'Volume',data:cms.map(s=>s.totalUnits),backgroundColor:'rgba(34,212,160,.55)',borderRadius:3,yAxisID:'y1',order:3,barPercentage:.45,categoryPercentage:.8,datalabels:dl(function(v){return f.short(v);},'#22d4a0')},
-    {label:'\u20b9/Unit',data:cms.map(s=>s.costPerUnit),type:'line',borderColor:'#f5a42a',borderWidth:2.5,tension:.3,pointBackgroundColor:'#f5a42a',pointRadius:5,yAxisID:'y2',order:1,fill:false,datalabels:{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:'#f5a42a',font:{size:10,weight:'700'},anchor:'center',align:'top',offset:10,formatter:function(v){return'\u20b9'+Number(v).toFixed(2);}}},
-  ]},options:{onClick:function(evt,els){if(els.length)showMonthDetail(months[els[0].index],'cost',cp);},plugins:{legend:{labels:{color:'#F3F4F6',font:{size:11},boxWidth:10,padding:14}},tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){if(ctx.dataset.label==='\u20b9/Unit')return' \u20b9/Unit: \u20b9'+Number(ctx.raw).toFixed(2);if(ctx.dataset.label==='Overall Cost')return' Cost: \u20b9'+f.short(ctx.raw);return' Volume: '+f.short(ctx.raw)+' units';}}}},scales:{x:{ticks:{color:'#F3F4F6',font:{size:11}},grid:{color:'rgba(60,60,60,.5)'}},y:{type:'linear',position:'left',ticks:{color:'#F3F4F6',font:{size:10},callback:function(v){return'\u20b9'+f.short(v);}},grid:{color:'rgba(60,60,60,.5)'}},y1:{type:'linear',position:'right',ticks:{color:'#22d4a0',font:{size:10},callback:function(v){return f.short(v);}},grid:{display:false}},y2:{type:'linear',position:'right',display:false}}}});
+    {label:'Overall Cost',data:cms.map(s=>s.totalCost),backgroundColor:'rgba(79,120,255,.75)',borderRadius:3,yAxisID:'y',order:2,barPercentage:.45,categoryPercentage:.8,maxBarThickness:80,datalabels:dl(function(v){return'\u20b9'+f.short(v);})},
+    {label:'Volume',data:cms.map(s=>s.totalUnits),backgroundColor:'rgba(34,212,160,.55)',borderRadius:3,yAxisID:'y1',order:3,barPercentage:.45,categoryPercentage:.8,maxBarThickness:80,datalabels:dl(function(v){return f.short(v);},'#22d4a0')},
+    {label:'\u20b9/Unit',data:cms.map(s=>s.costPerUnit),type:'line',borderColor:'#f5a42a',borderWidth:2.5,tension:.3,pointBackgroundColor:'#f5a42a',pointRadius:5,yAxisID:'y2',order:1,fill:false,datalabels:{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:'#f5a42a',font:{size:13,weight:'700'},anchor:'center',align:'top',offset:10,formatter:function(v){return'\u20b9'+Number(v).toFixed(2);}}},
+  ]},options:{onClick:function(evt,els){if(els.length)showMonthDetail(months[els[0].index],'cost',cp);},plugins:{legend:{labels:{color:'#F3F4F6',font:{size:14},boxWidth:10,padding:14}},tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){if(ctx.dataset.label==='\u20b9/Unit')return' \u20b9/Unit: \u20b9'+Number(ctx.raw).toFixed(2);if(ctx.dataset.label==='Overall Cost')return' Cost: \u20b9'+f.short(ctx.raw);return' Volume: '+f.short(ctx.raw)+' units';}}}},scales:{x:{ticks:{color:'#F3F4F6',font:{size:14}},grid:{color:'rgba(60,60,60,.5)'}},y:{type:'linear',position:'left',ticks:{color:'#F3F4F6',font:{size:13},callback:function(v){return'\u20b9'+f.short(v);}},grid:{color:'rgba(60,60,60,.5)'}},y1:{type:'linear',position:'right',ticks:{color:'#22d4a0',font:{size:13},callback:function(v){return f.short(v);}},grid:{display:false}},y2:{type:'linear',position:'right',display:false}}}});
 }
 function renderChart2(months){
   const labels=months.map(m=>m.month.replace('-26','')),sm=CF.seg,sp=CF.segp;
@@ -1238,24 +1718,77 @@ function renderChart2(months){
   const segColors=allSegNames.map(function(n){return sc(n);});
   function segVal(s,metric){if(metric==='cost')return Math.round((s.costPerUnit||0)*(s.units||0));if(metric==='units')return s.units||0;return s.costPerUnit||0;}
   const smFmt=sm==='cost'?function(v){return'\u20b9'+f.short(v);}:sm==='costPerUnit'?function(v){return'\u20b9'+Number(v).toFixed(2);}:function(v){return f.short(v);};
-  const segDS=allSegNames.map(function(sn,i){return{label:sn,data:months.map(function(m){const sd=segProdData(m,sp).find(function(x){return x.name===sn;});return sd?segVal(sd,sm):0;}),backgroundColor:segColors[i],borderRadius:3,barPercentage:.9,categoryPercentage:.7,stack:'seg',
-      datalabels:{display:false}};});
-  // Add stack total label on last dataset only
-  if(segDS.length>0){
-    const lastDS=segDS[segDS.length-1];
-    lastDS.datalabels={
+
+  // Min fraction of stack height for an inner label to render
+  // (prevents illegible text on tiny slivers — 5% threshold)
+  const MIN_FRAC=0.05;
+
+  // Per-segment inner label — auto-contrast text colour against the bar background
+  function makeInnerDL(bgColor){
+    // Use dark text on light backgrounds (Unknown grey), white on dark
+    var isLight=bgColor&&/^#[Ee][0-9A-Fa-f]/i.test(bgColor);
+    var textColor=isLight?'#222222':'rgba(255,255,255,0.95)';
+    return{
       display:function(ctx){
-        var t=0;ctx.chart.data.datasets.forEach(function(d){t+=(+d.data[ctx.dataIndex]||0);});return t>0;
+        var v=ctx.dataset.data[ctx.dataIndex]||0;
+        if(!v)return false;
+        var t=0;ctx.chart.data.datasets.forEach(function(d){t+=(+d.data[ctx.dataIndex]||0);});
+        return t>0&&(v/t)>=MIN_FRAC;
       },
-      color:'#FFFFFF',font:{size:10,weight:'700'},anchor:'end',align:'top',offset:3,clamp:true,
-      formatter:function(v,ctx){
-        var t=0;ctx.chart.data.datasets.forEach(function(d){t+=(+d.data[ctx.dataIndex]||0);});return t>0?smFmt(t):'';
-      }
+      color:textColor,font:{size:12,weight:'600'},anchor:'center',align:'center',offset:0,clamp:true,
+      formatter:function(v){return v>0?smFmt(v):'';}
     };
   }
-  // Add formatter after (avoids variable capture issue with smFmt)
-  segDS.forEach(function(ds){ds.datalabels.formatter=function(v){return smFmt(v);};});
-  mk('ch-seg-trend',{type:'bar',data:{labels,datasets:segDS},options:{onClick:function(evt,els){if(els.length)showMonthDetail(months[els[0].index],'segment',allSegNames[els[0].datasetIndex]);},plugins:{legend:{position:'bottom',labels:{color:'#F3F4F6',font:{size:11},boxWidth:10,padding:10}},tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){return ctx.dataset.label+': '+smFmt(ctx.raw);},footer:function(items){const t=items.reduce(function(s,i){return s+i.raw;},0);return t>0?'Total: '+smFmt(t):'';}}},scales:{x:{stacked:true,ticks:{color:'#F3F4F6',font:{size:11}},grid:{color:'rgba(60,60,60,.5)'}},y:{stacked:true,ticks:{color:'#F3F4F6',font:{size:10},callback:smFmt},grid:{color:'rgba(60,60,60,.5)'}}}}}});
+
+  // Stack-total label on a dedicated transparent "cap" dataset — always visible above bar
+  const totalCapData=months.map(function(m){return 0;}); // zero-height, just anchors the label
+  const totalDScap={
+    label:'_total_',
+    data:totalCapData,
+    backgroundColor:'transparent',
+    borderWidth:0,
+    barPercentage:.9,categoryPercentage:.7,maxBarThickness:80,stack:'seg',
+    datalabels:{
+      display:function(ctx){
+        var t=0;ctx.chart.data.datasets.forEach(function(d){if(d.label!=='_total_')t+=(+d.data[ctx.dataIndex]||0);});return t>0;
+      },
+      color:'#FFFFFF',
+      textStrokeColor:'rgba(0,0,0,0.6)',
+      textStrokeWidth:3,
+      font:{size:13,weight:'700'},
+      anchor:'end',align:'top',offset:4,clamp:true,
+      formatter:function(v,ctx){
+        var datasets=ctx.chart.data.datasets;
+        if(sm==='costPerUnit'){
+          var total=0,weightedSum=0;
+          datasets.forEach(function(ds,di){
+            if(ds.label==='_total_')return;
+            var cpuVal=+ds.data[ctx.dataIndex]||0;
+            var m=months[ctx.dataIndex];
+            var seg=m&&segProdData(m,sp).find(function(x){return x.name===allSegNames[di];});
+            var units=seg?seg.units||0:0;
+            weightedSum+=cpuVal*units;
+            total+=units;
+          });
+          return total>0?smFmt(weightedSum/total):'';
+        }
+        var t=0;datasets.forEach(function(d){if(d.label!=='_total_')t+=(+d.data[ctx.dataIndex]||0);});
+        return t>0?smFmt(t):'';
+      }
+    }
+  };
+
+  const segDS=allSegNames.map(function(sn,i){
+    return{
+      label:sn,
+      data:months.map(function(m){const sd=segProdData(m,sp).find(function(x){return x.name===sn;});return sd?segVal(sd,sm):0;}),
+      backgroundColor:segColors[i],borderRadius:3,barPercentage:.9,categoryPercentage:.7,maxBarThickness:80,stack:'seg',
+      datalabels:makeInnerDL(segColors[i])
+    };
+  });
+  segDS.push(totalDScap);
+
+  mk('ch-seg-trend',{type:'bar',data:{labels,datasets:segDS},options:{onClick:function(evt,els){if(els.length&&els[0].datasetIndex<allSegNames.length)showMonthDetail(months[els[0].index],'segment',allSegNames[els[0].datasetIndex]);},plugins:{legend:{position:'bottom',labels:{color:'#F3F4F6',font:{size:14},boxWidth:10,padding:10,filter:function(item){return item.text!=='_total_';}}},tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){if(ctx.dataset.label==='_total_')return null;return ctx.dataset.label+': '+smFmt(ctx.raw);},footer:function(items){const t=items.filter(function(i){return i.dataset.label!=='_total_';}).reduce(function(s,i){return s+i.raw;},0);return t>0?'Total: '+smFmt(t):'';}}},scales:{x:{stacked:true,ticks:{color:'#F3F4F6',font:{size:14}},grid:{color:'rgba(60,60,60,.5)'}},y:{stacked:true,ticks:{color:'#F3F4F6',font:{size:13},callback:smFmt},grid:{color:'rgba(60,60,60,.5)'}}}}}});
 }
 function aggregateEditors(months){
   // Aggregate editor data across all filtered months
@@ -1304,15 +1837,106 @@ function renderChart3(months){
   const top15=[...edFilt].sort(function(a,b){return edVal(b,em)-edVal(a,em);}).slice(0,15);
   const edColors=top15.map(function(e){return/payroll/i.test(e.teamType)?'#22d4a0':'#f5a42a';});
   const subEl=document.getElementById('ed-chart-sub');if(subEl)subEl.textContent=lastM.month+(ep!=='all'?' \u00b7 '+ep:'')+' \u00b7 \uD83D\uDFE2 Inhouse  \uD83D\uDFE1 OS';
-  mk('ch-ed-cost',{type:'bar',data:{labels:top15.map(function(e){return f.email(e.email);}),datasets:[{label:em==='costPerUnit'?'\u20b9/Unit':em==='efficiency'?'Efficiency':'Units',data:top15.map(function(e){return edVal(e,em);}),backgroundColor:edColors,borderRadius:[0,3,3,0],datalabels:{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:'#FFFFFF',font:{size:10,weight:'600'},anchor:'end',align:'right',offset:5,formatter:function(v,ctx){const e=top15[ctx.dataIndex];if(em==='costPerUnit')return edFmt(v,em)+' ('+f.short(e.units)+')';if(em==='efficiency')return edFmt(v,em)+' ('+f.short(e.units)+')';return edFmt(v,em);}}}]},options:{indexAxis:'y',layout:{padding:{right:110}},onClick:function(evt,els){if(els.length)showEditorDetail(top15[els[0].index]);},plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){const e=top15[ctx.dataIndex];if(em==='costPerUnit')return' ₹/Unit: ₹'+Number(ctx.raw).toFixed(2)+' | Units: '+f.num(e.units);if(em==='efficiency')return' Efficiency: '+ctx.raw.toFixed(2)+'%';return' Units: '+f.short(ctx.raw);}}}},scales:{x:{ticks:{color:'#F3F4F6',font:{size:10},callback:function(v){return em==='costPerUnit'?'\u20b9'+v:em==='efficiency'?v+'%':f.short(v);}},grid:{color:'rgba(60,60,60,.5)'}},y:{ticks:{color:'#F3F4F6',font:{size:10.5}},grid:{display:false}}}}});
+  mk('ch-ed-cost',{type:'bar',data:{labels:top15.map(function(e){return f.email(e.email);}),datasets:[{label:em==='costPerUnit'?'\u20b9/Unit':em==='efficiency'?'Efficiency':'Units',data:top15.map(function(e){return edVal(e,em);}),backgroundColor:edColors,borderRadius:[0,3,3,0],datalabels:{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:'#FFFFFF',font:{size:13,weight:'600'},anchor:'end',align:'right',offset:5,formatter:function(v,ctx){const e=top15[ctx.dataIndex];if(em==='costPerUnit')return edFmt(v,em)+' ('+f.short(e.units)+')';if(em==='efficiency')return edFmt(v,em)+' ('+f.short(e.units)+')';return edFmt(v,em);}}}]},options:{indexAxis:'y',layout:{padding:{right:110}},onClick:function(evt,els){if(els.length)showEditorDetail(top15[els[0].index]);},plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){const e=top15[ctx.dataIndex];if(em==='costPerUnit')return' ₹/Unit: ₹'+Number(ctx.raw).toFixed(2)+' | Units: '+f.num(e.units);if(em==='efficiency')return' Efficiency: '+ctx.raw.toFixed(2)+'%';return' Units: '+f.short(ctx.raw);}}}},scales:{x:{ticks:{color:'#F3F4F6',font:{size:13},callback:function(v){return em==='costPerUnit'?'\u20b9'+v:em==='efficiency'?v+'%':f.short(v);}},grid:{color:'rgba(60,60,60,.5)'}},y:{ticks:{color:'#F3F4F6',font:{size:13.5}},grid:{display:false}}}}});
 }
 function renderChart4(months){
   const labels=months.map(m=>m.month.replace('-26','')),pp=CF.prod,pm=CF.prodm;
   const allPN=[...new Set(months.flatMap(function(m){return m.productBreakdown.map(function(p){return p.name;});}))].filter(function(n){if(pp==='all')return true;if(pp==='image')return /image/i.test(n);if(pp==='360')return /360|spin/i.test(n);if(pp==='video')return /video/i.test(n);return true;});
-  function pVal(p,m){if(m==='units')return p?p.units||0:0;if(m==='costPerUnit')return p?p.costPerUnit||0:0;return p?Math.round((p.costSharePct||0)/100*(months[months.length-1].summary.totalCost||0)):0;}
+  function pVal(p,m,monthObj){
+    if(m==='units')return p?p.units||0:0;
+    if(m==='costPerUnit')return p?p.costPerUnit||0:0;
+    // Use the pre-computed cost field from productBreakdown (set in data.js)
+    return p?p.cost||0:0;
+  }
   const pmFmt=pm==='cost'?function(v){return'\u20b9'+f.short(v);}:pm==='costPerUnit'?function(v){return'\u20b9'+Number(v).toFixed(2);}:function(v){return f.short(v);};
-  const pDS=allPN.map(function(pn,i){return{label:pn,data:months.map(function(m){return pVal(getFilteredProducts(m).find(function(x){return x.name===pn;}),pm);}),backgroundColor:pc(pn,i),borderRadius:3,barPercentage:.8,categoryPercentage:.8,datalabels:{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:'#FFFFFF',font:{size:10,weight:'600'},anchor:'end',align:'top',offset:2,clamp:true,formatter:function(v){return pmFmt(v);}}};});
-  mk('ch-prod-trend',{type:'bar',data:{labels,datasets:pDS},options:{onClick:function(evt,els){if(els.length)showMonthDetail(months[els[0].index],'product',allPN[els[0].datasetIndex]);},plugins:{legend:{position:'bottom',labels:{color:'#F3F4F6',font:{size:11},boxWidth:10,padding:10}},tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){return ctx.dataset.label+': '+pmFmt(ctx.raw);},footer:function(items){const t=items.reduce(function(s,i){return s+i.raw;},0);return t>0?'Total: '+pmFmt(t):'';}}},scales:{x:{ticks:{color:'#F3F4F6',font:{size:11}},grid:{color:'rgba(60,60,60,.5)'}},y:{ticks:{color:'#F3F4F6',font:{size:10},callback:pmFmt},grid:{color:'rgba(60,60,60,.5)'}}}}}});
+  const pDS=allPN.map(function(pn,i){return{label:pn,data:months.map(function(m){return pVal(getFilteredProducts(m).find(function(x){return x.name===pn;}),pm,m);}),backgroundColor:pc(pn,i),borderRadius:3,barPercentage:.8,categoryPercentage:.8,maxBarThickness:80,order:2,yAxisID:'y',datalabels:{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:'#FFFFFF',font:{size:13,weight:'600'},anchor:'end',align:'top',offset:2,clamp:true,formatter:function(v){return pmFmt(v);}}};});
+
+  // Existing total trend line (sum/avg across all products)
+  const trendData=months.map(function(m){
+    var prods=allPN.map(function(pn){return getFilteredProducts(m).find(function(x){return x.name===pn;});}).filter(Boolean);
+    if(pm==='costPerUnit'){
+      var totalUnits=prods.reduce(function(s,p){return s+(p.units||0);},0);
+      var totalCost=prods.reduce(function(s,p){return s+(p.costPerUnit||0)*(p.units||0);},0);
+      return totalUnits>0?+(totalCost/totalUnits).toFixed(2):0;
+    }
+    return prods.reduce(function(s,p){return s+pVal(p,pm,m);},0);
+  });
+  var trendColor='#ffffff';
+  var trendLabel=pm==='costPerUnit'?'Avg \u20b9/Unit (all products)':pm==='cost'?'Total Cost (all products)':'Total Volume (all products)';
+  var trendDS={
+    label:trendLabel,data:trendData,type:'line',borderColor:trendColor,borderWidth:2.5,borderDash:[6,3],
+    tension:.3,pointBackgroundColor:trendColor,pointRadius:4,pointHoverRadius:6,fill:false,order:1,yAxisID:'y',
+    datalabels:{display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},color:trendColor,font:{size:11,weight:'700'},anchor:'end',align:'top',offset:14,clamp:true,formatter:function(v){return pmFmt(v);}}
+  };
+
+  // Cost / Revenue % per product — uses productMrrAlloc from backend
+  // MRR is allocated per product by splitting each enterprise's MRR equally 
+  // across the product types it had active production in that month.
+  // Only shown when metric is Cost (the other metrics don't have a revenue denominator).
+  var datasets=pDS.concat([trendDS]);
+  var showCostRevLine=(pm==='cost');
+  var costRevDS=null;
+  if(showCostRevLine){
+    // Per-product type: get alloc MRR (USD → INR) and actual delivery cost
+    var imgRx=/image/i, s360Rx=/360|spin/i, vidRx=/video/i;
+    function getProdMrr(m,rx){
+      var alloc=m.productMrrAlloc||{};
+      if(rx===imgRx) return (alloc.image||0)*83;
+      if(rx===s360Rx) return (alloc.s360||0)*83;
+      return (alloc.video||0)*83;
+    }
+    function getProdCost(m,rx){
+      return (getFilteredProducts(m)||[]).filter(function(p){return rx.test(p.name);}).reduce(function(s,p){return s+pVal(p,'cost',m);},0);
+    }
+    // Build one % line per product type (not per raw product name)
+    var prodTypeLines=[
+      {label:'Images Cost/Rev%',rx:imgRx,color:pc('Images')},
+      {label:'360 Cost/Rev%',rx:s360Rx,color:pc('360')},
+      {label:'Video Cost/Rev%',rx:vidRx,color:pc('Video')},
+    ].filter(function(pt){return allPN.some(function(n){return pt.rx.test(n);});});
+
+    var crLineDSs=prodTypeLines.map(function(pt){
+      var crData=months.map(function(m){
+        var mrr=getProdMrr(m,pt.rx);
+        var cost=getProdCost(m,pt.rx);
+        return mrr>0?+(cost/mrr*100).toFixed(2):0;
+      });
+      return{
+        label:pt.label,
+        data:crData,
+        type:'line',
+        borderColor:pt.color,
+        backgroundColor:pt.color,
+        borderWidth:2,
+        borderDash:[4,2],
+        tension:.3,
+        pointBackgroundColor:pt.color,
+        pointRadius:4,
+        pointHoverRadius:6,
+        fill:false,
+        order:0,
+        yAxisID:'y2',
+        datalabels:{
+          display:function(ctx){return ctx.dataset.data[ctx.dataIndex]>0;},
+          color:pt.color,
+          font:{size:11,weight:'700'},
+          anchor:'end',
+          align:'top',
+          offset:4,
+          clamp:true,
+          formatter:function(v){return v>0?v.toFixed(2)+'%':'';}
+        }
+      };
+    });
+    datasets=pDS.concat([trendDS]).concat(crLineDSs);
+  }
+
+  var y2Axis=showCostRevLine?{y2:{type:'linear',position:'right',ticks:{color:'#f5a42a',font:{size:12},callback:function(v){return v.toFixed(1)+'%';}},grid:{display:false},title:{display:true,text:'Cost / Revenue %',color:'#aaa',font:{size:11}}}}:{};
+  var scalesBase={x:{ticks:{color:'#F3F4F6',font:{size:14}},grid:{color:'rgba(60,60,60,.5)'}},y:{ticks:{color:'#F3F4F6',font:{size:13},callback:pmFmt},grid:{color:'rgba(60,60,60,.5)'}}};
+  var scales=Object.assign({},scalesBase,y2Axis);
+
+  var COST_REV_LABELS=['Images Cost/Rev%','360 Cost/Rev%','Video Cost/Rev%'];
+  mk('ch-prod-trend',{type:'bar',data:{labels,datasets:datasets},options:{onClick:function(evt,els){if(els.length)showMonthDetail(months[els[0].index],'product',allPN[els[0].datasetIndex]);},plugins:{legend:{position:'bottom',labels:{color:'#F3F4F6',font:{size:14},boxWidth:10,padding:10}},tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){if(COST_REV_LABELS.indexOf(ctx.dataset.label)>-1)return ctx.dataset.label+': '+ctx.raw.toFixed(2)+'%';return ctx.dataset.label+': '+pmFmt(ctx.raw);},footer:function(items){const t=items.filter(function(i){return i.dataset.label!==trendLabel&&COST_REV_LABELS.indexOf(i.dataset.label)===-1;}).reduce(function(s,i){return s+i.raw;},0);return t>0?'Total: '+pmFmt(t):'';}}},scales:scales}}});
 }
 
 // ── RENDER USER SUMMARY ───────────────────────────────────────────────────────
@@ -1344,12 +1968,12 @@ function renderUSTable(){
   const el=document.getElementById('us-tbl');if(!el)return;
   el.innerHTML=rows.map(function(e,i){
     const team=/payroll/i.test(e.teamType)?
-      '<span style="background:rgba(34,212,160,.15);color:#22d4a0;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">Inhouse</span>':
-      '<span style="background:rgba(245,164,42,.15);color:#f5a42a;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">OS</span>';
+      '<span style="background:rgba(34,212,160,.15);color:#22d4a0;padding:1px 6px;border-radius:4px;font-size:12px;font-weight:600">Inhouse</span>':
+      '<span style="background:rgba(245,164,42,.15);color:#f5a42a;padding:1px 6px;border-radius:4px;font-size:12px;font-weight:600">OS</span>';
     return'<tr>'
       +'<td class="rank-num">'+(i+1)+'</td>'
       +'<td><div style="color:var(--text);font-weight:500">'+f.email(e.email)+'</div>'
-      +'<div style="font-size:10px;color:var(--muted)">'+e.email+'</div></td>'
+      +'<div style="font-size:12px;color:var(--muted)">'+e.email+'</div></td>'
       +'<td>'+team+'</td>'
       +'<td class="r">'+f.num(e.imgUnits)+'</td>'
       +'<td class="r">'+f.inr0(e.imgCost)+'</td>'
@@ -1398,107 +2022,141 @@ function renderUserSummary(months){
   });o._wired=true;}
 }
 
-window.cycleSortEnt=mkSorter('se',['vins','units','totalCost','costPerUnit'],function(col,dir){_entSort.col=col;_entSort.dir=dir;renderEntTable();});
+window.cycleSortEnt=mkSorter('se',['enterprise','entId','segment','csPoc','obPoc','contractedArrNum','vins','units','totalCost','costPerUnit','costMrrPct','trueAccuracy'],function(col,dir){_entSort.col=col;_entSort.dir=dir;renderEntTable();});
+// Wire click delegation for all sortable-ent headers
+document.addEventListener('click',function(e){
+  var th=e.target.closest('.sortable-ent');
+  if(!th)return;
+  var col=th.dataset.col;
+  if(!col)return;
+  var s=_entSort;
+  if(s.col===col)s.dir*=-1; else{s.col=col;s.dir=-1;}
+  // Update all arrows
+  document.querySelectorAll('[id^="se-"]').forEach(function(el){
+    var c=el.id.replace('se-','');
+    el.textContent=s.col===c?(s.dir===-1?' ▼':' ▲'):'';
+  });
+  renderEntTable();
+});
 function renderEntTable(){
-  // Apply CS/OB POC filter
+  // Apply segment + CS/OB POC filter
   var rows=_entData.filter(function(e){
     var meta=entMeta(e.name);
+    var seg=e.segment||meta.segment||'Unknown';
     var cs=e.csPoc||meta.csPoc||'';
-    var ob=e.obPoc||meta.obPoc||'—';
+    var segOk=passesFilter('segment',seg);
     var csOk=FILTERS.cspoc.selected.size===0||FILTERS.cspoc.selected.size===FILTERS.cspoc.all.length||
-              (cs&&FILTERS.cspoc.selected.has(cs));
+              (cs&&setHasCI(FILTERS.cspoc.selected,cs));
     var obOk=FILTERS.obpoc.selected.size===0||FILTERS.obpoc.selected.size===FILTERS.obpoc.all.length||
-              (meta.obPoc&&FILTERS.obpoc.selected.has(meta.obPoc));
-    return csOk&&obOk;
+              (meta.obPoc&&setHasCI(FILTERS.obpoc.selected,meta.obPoc));
+    return segOk&&csOk&&obOk;
   });
-  rows=applySortArr(rows,_entSort.col,_entSort.dir);
+  rows=applySortArr(rows,_entSort.col,_entSort.dir); // show ALL enterprises, no slice
   window._entList=rows;
   var tbl=document.getElementById('co-ent-tbl');
   if(!tbl)return;
+  var numMonths=filteredMonths().length||1;
+  // Update header label with month-count context, same convention as Segment Summary
+  var ctrHdr=document.getElementById('ent-contracted-hdr');
+  if(ctrHdr)ctrHdr.childNodes[0].textContent=numMonths===1?'Contracted MRR':'Contracted MRR \u00d7'+numMonths;
+  function fmtArr(annualRaw){
+    var n=parseFloat(String(annualRaw||'').replace(/[^0-9.]/g,''))||0;
+    if(!n)return'—';
+    var mrr=(n/12)*numMonths;
+    return f.usd(mrr);
+  }
+  try{
   tbl.innerHTML=rows.map(function(e,i){
-    // Use embedded Metabase data (from backend mapping) with ENT_META as fallback
     var meta=entMeta(e.name);
     var seg=e.segment||meta.segment||'';
     var cs=e.csPoc||meta.csPoc||'—';
-    var rawArr=e.liveArr||meta.liveArr||'';
-    var arr=rawArr?'₹'+Number(rawArr.replace(/[^0-9.]/g,'')).toLocaleString('en-IN'):'—';
-    var segBadge=seg?'<span class="seg" style="background:'+sc(seg)+'22;color:'+sc(seg)+';font-size:9px">'+seg+'</span>':'—';
+    var ob=e.obPoc||meta.obPoc||'—';
+    var rawContracted=String(meta.contractedArr||0);
+    var segBadge=seg?'<span class="seg" style="background:'+sc(seg)+'22;color:'+sc(seg)+';font-size:12px">'+seg+'</span>':'—';
     var rag=meta.rag||'';
     var ragColor=rag==='Green'?'#22d4a0':rag==='Amber'?'#f5a42a':rag==='Red'?'#f0566a':rag.includes('Churn')?'#a07cff':'#666';
-    var ragBadge=rag?'<span style="font-size:8px;padding:1px 5px;border-radius:3px;background:'+ragColor+'22;color:'+ragColor+';margin-left:4px">'+rag+'</span>':'';
+    var ragBadge=rag?'<span style="font-size:11px;padding:1px 5px;border-radius:3px;background:'+ragColor+'22;color:'+ragColor+';margin-left:4px">'+rag+'</span>':'';
+    // Cost/Contracted MRR % = delivery cost (INR) / (contractedMRR USD × 83) × 100
+    var contractedAnnualNum=parseFloat(String(meta.contractedArr||0).replace(/[^0-9.]/g,''))||0;
+    var contractedMRRinr=((contractedAnnualNum/12)*numMonths)*83;
+    var costMrrPct=contractedMRRinr>0?+((( e.totalCost||0)/contractedMRRinr)*100).toFixed(2):null;
+    var costMrrColor=costMrrPct===null?'var(--muted)':costMrrPct>10?'#f0566a':costMrrPct>5?'#f5a42a':'#22d4a0';
+    var costMrrBar=costMrrPct>0?'<div style="display:inline-block;width:'+Math.min(costMrrPct*2,80)+'px;height:4px;background:'+costMrrColor+';border-radius:2px;vertical-align:middle;margin-left:4px"></div>':'';
     return'<tr style="cursor:pointer" onclick="_showEnt('+i+')">'+
       '<td class="rank-num">'+(i+1)+'</td>'+
-      '<td class="bright" style="max-width:140px;overflow:hidden;text-overflow:ellipsis" title="'+e.name+'">'+e.name+'</td>'+
+      '<td class="bright" style="max-width:130px;overflow:hidden;text-overflow:ellipsis" title="'+e.name+'">'+e.name+'</td>'+
+      '<td style="font-size:12px;color:var(--muted);font-family:var(--mono)">'+(e.entId||meta.entId||'—')+'</td>'+
       '<td>'+segBadge+ragBadge+'</td>'+
-      '<td style="font-size:11px;color:var(--sub);max-width:120px;overflow:hidden;text-overflow:ellipsis" title="'+cs+'">'+cs+'</td>'+
-      '<td style="font-size:11px;color:var(--sub);max-width:120px;overflow:hidden;text-overflow:ellipsis" title="'+ob+'">'+ob+'</td>'+
-      '<td class="r" style="font-size:11px;color:var(--green)">'+arr+'</td>'+
+      '<td style="font-size:13px;color:var(--sub);max-width:100px;overflow:hidden;text-overflow:ellipsis" title="'+cs+'">'+cs+'</td>'+
+      '<td style="font-size:13px;color:var(--sub);max-width:100px;overflow:hidden;text-overflow:ellipsis" title="'+ob+'">'+ob+'</td>'+
+      '<td class="r" style="font-size:13px;color:#38c4f0">'+fmtArr(rawContracted)+'</td>'+
       '<td class="r">'+f.num(e.vins)+'</td>'+
       '<td class="r">'+f.num(e.units)+'</td>'+
       '<td class="r" style="color:var(--blue)">'+f.inr0(e.totalCost||0)+'</td>'+
       '<td class="r" style="color:var(--amber)">'+f.inr(e.costPerUnit)+'</td>'+
+      '<td class="r" style="color:'+costMrrColor+';white-space:nowrap">'+(costMrrPct!==null?costMrrPct.toFixed(2)+'%':'—')+costMrrBar+'</td>'+
+      '<td class="r" style="color:'+(e.trueAccuracy>=90?'#22d4a0':e.trueAccuracy>=80?'#f5a42a':e.trueAccuracy>0?'#f0566a':'var(--muted)')+'">'+(e.trueAccuracy>0?e.trueAccuracy.toFixed(2)+'%':'—')+'</td>'+
       '</tr>';
   }).join('');
+  }catch(err){
+    console.error('[renderEntTable] row build error:',err);
+    tbl.innerHTML='<tr><td colspan="13" style="color:var(--red);padding:12px;font-size:13px">Error: '+err.message+'</td></tr>';
+  }
 }
 
 // Aggregate segment/enterprise data across multiple months
-function aggregateSegments(months,productFilter){
-  var prod=productFilter||'all';
+function aggregateSegments(months){
+  const numMonths=months.length||1;
   const acc={};
-
   months.forEach(function(m){
-    // Get MRR per segment from enterpriseBreakdown contractedArr
-    var segMRR={};
-    (m.enterpriseBreakdown||[]).forEach(function(e){
-      var seg=e.segment||'Unknown';
-      var mrrINR=((e.contractedArr||0)/12)*83;
-      if(!segMRR[seg])segMRR[seg]=0;
-      segMRR[seg]+=mrrINR;
-    });
-
     filterBreakdown(m.segmentBreakdown,'segment').forEach(function(sg){
       const n=sg.name;
-      if(!acc[n])acc[n]={name:n,vins:0,units:0,actualMins:0,sumTarget:0,costPerUnit_sum:0,totalCost:0,totalMRR_INR:0};
-
-      // Apply product filter via byProduct
-      var units=0,vins=0,actualMins=0,sumTarget=0,cost=0;
-      if(prod==='all'){
-        units=sg.units||0; vins=sg.vins||0;
-        actualMins=sg.actualMins||0; sumTarget=sg.sumTarget||0;
-        cost=(sg.costPerUnit||0)*(sg.units||0);
-      } else {
-        // Filter by product via byProduct map
-        var pk=prod==='image'?/image/i:prod==='360'?/360|spin/i:/video/i;
-        Object.entries(sg.byProduct||{}).forEach(function(kv){
-          if(!pk.test(kv[0]))return;
-          var pd=kv[1];
-          units+=pd.units||0;
-          vins+=pd.vins||0;
-          actualMins+=pd.actualMins||0;
-          sumTarget+=pd.sumTarget||0;
-          cost+=(pd.costPerUnit||0)*(pd.units||0);
-        });
-      }
-
-      acc[n].vins+=vins;
-      acc[n].units+=units;
-      acc[n].actualMins+=actualMins;
-      acc[n].sumTarget+=sumTarget;
-      acc[n].totalCost+=cost;
-      acc[n].costPerUnit_sum+=(units>0?(cost/units):0)*units;
-      acc[n].totalMRR_INR+=(segMRR[n]||0);
+      if(!acc[n])acc[n]={name:n,vins:0,units:0,actualMins:0,sumTarget:0,costPerUnit_sum:0,count:0,
+        liveArrUSD:0,contractedArrAnnual:0};
+      acc[n].vins+=sg.vins||0;
+      acc[n].units+=sg.units||0;
+      acc[n].actualMins+=sg.actualMins||0;
+      acc[n].sumTarget+=sg.sumTarget||0;
+      acc[n].costPerUnit_sum+=(sg.costPerUnit||0)*(sg.units||0);
     });
+  });
+
+  // Build deduplicated map: enterprise name → segment, from filtered months only
+  const activeEntSegs={};
+  months.forEach(function(m){
+    (m.enterpriseBreakdown||[]).forEach(function(e){
+      if(!e.units)return;
+      if(!activeEntSegs[e.name])activeEntSegs[e.name]=e.segment||'Unknown';
+    });
+  });
+
+  // Sum ARR from ENT_META per segment, then multiply by numMonths
+  Object.entries(activeEntSegs).forEach(function(kv){
+    var entName=kv[0],seg=kv[1];
+    if(!acc[seg])return;
+    var meta=entMeta(entName);
+    var liveRaw=parseFloat(String(meta.liveArr||'0').replace(/[^0-9.]/g,''))||0;
+    acc[seg].liveArrUSD+=liveRaw;
+    acc[seg].contractedArrAnnual+=(meta.contractedArr||0);
   });
 
   const rows=Object.values(acc).map(function(s){
     s.efficiency=s.actualMins>0?+((s.sumTarget/s.actualMins)*100).toFixed(2):0;
-    s.costPerUnit=s.units>0?+(s.totalCost/s.units).toFixed(2):0;
-    // Cost/MRR% = delivery cost / MRR (in INR) * 100
-    s.costMrrPct=s.totalMRR_INR>0?+((s.totalCost/s.totalMRR_INR)*100).toFixed(2):0;
+    s.costPerUnit=s.units>0?+(s.costPerUnit_sum/s.units).toFixed(2):0;
+    // Scale by numMonths: Live ARR/12 × N, Contracted ARR/12 × N
+    s.liveArrUSD=Math.round((s.liveArrUSD/12)*numMonths);
+    s.contractedArrMonthly=Math.round(((s.contractedArrAnnual||0)/12)*numMonths);
+    s.numMonths=numMonths;
     return s;
   });
-  const totalWeightedCost=rows.reduce(function(t,s){return t+s.totalCost;},0)||1;
-  rows.forEach(function(s){s.costShare=+(( s.totalCost/totalWeightedCost)*100).toFixed(2);});
+  const totalWeightedCost=rows.reduce(function(t,s){return t+(s.costPerUnit||0)*(s.units||0);},0)||1;
+  const totalContractedArr=rows.reduce(function(t,s){return t+(s.contractedArrAnnual||0);},0)||1;
+  const totalUnits=rows.reduce(function(t,s){return t+(s.units||0);},0)||1;
+  rows.forEach(function(s){
+    s.costShare=+(((s.costPerUnit||0)*(s.units||0)/totalWeightedCost)*100).toFixed(2);
+    s.arrShare=+(((s.contractedArrAnnual||0)/totalContractedArr)*100).toFixed(2);
+    s.volumeShare=+(((s.units||0)/totalUnits)*100).toFixed(2);
+  });
   return rows.filter(function(s){return s.units>0;});
 }
 
@@ -1509,30 +2167,49 @@ function aggregateEnterprises(months){
     const totalCost=m.summary.totalCost||0;
     (m.enterpriseBreakdown||[]).forEach(function(e){
       const n=e.name;
-      if(!acc[n])acc[n]={name:n,segment:e.segment||'',csPoc:e.csPoc||'',obPoc:e.obPoc||'',liveArr:e.liveArr||'',vins:0,units:0,actualMins:0,sumTarget:0,costPerUnit_sum:0,totalCost:0};
+      if(!acc[n])acc[n]={name:n,entId:e.entId||'',segment:e.segment||'',csPoc:e.csPoc||'',obPoc:e.obPoc||'',liveArr:e.liveArr||'',contractedArr:e.contractedArr||0,vins:0,units:0,actualMins:0,sumTarget:0,costPerUnit_sum:0,totalCost:0,accWeightSum:0,accWeightedSum:0,toolAccWeightedSum:0,aiImages:0,aiIncorrect:0};
       acc[n].vins+=e.vins||0;
       acc[n].units+=e.units||0;
       acc[n].actualMins+=e.actualMins||0;
       acc[n].sumTarget+=e.sumTarget||0;
-      const entCostThisMonth=Math.round((e.costPerUnit||0)*(e.units||0));
-      acc[n].costPerUnit_sum+=(e.costPerUnit||0)*(e.units||0);
-      acc[n].totalCost+=entCostThisMonth;
+      const entCostThisMonth=Math.round((+e.costPerUnit||0)*(e.units||0));
+      acc[n].costPerUnit_sum+=isFinite(e.costPerUnit)?(+e.costPerUnit||0)*(e.units||0):0;
+      acc[n].totalCost+=isFinite(entCostThisMonth)?entCostThisMonth:0;
+      // AI accuracy: weighted average by images scored this month
+      var imgs=+e.aiTotalImages||0;
+      if(imgs>0&&isFinite(+e.trueAccuracy)){
+        acc[n].accWeightSum+=imgs;
+        acc[n].accWeightedSum+=imgs*(+e.trueAccuracy||0);
+        acc[n].toolAccWeightedSum+=imgs*(+e.postQcToolAccuracy||0);
+        acc[n].aiImages+=imgs;
+        acc[n].aiIncorrect+=(+e.aiIncorrectImages||0);
+      }
+      if(!acc[n].entId&&e.entId)acc[n].entId=e.entId;
       if(!acc[n].segment&&e.segment)acc[n].segment=e.segment;
       if(!acc[n].csPoc&&e.csPoc)acc[n].csPoc=e.csPoc;
       if(!acc[n].obPoc&&e.obPoc)acc[n].obPoc=e.obPoc;
       if(!acc[n].liveArr&&e.liveArr)acc[n].liveArr=e.liveArr;
+      if(!acc[n].contractedArr&&e.contractedArr)acc[n].contractedArr=e.contractedArr;
     });
   });
   return Object.values(acc).map(function(e){
     e.efficiency=e.actualMins>0?+((e.sumTarget/e.actualMins)*100).toFixed(2):0;
     e.costPerUnit=e.units>0?+(e.costPerUnit_sum/e.units).toFixed(2):0;
+    e.trueAccuracy=e.accWeightSum>0?+(e.accWeightedSum/e.accWeightSum).toFixed(2):0;
+    e.postQcToolAccuracy=e.accWeightSum>0?+(e.toolAccWeightedSum/e.accWeightSum).toFixed(2):0;
+    // Numeric sort keys
+    e.contractedArrNum=parseFloat(String(e.contractedArr||'').replace(/[^0-9.]/g,''))||e.contractedArr||0;
+    // Cost/Contracted MRR % (sort key only — display is in renderEntTable with numMonths)
+    var mrrInr=(e.contractedArrNum/12)*83;
+    e.costMrrPct=mrrInr>0?+((e.totalCost/mrrInr)*100).toFixed(2):0;
     return e;
-  }).filter(function(e){return e.units>0;}).sort(function(a,b){return b.costPerUnit-a.costPerUnit;}).slice(0,25);
+  }).filter(function(e){return e.units>0;}).sort(function(a,b){return b.costPerUnit-a.costPerUnit;});
+  // Note: no .slice here — renderEntTable applies segment filter and then shows top 50
 }
 
 function renderTables(months){
   // Aggregate across all filtered months for accurate date-range data
-  _segData=aggregateSegments(months,_segSumProduct);renderSegTable();
+  _segData=aggregateSegments(months);renderSegTable();
   _entData=aggregateEnterprises(months);renderEntTable();
 }
 
@@ -1546,7 +2223,7 @@ function renderEditors(months){
   edData=filterBreakdown(m.editorBreakdown,'editor');
   document.getElementById('ed-sub1').textContent=m.month;
   const t10=[...edData].slice(0,10);
-  mk('ch-ed-vol',{type:'bar',_lf:v=>v>0?f.short(v):'',data:{labels:t10.map(e=>f.email(e.email)),datasets:[{label:'Units',data:t10.map(e=>e.units),backgroundColor:'#4f78ff',borderRadius:[0,3,3,0]}]},options:{indexAxis:'y',layout:{padding:{right:50}},plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>f.short(v)}},y:{ticks:{font:{size:11}}}}}});
+  mk('ch-ed-vol',{type:'bar',_lf:v=>v>0?f.short(v):'',data:{labels:t10.map(e=>f.email(e.email)),datasets:[{label:'Units',data:t10.map(e=>e.units),backgroundColor:'#4f78ff',borderRadius:[0,3,3,0]}]},options:{indexAxis:'y',layout:{padding:{right:50}},plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>f.short(v)}},y:{ticks:{font:{size:14}}}}}});
   renderEditorTable();
 }
 function renderEditorTable(){
@@ -1559,8 +2236,8 @@ function renderEditorTable(){
     const s360=e.byProduct?Object.entries(e.byProduct).find(([k])=>/360|spin/i.test(k))?.[1]||0:0;
     const vid=e.byProduct?Object.entries(e.byProduct).find(([k])=>/video/i.test(k))?.[1]||0:0;
     const isInhouse=/payroll/i.test(e.teamType);
-    const teamBadge=isInhouse?'<span style="background:rgba(34,212,160,.15);color:#22d4a0;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:600">Inhouse</span>':'<span style="background:rgba(245,164,42,.15);color:#f5a42a;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:600">OS</span>';
-    return'<tr><td class="rank-num">'+(i+1)+'</td><td><div style="color:var(--text);font-weight:500">'+f.email(e.email)+'</div><div style="font-size:10px;color:var(--muted)">'+e.email+'</div></td><td>'+teamBadge+'</td><td class="r">'+f.num(imgU)+'</td><td class="r">'+f.num(s360)+'</td><td class="r">'+f.num(vid)+'</td><td class="r" style="color:var(--text);font-weight:600">'+f.num(e.units)+'</td><td class="r"><span class="'+effCls(e.efficiency)+'">'+f.pct(e.efficiency)+'</span></td><td class="r">'+f.inr(e.costPerUnit)+'</td><td class="r">'+f.inr0(e.salary)+'</td></tr>';
+    const teamBadge=isInhouse?'<span style="background:rgba(34,212,160,.15);color:#22d4a0;padding:1px 6px;border-radius:4px;font-size:12px;font-weight:600">Inhouse</span>':'<span style="background:rgba(245,164,42,.15);color:#f5a42a;padding:1px 6px;border-radius:4px;font-size:12px;font-weight:600">OS</span>';
+    return'<tr><td class="rank-num">'+(i+1)+'</td><td><div style="color:var(--text);font-weight:500">'+f.email(e.email)+'</div><div style="font-size:12px;color:var(--muted)">'+e.email+'</div></td><td>'+teamBadge+'</td><td class="r">'+f.num(imgU)+'</td><td class="r">'+f.num(s360)+'</td><td class="r">'+f.num(vid)+'</td><td class="r" style="color:var(--text);font-weight:600">'+f.num(e.units)+'</td><td class="r"><span class="'+effCls(e.efficiency)+'">'+f.pct(e.efficiency)+'</span></td><td class="r">'+f.inr(e.costPerUnit)+'</td><td class="r">'+f.inr0(e.salary)+'</td></tr>';
   }).join('');
 }
 // Defer binding since elements may not exist yet at script parse time
@@ -1574,7 +2251,7 @@ document.addEventListener('DOMContentLoaded',bindEditorSearch);
 
 // ── FETCH ─────────────────────────────────────────────────────────────────────
 // ── POC ARR vs DELIVERY COST CHART ───────────────────────────────────────────
-let POC_METRIC = 'arr'; // 'arr' | 'cost' | 'both'
+let POC_METRIC = 'both'; // locked to 'both' — toggle removed from UI
 
 function setPocMetric(metric, btn) {
   POC_METRIC = metric;
@@ -1588,28 +2265,40 @@ function setPocMetric(metric, btn) {
 function buildPocData(months) {
   const numMonths = months.length || 1;
 
-  // Aggregate delivery cost per enterprise across filtered months
+  // Aggregate delivery cost + units per enterprise across filtered months.
+  // We only include enterprises that were ACTIVE in the filtered period —
+  // enterprises Metabase knows about but had no activity this range are excluded,
+  // otherwise the POC chart would show MRR for accounts that did nothing.
   const entCosts = {};
+  const entActive = new Set();
   months.forEach(function(m) {
     (m.enterpriseBreakdown || []).forEach(function(e) {
+      if (!e.units) return;
+      entActive.add(e.name);
       if (!entCosts[e.name]) entCosts[e.name] = 0;
       entCosts[e.name] += Math.round((e.costPerUnit || 0) * (e.units || 0));
     });
   });
 
   // Build POC → {mrr: USD×numMonths, cost: INR, numMonths, enterprises:[]}
+  // Grouped by normalized (lowercase+trim) POC email — the Metabase CSV may have
+  // the same person's email typed with inconsistent casing across rows, which
+  // would otherwise silently split one POC into multiple chart entries.
   const pocMap = {};
+  const pocLabelCounts = {}; // normKey -> { label: count } — resolves display casing
   Object.entries(ENT_META).forEach(function([entName, meta]) {
-    const poc = (meta.csPoc && meta.csPoc !== '') ? meta.csPoc : (meta.obPoc || '');
-    if (!poc) return;
+    // Only enterprises active in the filtered date range
+    if (!entActive.has(entName)) return;
+
+    const rawPoc = (meta.csPoc && meta.csPoc !== '') ? meta.csPoc : (meta.obPoc || '');
+    if (!rawPoc) return;
+    const poc = rawPoc.toLowerCase().trim();
 
     const csOk = FILTERS.cspoc.selected.size === 0 || FILTERS.cspoc.selected.size === FILTERS.cspoc.all.length ||
-                 (meta.csPoc && FILTERS.cspoc.selected.has(meta.csPoc));
+                 (meta.csPoc && setHasCI(FILTERS.cspoc.selected,meta.csPoc));
     const obOk = FILTERS.obpoc.selected.size === 0 || FILTERS.obpoc.selected.size === FILTERS.obpoc.all.length ||
-                 (meta.obPoc && FILTERS.obpoc.selected.has(meta.obPoc));
+                 (meta.obPoc && setHasCI(FILTERS.obpoc.selected,meta.obPoc));
     if (!csOk && !obOk) return;
-
-    if (!entCosts[entName] && (meta.contractedArr || 0) === 0) return;
 
     // MRR = ARR / 12, then multiply by number of selected months
     const mrrUSD = ((meta.contractedArr || 0) / 12) * numMonths;
@@ -1618,6 +2307,19 @@ function buildPocData(months) {
     pocMap[poc].mrr  += mrrUSD;                    // USD — MRR × numMonths
     pocMap[poc].cost += (entCosts[entName] || 0);  // INR — actual delivery cost
     pocMap[poc].enterprises.push(entName);
+
+    if (!pocLabelCounts[poc]) pocLabelCounts[poc] = {};
+    pocLabelCounts[poc][rawPoc] = (pocLabelCounts[poc][rawPoc] || 0) + 1;
+  });
+
+  // Resolve each group's display label to its most frequently occurring original casing
+  Object.entries(pocMap).forEach(function([normKey, row]) {
+    const counts = pocLabelCounts[normKey] || {};
+    let bestLabel = normKey, bestCount = -1;
+    Object.entries(counts).forEach(function([label, count]) {
+      if (count > bestCount) { bestCount = count; bestLabel = label; }
+    });
+    row.poc = bestLabel;
   });
 
   return Object.values(pocMap)
@@ -1670,7 +2372,7 @@ function renderPocChart(months) {
       borderRadius: isStacked ? 0 : 3,
       yAxisID: 'y', order: 2,
       stack: isStacked ? 'poc' : undefined,
-      barPercentage: 0.7, categoryPercentage: 0.8,
+      barPercentage: 0.7, categoryPercentage: 0.8, maxBarThickness: 80,
       datalabels: {
         display: function(ctx) {
           if (!isStacked) return ctx.dataset.data[ctx.dataIndex] > 0;
@@ -1679,7 +2381,7 @@ function renderPocChart(months) {
         },
         color: '#FFFFFF', font: { size: 9, weight: '600' },
         anchor: 'end', align: 'top', offset: 2, clamp: true,
-        formatter: function(v) { return v >= 1e6 ? '$' + (v/1e6).toFixed(2) + 'M' : v >= 1e3 ? '$' + (v/1e3).toFixed(1) + 'K' : '$' + v; }
+        formatter: function(v) { return f.usd(v); }
       }
     });
   }
@@ -1695,7 +2397,7 @@ function renderPocChart(months) {
       borderRadius: isStacked ? [3,3,0,0] : 3,
       yAxisID: isStacked ? 'y' : 'y', order: 3,
       stack: isStacked ? 'poc' : undefined,
-      barPercentage: 0.7, categoryPercentage: 0.8,
+      barPercentage: 0.7, categoryPercentage: 0.8, maxBarThickness: 80,
       datalabels: {
         display: function(ctx) { return isStacked && ctx.dataset.data[ctx.dataIndex] > 0; },
         color: '#22d4a0', font: { size: 9, weight: '700' },
@@ -1703,7 +2405,7 @@ function renderPocChart(months) {
         formatter: function(v, ctx) {
           // v is USD-equiv in stacked mode — show original INR
           var costINR = data[ctx.dataIndex].cost;
-          return costINR >= 1e7 ? '₹'+(costINR/1e7).toFixed(1)+'Cr' : costINR >= 1e5 ? '₹'+(costINR/1e5).toFixed(1)+'L' : '₹'+costINR.toLocaleString('en-IN');
+          return f.inrL(costINR);
         }
       }
     });
@@ -1733,7 +2435,7 @@ function renderPocChart(months) {
         display: function(ctx) { return ctx.dataset.data[ctx.dataIndex] > 0; },
         color: '#f5a42a', font: { size: 9, weight: '700' },
         anchor: 'center', align: 'top', offset: 8,
-        formatter: function(v) { return v.toFixed(1) + '%'; }
+        formatter: function(v) { return v.toFixed(2) + '%'; }
       }
     });
     // Stack total label on last bar dataset (Delivery Cost)
@@ -1747,8 +2449,8 @@ function renderPocChart(months) {
         formatter: function(v, ctx) {
           var d = data[ctx.dataIndex];
           var mrrINR = (d.mrr || 0) * 83;
-          var pct = (mrrINR && d.cost) ? ((d.cost / mrrINR) * 100).toFixed(1) + '%' : '';
-          var mrrFmt = (d.mrr||0) >= 1e6 ? '$'+((d.mrr||0)/1e6).toFixed(1)+'M' : (d.mrr||0) >= 1e3 ? '$'+((d.mrr||0)/1e3).toFixed(0)+'K' : '$'+Math.round(d.mrr||0);
+          var pct = (mrrINR && d.cost) ? ((d.cost / mrrINR) * 100).toFixed(2) + '%' : '';
+          var mrrFmt = f.usd(d.mrr||0);
           return mrrFmt + (pct ? ' | ' + pct : '');
         }
       };
@@ -1767,11 +2469,11 @@ function renderPocChart(months) {
       ticks: { color: '#6a82a8', font: { size: 9 },
         callback: function(v) {
           if (POC_METRIC === 'cost') {
-            if (v >= 1e7) return '₹' + (v/1e7).toFixed(1) + 'Cr';
-            if (v >= 1e5) return '₹' + (v/1e5).toFixed(1) + 'L';
+            if (v >= 1e7) return '₹' + (v/1e7).toFixed(2) + 'Cr';
+            if (v >= 1e5) return '₹' + (v/1e5).toFixed(2) + 'L';
             return '₹' + v;
           }
-          return v >= 1e6 ? '$' + (v/1e6).toFixed(1) + 'M' : v >= 1e3 ? '$' + (v/1e3).toFixed(0) + 'K' : '$' + v;
+          return f.usd(v);
         }
       },
       grid: { color: 'rgba(60,60,60,.5)' }
@@ -1787,7 +2489,7 @@ function renderPocChart(months) {
     };
     scales.y3 = {
       type: 'linear', position: 'right',
-      ticks: { color: '#f5a42a', font: { size: 9 }, callback: function(v) { return v.toFixed(0) + '%'; } },
+      ticks: { color: '#f5a42a', font: { size: 9 }, callback: function(v) { return v.toFixed(2) + '%'; } },
       grid: { display: false },
       title: { display: true, text: '% Cost / ARR', color: '#f5a42a', font: { size: 10 } }
     };
@@ -1797,8 +2499,8 @@ function renderPocChart(months) {
     scales.y.stacked = true;
     delete scales.y1;
     scales.y.ticks.callback = function(v) {
-      if (v >= 1e6) return '$' + (v/1e6).toFixed(1) + 'M';
-      if (v >= 1e3) return '$' + (v/1e3).toFixed(0) + 'K';
+      if (v >= 1e6) return '$' + (v/1e6).toFixed(2) + 'M';
+      if (v >= 1e3) return '$' + (v/1e3).toFixed(2) + 'K';
       return '$' + v;
     };
   }
@@ -1830,7 +2532,7 @@ function renderPocChart(months) {
             label: function(ctx) {
               var v = ctx.raw, d = data[ctx.dataIndex];
               if (ctx.dataset.label === '% Cost / ARR') return ' % Cost/MRR (ARR/12×83): ' + v.toFixed(2) + '%';
-              if (ctx.dataset.label.includes('MRR') || ctx.dataset.label.includes('ARR')) return ' MRR: ' + (v >= 1e6 ? '$' + (v/1e6).toFixed(2) + 'M' : '$' + v.toLocaleString());
+              if (ctx.dataset.label.includes('MRR') || ctx.dataset.label.includes('ARR')) return ' MRR: ' + f.usd(v);
               // v is USD-equiv in stacked, INR in cost-only mode
               var costINR = isStacked ? v * 83 : v;
               var costFmt = costINR >= 1e7 ? '₹'+(costINR/1e7).toFixed(2)+'Cr' : costINR >= 1e5 ? '₹'+(costINR/1e5).toFixed(2)+'L' : '₹'+costINR.toLocaleString('en-IN');
@@ -1859,12 +2561,23 @@ function renderPocChart(months) {
 
 // ── POC DRILL-DOWN MODAL ──────────────────────────────────────────────────────
 function showPocDetail(pocRow, months) {
-  // Build account-wise breakdown for this POC
+  // Build account-wise breakdown for this POC — accumulate cost + accuracy across months
   const entCosts = {};
+  const entAcc = {};   // { entName: { weightSum, weightedSum } }
+  const entIds = {};   // { entName: entId from sheet (Jul-26+) or Metabase }
   months.forEach(function(m) {
     (m.enterpriseBreakdown || []).forEach(function(e) {
       if (!entCosts[e.name]) entCosts[e.name] = 0;
       entCosts[e.name] += Math.round((e.costPerUnit || 0) * (e.units || 0));
+      // Capture entId from any month that has it (Jul-26+ sheets have this)
+      if (!entIds[e.name] && e.entId) entIds[e.name] = e.entId;
+      // AI accuracy: weighted by images scored
+      var imgs = +e.aiTotalImages || 0;
+      if (imgs > 0 && isFinite(+e.trueAccuracy)) {
+        if (!entAcc[e.name]) entAcc[e.name] = { weightSum: 0, weightedSum: 0 };
+        entAcc[e.name].weightSum   += imgs;
+        entAcc[e.name].weightedSum += imgs * (+e.trueAccuracy || 0);
+      }
     });
   });
 
@@ -1873,13 +2586,12 @@ function showPocDetail(pocRow, months) {
   var accounts = pocRow.enterprises.map(function(entName) {
     var meta = entMeta(entName);
     var annualArr = meta.contractedArr || 0;
-    var mrr  = (annualArr / 12) * numMonths;  // MRR × numMonths
+    var mrr  = (annualArr / 12) * numMonths;
     var cost = entCosts[entName] || 0;
     var mrrINR = mrr * 83;
     var pct = (mrrINR && cost) ? +((cost / mrrINR) * 100).toFixed(2) : 0;
-    return { name: entName, mrr: mrr, cost: cost, pct: pct, segment: meta.segment || '—', activeRooftops: meta.activeRooftops || 0 };
-  }).filter(function(a) { return a.mrr > 0 || a.cost > 0; })
-    .sort(function(a, b) { return (b.mrr - a.mrr) || (b.cost - a.cost); });
+    return { name: entName, entId: entIds[entName] || meta.entId || '—', mrr: mrr, cost: cost, pct: pct, segment: meta.segment || '—', activeRooftops: meta.activeRooftops || 0, trueAccuracy: entAcc[entName] && entAcc[entName].weightSum > 0 ? +(entAcc[entName].weightedSum / entAcc[entName].weightSum).toFixed(2) : 0 };
+  }).filter(function(a) { return a.mrr > 0 || a.cost > 0; });
 
   var pocName = pocRow.poc.split('@')[0].replace('.', ' ');
   pocName = pocName.charAt(0).toUpperCase() + pocName.slice(1);
@@ -1888,95 +2600,129 @@ function showPocDetail(pocRow, months) {
   var totalMrrINR = totalMrr * 83;
   var totalPct = (totalMrrINR && totalCost) ? ((totalCost / totalMrrINR) * 100).toFixed(2) : '—';
 
-  function fmtMrr(v) { return v >= 1e6 ? '$' + (v/1e6).toFixed(2) + 'M' : v >= 1e3 ? '$' + (v/1e3).toFixed(1) + 'K' : '$' + v; }
-  function fmtCost(v) { return v >= 1e7 ? '₹' + (v/1e7).toFixed(2) + 'Cr' : v >= 1e5 ? '₹' + (v/1e5).toFixed(2) + 'L' : '₹' + v.toLocaleString('en-IN'); }
+  var fmtMrr=f.usd;var fmtCost=f.inrL;
 
-  var rows = accounts.map(function(a, i) {
-    var segBadge = a.segment !== '—' ? '<span class="seg" style="background:' + sc(a.segment) + '22;color:' + sc(a.segment) + ';font-size:9px">' + a.segment + '</span>' : '—';
-    var pctBar = a.pct > 0 ? '<div style="display:inline-block;width:' + Math.min(a.pct * 2, 80) + 'px;height:4px;background:' + (a.pct > 10 ? '#f0566a' : a.pct > 5 ? '#f5a42a' : '#22d4a0') + ';border-radius:2px;vertical-align:middle;margin-left:4px"></div>' : '';
-    return '<tr>'
-      + '<td class="rank-num">' + (i+1) + '</td>'
-      + '<td class="bright" style="max-width:200px;overflow:hidden;text-overflow:ellipsis" title="' + a.name + '">' + a.name + '</td>'
-      + '<td>' + segBadge + '</td>'
-      + '<td style="font-size:10px;color:var(--muted);text-align:right">' + (a.activeRooftops || '—') + '</td>'
-      + '<td class="r" style="color:#4f78ff;font-weight:600">' + fmtMrr(a.mrr) + '</td>'
-      + '<td class="r" style="color:#22d4a0">' + fmtCost(a.cost) + '</td>'
-      + '<td class="r" style="color:' + (a.pct > 10 ? '#f0566a' : a.pct > 5 ? '#f5a42a' : '#aaaaaa') + '">' + (a.pct ? a.pct.toFixed(2) + '%' : '—') + pctBar + '</td>'
-      + '</tr>';
-  }).join('');
+  // Sort state for modal
+  var modalSort = { col: 'mrr', dir: -1 };
+
+  function sortedAccounts() {
+    return [...accounts].sort(function(a, b) {
+      var av = a[modalSort.col] != null ? a[modalSort.col] : 0;
+      var bv = b[modalSort.col] != null ? b[modalSort.col] : 0;
+      return typeof av === 'string' ? av.localeCompare(bv) * modalSort.dir : (av - bv) * modalSort.dir;
+    });
+  }
+
+  function buildRows(sorted) {
+    return sorted.map(function(a, i) {
+      var segBadge = a.segment !== '—' ? '<span class="seg" style="background:' + sc(a.segment) + '22;color:' + sc(a.segment) + ';font-size:12px">' + a.segment + '</span>' : '—';
+      var pctBar = a.pct > 0 ? '<div style="display:inline-block;width:' + Math.min(a.pct * 2, 80) + 'px;height:4px;background:' + (a.pct > 10 ? '#f0566a' : a.pct > 5 ? '#f5a42a' : '#22d4a0') + ';border-radius:2px;vertical-align:middle;margin-left:4px"></div>' : '';
+      return '<tr>'
+        + '<td class="rank-num">' + (i+1) + '</td>'
+        + '<td class="bright" style="max-width:240px;overflow:hidden;text-overflow:ellipsis" title="' + a.name + '">' + a.name + '</td>'
+        + '<td style="font-size:12px;color:var(--muted);font-family:var(--mono)">' + a.entId + '</td>'
+        + '<td>' + segBadge + '</td>'
+        + '<td style="font-size:12px;color:var(--muted);text-align:right">' + (a.activeRooftops || '—') + '</td>'
+        + '<td class="r" style="color:#4f78ff;font-weight:600">' + fmtMrr(a.mrr) + '</td>'
+        + '<td class="r" style="color:#22d4a0">' + fmtCost(a.cost) + '</td>'
+        + '<td class="r" style="color:' + (a.pct > 10 ? '#f0566a' : a.pct > 5 ? '#f5a42a' : '#aaaaaa') + '">' + (a.pct ? a.pct.toFixed(2) + '%' : '—') + pctBar + '</td>'
+        + '<td class="r" style="color:' + (a.trueAccuracy >= 90 ? '#22d4a0' : a.trueAccuracy >= 80 ? '#f5a42a' : a.trueAccuracy > 0 ? '#f0566a' : 'var(--muted)') + '">' + (a.trueAccuracy > 0 ? a.trueAccuracy.toFixed(2) + '%' : '—') + '</td>'
+        + '</tr>';
+    }).join('');
+  }
+
+  function thSort(col, label, color) {
+    var active = modalSort.col === col;
+    var arrow = active ? (modalSort.dir === -1 ? ' ▼' : ' ▲') : ' ↕';
+    var style = 'cursor:pointer;user-select:none;' + (color ? 'color:' + color + ';' : '');
+    return '<th class="r poc-sort-th" data-col="' + col + '" style="' + style + '">'
+      + label + '<span style="font-size:12px;color:var(--blue);margin-left:2px" id="poc-arrow-' + col + '">' + (active ? (modalSort.dir === -1 ? ' ▼' : ' ▲') : '') + '</span></th>';
+  }
+
+  function buildHeader() {
+    return '<thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr>'
+      + '<th>#</th>'
+      + '<th class="poc-sort-th" data-col="name" style="cursor:pointer;user-select:none">Account<span style="font-size:12px;color:var(--blue);margin-left:2px" id="poc-arrow-name"></span></th>'
+      + '<th class="poc-sort-th" data-col="entId" style="cursor:pointer;user-select:none">Enterprise ID<span style="font-size:12px;color:var(--blue);margin-left:2px" id="poc-arrow-entId"></span></th>'
+      + '<th class="poc-sort-th" data-col="segment" style="cursor:pointer;user-select:none">Segment<span style="font-size:12px;color:var(--blue);margin-left:2px" id="poc-arrow-segment"></span></th>'
+      + thSort('activeRooftops', 'Rooftops', null)
+      + thSort('mrr', 'MRR (' + numMonths + 'mo) USD', '#4f78ff')
+      + thSort('cost', 'Delivery Cost', '#22d4a0')
+      + thSort('pct', '% Cost/MRR', '#f5a42a')
+      + thSort('trueAccuracy', 'AI Accuracy', null)
+      + '</tr></thead>';
+  }
+
+  function refreshArrows() {
+    document.querySelectorAll('[id^="poc-arrow-"]').forEach(function(el) {
+      var col = el.id.replace('poc-arrow-', '');
+      el.textContent = modalSort.col === col ? (modalSort.dir === -1 ? ' ▼' : ' ▲') : '';
+    });
+  }
 
   var modal = document.createElement('div');
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(10,10,10,.9);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
 
   var inner = document.createElement('div');
-  inner.style.cssText = 'background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:800px;max-width:95vw;max-height:88vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.7)';
+  inner.style.cssText = 'background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:1480px;max-width:97vw;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.7)';
   inner.innerHTML = ''
-    + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px">'
+    + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;flex-shrink:0">'
     +   '<div>'
     +     '<div style="font-weight:700;font-size:16px;color:var(--text)">' + pocName + '</div>'
-    +     '<div style="font-size:11px;color:var(--muted);margin-top:2px">' + pocRow.poc + '</div>'
+    +     '<div style="font-size:13px;color:var(--muted);margin-top:2px">' + pocRow.poc + '</div>'
     +   '</div>'
-    +   '<button id="poc-close-btn" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;line-height:1">✕</button>'
+    +   '<div style="display:flex;gap:8px;align-items:center">'
+    +     '<button class="dl-btn" data-poc="'+pocRow.poc.replace(/[^a-zA-Z0-9]/g,'_')+'" onclick="downloadCSV(\'#poc-tbl\', \'poc_\'+this.dataset.poc+\'_\'+(new Date().toISOString().slice(0,10)))" title="Download CSV">⬇ CSV</button>'
+    +     '<button id="poc-close-btn" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;line-height:1;padding:4px 8px">✕</button>'
+    +   '</div>'
     + '</div>'
-    // Summary KPIs
-    + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">'
+    + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;flex-shrink:0">'
     +   '<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">'
     +     '<div style="font-size:18px;font-weight:700;color:#4f78ff">' + fmtMrr(totalMrr) + '</div>'
-    +     '<div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:3px">MRR × '+numMonths+' months (USD)</div>'
+    +     '<div style="font-size:12px;color:var(--muted);text-transform:uppercase;margin-top:3px">MRR × '+numMonths+' months (USD)</div>'
     +   '</div>'
     +   '<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">'
     +     '<div style="font-size:18px;font-weight:700;color:#22d4a0">' + fmtCost(totalCost) + '</div>'
-    +     '<div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:3px">Delivery Cost (INR)</div>'
+    +     '<div style="font-size:12px;color:var(--muted);text-transform:uppercase;margin-top:3px">Delivery Cost (INR)</div>'
     +   '</div>'
     +   '<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">'
     +     '<div style="font-size:18px;font-weight:700;color:#f5a42a">' + totalPct + (totalPct !== '—' ? '%' : '') + '</div>'
-    +     '<div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:3px">% Cost / MRR</div>'
+    +     '<div style="font-size:12px;color:var(--muted);text-transform:uppercase;margin-top:3px">% Cost / MRR</div>'
     +   '</div>'
     +   '<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">'
     +     '<div style="font-size:18px;font-weight:700;color:var(--text)">' + accounts.length + '</div>'
-    +     '<div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:3px">Accounts</div>'
+    +     '<div style="font-size:12px;color:var(--muted);text-transform:uppercase;margin-top:3px">Accounts</div>'
     +   '</div>'
     + '</div>'
-    // Table
-    + '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px">Account Breakdown</div>'
-    + '<div class="tbl-wrap"><table><thead><tr>'
-    +   '<th>#</th><th>Account</th><th>Segment</th>'
-    +   '<th class="r" style="font-size:10px">Rooftops</th>'
-    +   '<th class="r" style="color:#4f78ff">MRR (' + numMonths + 'mo) USD</th>'
-    +   '<th class="r" style="color:#22d4a0">Delivery Cost</th>'
-    +   '<th class="r" style="color:#f5a42a">% Cost/MRR</th>'
-    + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+    + '<div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px;flex-shrink:0">Account Breakdown <span style="font-weight:400;color:#555;font-size:12px">· click column headers to sort</span></div>'
+    + '<div class="tbl-wrap" id="poc-tbl-wrap" style="overflow-y:auto;flex:1;min-height:0"><table id="poc-tbl">'
+    + buildHeader()
+    + '<tbody id="poc-tbody">' + buildRows(sortedAccounts()) + '</tbody>'
+    + '</table></div>';
 
   modal.appendChild(inner);
+
+  // Attach close
   inner.querySelector('#poc-close-btn').onclick = function() { modal.remove(); };
   modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
+
+  // Attach sort listeners
+  inner.addEventListener('click', function(e) {
+    var th = e.target.closest('.poc-sort-th');
+    if (!th) return;
+    var col = th.dataset.col;
+    if (modalSort.col === col) modalSort.dir *= -1;
+    else { modalSort.col = col; modalSort.dir = -1; }
+    var tblHead = inner.querySelector('#poc-tbl thead');
+    tblHead.outerHTML = buildHeader();
+    inner.querySelector('#poc-tbody').innerHTML = buildRows(sortedAccounts());
+    // Re-attach sort listeners (header rebuilt)
+    inner.querySelectorAll('.poc-sort-th').forEach(function(el) { el.style.cursor = 'pointer'; });
+  });
+
   document.body.appendChild(modal);
 }
 
-
-function applyEntMeta(rawMeta){
-  // Deduplicate: keep only originalName entries, build normalized lookup separately
-  ENT_META={};ENT_META_NORM={};
-  Object.entries(rawMeta).forEach(function([k,e]){
-    if(!e||typeof e!=='object')return;
-    const origName=e.originalName||k;
-    if(!ENT_META[origName]){
-      ENT_META[origName]=e;
-      ENT_META_NORM[origName.toLowerCase().trim()]=origName;
-    }
-  });
-  if(DATA)DATA.enterpriseMeta=ENT_META;
-  const csSet=new Set(),obSet=new Set();
-  Object.values(ENT_META).forEach(function(m){
-    if(m.csPoc)csSet.add(m.csPoc);
-    if(m.obPoc)obSet.add(m.obPoc);
-  });
-  buildDropdown('cspoc',[...csSet].sort());
-  buildDropdown('obpoc',[...obSet].sort());
-  console.log('[meta] ENT_META populated:',Object.keys(ENT_META).length,'enterprises');
-  const months=filteredMonths();
-  if(months.length){renderTables(months);renderKPIs(months);if(CURRENT_VIEW==='enterprise')renderPocChart(months);}
-}
 
 async function fetchMetabaseFallback(){
   if(Object.keys(ENT_META).length>50){
@@ -2030,7 +2776,7 @@ async function fetchData(){
 async function refreshData(){const btn=document.getElementById('refresh-btn');btn.classList.add('spinning');await fetchData();btn.classList.remove('spinning');}
 function overlayShow(msg){const el=document.getElementById('overlay');el.style.display='flex';el.innerHTML='<div class="spinner"></div><div class="overlay-msg">'+msg+'</div>';}
 function overlayHide(){document.getElementById('overlay').style.display='none';}
-function overlayError(msg,detail){document.getElementById('overlay').innerHTML='<div class="err-box"><h3>Failed to load data</h3><p>'+msg+'</p><pre style="margin-top:8px;font-size:9px;color:#F3F4F6;text-align:left;white-space:pre-wrap;background:#0a0f1a;padding:8px;border-radius:4px;max-height:100px;overflow-y:auto">'+detail+'</pre><p style="margin-top:10px;font-size:10px;line-height:1.6">1. Check GOOGLE_SERVICE_ACCOUNT_EMAIL + GOOGLE_PRIVATE_KEY in Vercel<br>2. Share sheets with service account (Viewer)<br>3. Redeploy after env var changes</p><button onclick="location.reload()">Retry</button></div>';}
+function overlayError(msg,detail){document.getElementById('overlay').innerHTML='<div class="err-box"><h3>Failed to load data</h3><p>'+msg+'</p><pre style="margin-top:8px;font-size:12px;color:#F3F4F6;text-align:left;white-space:pre-wrap;background:#0a0f1a;padding:8px;border-radius:4px;max-height:100px;overflow-y:auto">'+detail+'</pre><p style="margin-top:10px;font-size:12px;line-height:1.6">1. Check GOOGLE_SERVICE_ACCOUNT_EMAIL + GOOGLE_PRIVATE_KEY in Vercel<br>2. Share sheets with service account (Viewer)<br>3. Redeploy after env var changes</p><button onclick="location.reload()">Retry</button></div>';}
 
 // Fire both requests immediately in parallel
 fetchData();
