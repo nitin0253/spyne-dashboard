@@ -1954,6 +1954,30 @@ function showPocDetail(pocRow, months) {
 }
 
 
+function applyEntMeta(rawMeta){
+  // Deduplicate: keep only originalName entries, build normalized lookup separately
+  ENT_META={};ENT_META_NORM={};
+  Object.entries(rawMeta).forEach(function([k,e]){
+    if(!e||typeof e!=='object')return;
+    const origName=e.originalName||k;
+    if(!ENT_META[origName]){
+      ENT_META[origName]=e;
+      ENT_META_NORM[origName.toLowerCase().trim()]=origName;
+    }
+  });
+  if(DATA)DATA.enterpriseMeta=ENT_META;
+  const csSet=new Set(),obSet=new Set();
+  Object.values(ENT_META).forEach(function(m){
+    if(m.csPoc)csSet.add(m.csPoc);
+    if(m.obPoc)obSet.add(m.obPoc);
+  });
+  buildDropdown('cspoc',[...csSet].sort());
+  buildDropdown('obpoc',[...obSet].sort());
+  console.log('[meta] ENT_META populated:',Object.keys(ENT_META).length,'enterprises');
+  const months=filteredMonths();
+  if(months.length){renderTables(months);renderKPIs(months);if(CURRENT_VIEW==='enterprise')renderPocChart(months);}
+}
+
 async function fetchMetabaseFallback(){
   if(Object.keys(ENT_META).length>50){
     console.log('[meta] already loaded:',Object.keys(ENT_META).length);
