@@ -481,16 +481,16 @@ select.sel:focus{border-color:var(--blue)}
 
   <div class="section" style="margin-bottom:12px">
     <div class="sec-head">
-      <div><div class="sec-title">Segment Summary</div><div class="sec-sub" id="seg-summary-sub">Filtered months · Cost% · Cost/MRR% · product filterable</div></div>
-      <button class="dl-btn" onclick="downloadCSV('#seg-summary-table','segment_summary_'+(new Date().toISOString().slice(0,10)))" title="Download CSV">⬇ CSV</button>
-    </div>
-    <div class="cf-row" style="padding:8px 0 4px">
+      <div><div class="sec-title">Segment Summary</div><div class="sec-sub" id="seg-summary-sub">Filtered months · VINs · Units · ARR · ₹/Unit · Cost %</div></div>
+      <div class="cf-row" style="margin-top:4px">
         <span class="cf-label">Product:</span>
         <button class="cf-pill active" data-chart="segsum" onclick="setSegSumProduct('all',this)">All</button>
         <button class="cf-pill" data-chart="segsum" onclick="setSegSumProduct('image',this)">Images</button>
         <button class="cf-pill" data-chart="segsum" onclick="setSegSumProduct('360',this)">360</button>
         <button class="cf-pill" data-chart="segsum" onclick="setSegSumProduct('video',this)">Video</button>
       </div>
+      <button class="dl-btn" onclick="downloadCSV('#seg-summary-table','segment_summary_'+(new Date().toISOString().slice(0,10)))" title="Download CSV">⬇ CSV</button>
+    </div>
     <div class="tbl-wrap"><table id="seg-summary-table">
       <thead id="seg-summary-thead"><tr>
         <th>Segment</th>
@@ -501,7 +501,6 @@ select.sel:focus{border-color:var(--blue)}
         <th class="r" onclick="cycleSortSeg('arrShare')" style="cursor:pointer">ARR Share %<span id="ss-arrShare" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
         <th class="r" onclick="cycleSortSeg('costPerUnit')" style="cursor:pointer">₹/Unit<span id="ss-costPerUnit" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
         <th class="r" onclick="cycleSortSeg('costShare')" style="cursor:pointer">Cost %<span id="ss-costShare" style="font-size:12px;color:var(--blue);margin-left:2px"> ▼</span></th>
-        <th class="r" onclick="cycleSortSeg('costMrrPct')" style="cursor:pointer">Cost/MRR%<span id="ss-costMrrPct" style="font-size:12px;color:var(--blue);margin-left:2px"></span></th>
       </tr></thead>
       <tbody id="sg-summary-tbl"></tbody>
     </table></div>
@@ -1155,27 +1154,34 @@ function setSegSumProduct(prod,btn){
 }
 let _segData=[],_segSort={col:'costShare',dir:-1};
 window.cycleSortSeg=mkSorter('ss',['vins','units','volumeShare','contractedArrMonthly','arrShare','costPerUnit','costShare'],function(col,dir){_segSort={col,dir};renderSegTable();});
-function renderSegTable(){
-  const rows=applySortArr(_segData,_segSort.col,_segSort.dir);
-  const el=document.getElementById('sg-summary-tbl');if(!el)return;
-  el.innerHTML=rows.map(function(s){
-    var mrrColor=s.costMrrPct>15?'var(--red)':s.costMrrPct>5?'var(--amber)':'var(--green)';
-    var mrrBar=s.costMrrPct>0?'<span style="display:inline-block;width:'+Math.min(s.costMrrPct*3,60)+'px;height:4px;background:'+mrrColor+';border-radius:2px;vertical-align:middle;margin-left:4px;opacity:.8"></span>':'';
-    var segTds='';
-    // Build cells matching whatever columns the thead has
-    var hasMrr=!!document.getElementById('ss-costMrrPct');
-    var base='<tr>'
-      +'<td class="bright"><span class="seg" style="background:'+sc(s.name)+'22;color:'+sc(s.name)+'">'+s.name+'</span></td>'
-      +'<td class="r" style="color:var(--purple)">'+f.num(s.vins)+'</td>'
-      +'<td class="r">'+f.num(s.units)+'</td>';
-    // Dynamic columns depending on what exists in thead
-    if(document.getElementById('ss-contractedArr'))base+='<td class="r" style="color:var(--green)">$'+f.short((s.totalMRR_INR||0)/83*12)+'</td>';
-    base+='<td class="r" style="color:var(--amber)">'+f.inr(s.costPerUnit)+'</td>';
-    if(document.getElementById('ss-costShare'))base+='<td class="r"><span style="font-weight:600">'+f.pct(s.costShare)+'</span></td>';
-    base+='<td class="r" style="color:'+mrrColor+';font-weight:600">'+f.pct(s.costMrrPct)+mrrBar+'</td>';
-    if(document.getElementById('ss-efficiency'))base+='<td class="r"><span class="'+effCls(s.efficiency)+'">'+f.pct(s.efficiency)+'</span></td>';
-    return base+'</tr>';
+function renderSegTable() {
+  const rows = applySortArr(_segData, _segSort.col, _segSort.dir);
+  const el = document.getElementById('sg-summary-tbl'); if (!el) return;
+  const numMonths = (rows[0]&&rows[0].numMonths)||1;
+  var ctrHdr = document.getElementById('seg-contracted-hdr');
+  if (ctrHdr) ctrHdr.childNodes[0].textContent =
+    numMonths===1 ? 'Contracted MRR (USD)' : 'Contracted MRR ×'+numMonths+' (USD)';
+  var sub = document.getElementById('seg-summary-sub');
+  if (sub) sub.textContent = (numMonths===1?'1 month':numMonths+' months') +
+    ' · VINs · Units · MRR · ₹/Unit · Cost% · Cost/MRR%';
+  var fmtUSD = f.usd || function(v){return v>=1e6?'$'+(v/1e6).toFixed(2)+'M':v>=1e3?'$'+(v/1e3).toFixed(1)+'K':'$'+Math.round(v);};
+  el.innerHTML = rows.map(function(s, i) {
+    var mrrColor = s.costMrrPct>15 ? 'var(--red)' : s.costMrrPct>5 ? 'var(--amber)' : 'var(--green)';
+    var mrrBar = s.costMrrPct>0 ?
+      '<span style="display:inline-block;width:'+Math.min(s.costMrrPct*3,60)+'px;height:4px;background:'+mrrColor+';border-radius:2px;vertical-align:middle;margin-left:4px;opacity:.8"></span>' : '';
+    return '<tr style="cursor:pointer" onclick="showSegmentDetail('+i+')" title="Click for account breakdown">' +
+      '<td class="bright"><span class="seg" style="background:'+sc(s.name)+'22;color:'+sc(s.name)+'">'+s.name+'</span></td>' +
+      '<td class="r" style="color:var(--purple)">'+f.num(s.vins)+'</td>' +
+      '<td class="r">'+f.num(s.units)+'</td>' +
+      '<td class="r" style="color:var(--cyan)">'+f.pct(s.volumeShare)+'</td>' +
+      '<td class="r" style="color:#38c4f0">'+fmtUSD(s.contractedArrMonthly)+'</td>' +
+      '<td class="r" style="color:var(--muted)">'+f.pct(s.arrShare)+'</td>' +
+      '<td class="r" style="color:var(--amber)">'+f.inr(s.costPerUnit)+'</td>' +
+      '<td class="r" style="font-weight:600">'+f.pct(s.costShare)+'</td>' +
+      '<td class="r" style="color:'+mrrColor+';font-weight:600">'+f.pct(s.costMrrPct)+mrrBar+'</td>' +
+      '</tr>';
   }).join('');
+  window._segList = rows;
 }
 let _prodData=[],_prodSort={col:'units',dir:-1};
 window.cycleSortProd=mkSorter('sp',['units','efficiency','costPerUnit','costSharePct'],function(col,dir){_prodSort={col,dir};renderProdTable();});
@@ -2120,50 +2126,74 @@ function renderEntTable(){
 }
 
 // Aggregate segment/enterprise data across multiple months
-function aggregateSegments(months,productFilter){
-  var prod=productFilter||'all';
-  const acc={};
-  months.forEach(function(m){
-    var segMRR={};
-    (m.enterpriseBreakdown||[]).forEach(function(e){
-      var seg=e.segment||'Unknown';
-      var mrrINR=((e.contractedArr||0)/12)*83;
-      if(!segMRR[seg])segMRR[seg]=0;
-      segMRR[seg]+=mrrINR;
-    });
-    filterBreakdown(m.segmentBreakdown,'segment').forEach(function(sg){
-      const n=sg.name;
-      if(!acc[n])acc[n]={name:n,vins:0,units:0,actualMins:0,sumTarget:0,totalCost:0,totalMRR_INR:0,costPerUnit_sum:0};
-      var units=0,vins=0,actualMins=0,sumTarget=0,cost=0;
-      if(prod==='all'){
-        units=sg.units||0;vins=sg.vins||0;actualMins=sg.actualMins||0;sumTarget=sg.sumTarget||0;
-        cost=(sg.costPerUnit||0)*(sg.units||0);
+function aggregateSegments(months, productFilter) {
+  var prod = productFilter || 'all';
+  const numMonths = months.length || 1;
+  const acc = {};
+
+  months.forEach(function(m) {
+    filterBreakdown(m.segmentBreakdown, 'segment').forEach(function(sg) {
+      const n = sg.name;
+      if (!acc[n]) acc[n] = {name:n,vins:0,units:0,actualMins:0,sumTarget:0,
+        costPerUnit_sum:0,totalCost:0,liveArrUSD:0,contractedArrAnnual:0};
+      var units=0, vins=0, actualMins=0, sumTarget=0, cost=0;
+      if (prod === 'all') {
+        units=sg.units||0; vins=sg.vins||0; actualMins=sg.actualMins||0;
+        sumTarget=sg.sumTarget||0; cost=(sg.costPerUnit||0)*(sg.units||0);
       } else {
-        var pk=prod==='image'?/image/i:prod==='360'?/360|spin/i:/video/i;
-        Object.entries(sg.byProduct||{}).forEach(function(kv){
-          if(!pk.test(kv[0]))return;
-          var pd=kv[1];
-          units+=pd.units||0;vins+=pd.vins||0;actualMins+=pd.actualMins||0;sumTarget+=pd.sumTarget||0;
+        var pk = prod==='image' ? /image/i : prod==='360' ? /360|spin/i : /video/i;
+        Object.entries(sg.byProduct||{}).forEach(function(kv) {
+          if (!pk.test(kv[0])) return;
+          var pd = kv[1];
+          units+=pd.units||0; vins+=pd.vins||0;
+          actualMins+=pd.actualMins||0; sumTarget+=pd.sumTarget||0;
           cost+=(pd.costPerUnit||0)*(pd.units||0);
         });
       }
-      acc[n].vins+=vins;acc[n].units+=units;acc[n].actualMins+=actualMins;
-      acc[n].sumTarget+=sumTarget;acc[n].totalCost+=cost;
-      acc[n].costPerUnit_sum+=(units>0?(cost/units):0)*units;
-      acc[n].totalMRR_INR+=(segMRR[n]||0);
+      acc[n].vins+=vins; acc[n].units+=units; acc[n].actualMins+=actualMins;
+      acc[n].sumTarget+=sumTarget; acc[n].totalCost+=cost;
     });
   });
-  const rows=Object.values(acc).map(function(s){
-    s.efficiency=s.actualMins>0?+((s.sumTarget/s.actualMins)*100).toFixed(2):0;
-    s.costPerUnit=s.units>0?+(s.totalCost/s.units).toFixed(2):0;
-    s.costMrrPct=s.totalMRR_INR>0?+((s.totalCost/s.totalMRR_INR)*100).toFixed(2):0;
+
+  // Sum ARR from ENT_META per segment (active enterprises only)
+  const activeEntSegs = {};
+  months.forEach(function(m) {
+    (m.enterpriseBreakdown||[]).forEach(function(e) {
+      if (!e.units) return;
+      if (!activeEntSegs[e.name]) activeEntSegs[e.name] = e.segment || 'Unknown';
+    });
+  });
+  Object.entries(activeEntSegs).forEach(function(kv) {
+    var entName=kv[0], seg=kv[1];
+    if (!acc[seg]) return;
+    var meta = entMeta(entName);
+    var liveRaw = parseFloat(String(meta.liveArr||'0').replace(/[^0-9.]/g,''))||0;
+    acc[seg].liveArrUSD += liveRaw;
+    acc[seg].contractedArrAnnual += (meta.contractedArr||0);
+  });
+
+  const rows = Object.values(acc).map(function(s) {
+    s.efficiency = s.actualMins>0 ? +((s.sumTarget/s.actualMins)*100).toFixed(2) : 0;
+    s.costPerUnit = s.units>0 ? +(s.totalCost/s.units).toFixed(2) : 0;
+    s.liveArrUSD = Math.round((s.liveArrUSD/12)*numMonths);
+    s.contractedArrMonthly = Math.round(((s.contractedArrAnnual||0)/12)*numMonths);
+    // Cost/MRR% = delivery cost INR / (contracted MRR × 83 INR/USD) × 100
+    var mrrINR = s.contractedArrMonthly * 83;
+    s.costMrrPct = mrrINR>0 ? +((s.totalCost/mrrINR)*100).toFixed(2) : 0;
+    s.numMonths = numMonths;
     return s;
   });
-  const totalCostAll=rows.reduce(function(t,s){return t+s.totalCost;},0)||1;
-  rows.forEach(function(s){s.costShare=+((s.totalCost/totalCostAll)*100).toFixed(2);});
+
+  const totalCost = rows.reduce(function(t,s){return t+(s.totalCost||0);},0)||1;
+  const totalArr  = rows.reduce(function(t,s){return t+(s.contractedArrAnnual||0);},0)||1;
+  const totalUnits = rows.reduce(function(t,s){return t+(s.units||0);},0)||1;
+  rows.forEach(function(s) {
+    s.costShare   = +(((s.totalCost||0)/totalCost)*100).toFixed(2);
+    s.arrShare    = +(((s.contractedArrAnnual||0)/totalArr)*100).toFixed(2);
+    s.volumeShare = +(((s.units||0)/totalUnits)*100).toFixed(2);
+  });
   return rows.filter(function(s){return s.units>0;});
 }
-
 
 function aggregateEnterprises(months){
   const acc={};
